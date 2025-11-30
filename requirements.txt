@@ -1,0 +1,11 @@
+nilearn
+pandas
+numpy
+matplotlib
+scikit-learn
+seaborn
+nibabel
+stable-baselines3
+stable-retro
+torch
+ipykernel
