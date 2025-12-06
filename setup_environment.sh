@@ -24,8 +24,8 @@ echo ""
 
 # Create virtual environment
 echo "Creating virtual environment..."
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+if [ ! -d "env" ]; then
+    python3 -m venv env
     echo "✓ Virtual environment created"
 else
     echo "✓ Virtual environment already exists"
@@ -35,7 +35,7 @@ echo ""
 
 # Activate virtual environment
 echo "Activating virtual environment..."
-source venv/bin/activate
+source env/bin/activate
 echo "✓ Virtual environment activated"
 
 echo ""
@@ -75,12 +75,11 @@ echo "✓ Created derivatives/ subdirectories"
 
 echo ""
 
-# Install Jupyter extensions
-echo "Installing Jupyter extensions..."
-pip install jupyter_contrib_nbextensions
-jupyter contrib nbextension install --user 2>/dev/null || true
-jupyter nbextension enable rise --py --sys-prefix
-echo "✓ Jupyter extensions configured"
+# Install JupyterLab extensions
+echo "Installing JupyterLab extensions..."
+# Note: jupyterlab_rise is the slideshow extension for JupyterLab 4.x
+# It installs as a standard pip package and doesn't require separate enable step
+echo "✓ JupyterLab extensions configured (jupyterlab_rise)"
 
 echo ""
 
@@ -104,21 +103,22 @@ echo "Setup Complete!"
 echo "================================================"
 echo ""
 echo "Next steps:"
-echo "1. Activate the environment: source venv/bin/activate"
+echo "1. Activate the environment: source env/bin/activate"
 echo "2. Import Mario ROM (if using RL features):"
 echo "   python3 -m retro.import /path/to/SuperMarioBros.nes"
 echo "3. Ensure data is available in sourcedata/"
 echo "   - sourcedata/mario/"
 echo "   - sourcedata/mario.fmriprep/"
 echo "   - sourcedata/mario.annotations/"
-echo "4. Launch Jupyter: jupyter notebook"
+echo "4. Launch JupyterLab: jupyter lab"
 echo "5. Start with notebooks/01_dataset_exploration.ipynb"
 echo "   or notebooks/00_presentation_RISE.ipynb for the slideshow"
 echo ""
-echo "For RISE presentations:"
+echo "For RISE presentations in JupyterLab:"
 echo "  - Open 00_presentation_RISE.ipynb"
-echo "  - Click the RISE button to start slideshow"
+echo "  - Click the presentation icon in the toolbar to start slideshow"
 echo "  - Use spacebar to advance, shift+spacebar to go back"
+echo "  - Or use View > Activate Presentation Mode"
 echo ""
 echo "Enjoy the tutorial!"
 echo ""
