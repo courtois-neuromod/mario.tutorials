@@ -1,11 +1,50 @@
-nilearn
-pandas
-numpy
-matplotlib
-scikit-learn
-seaborn
-nibabel
-stable-baselines3
-stable-retro
-torch
-ipykernel
+# Mario fMRI Tutorial Dependencies
+# Python 3.9+
+
+# Core scientific computing
+numpy>=1.21.0,<2.0.0
+scipy>=1.7.0
+pandas>=1.3.0
+
+# Neuroimaging
+nibabel>=4.0.0
+nilearn>=0.10.0
+nistats>=0.0.1rc  # For GLM compatibility
+
+# Machine learning
+scikit-learn>=1.0.0
+torch>=2.0.0
+pytorch-lightning>=2.0.0
+
+# Data handling
+h5py>=3.7.0
+
+# Visualization
+matplotlib>=3.5.0
+seaborn>=0.12.0
+plotly>=5.0.0
+ipywidgets>=8.0.0
+
+# Jupyter and presentation
+jupyter>=1.0.0
+notebook>=6.5.0
+jupyterlab>=3.5.0
+RISE>=5.7.0  # For slideshow presentations
+ipython>=8.0.0
+
+# RL environment
+gym>=0.21.0
+stable-retro>=0.9.0  # Fork of gym-retro
+
+# Progress bars
+tqdm>=4.60.0
+
+# Optional: Advanced visualization
+niwidgets>=0.2.0  # Interactive brain viewers
+
+# Optional: Statistical testing
+statsmodels>=0.13.0
+
+# Optional: Reporting
+reportlab>=3.6.0
+atlasreader>=0.2.0
