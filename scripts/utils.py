@@ -16,9 +16,9 @@ def get_project_root():
 
 def get_sourcedata_path():
     """Get the path to sourcedata directory."""
-    # Assume sourcedata is in parent of mario.tutorials
+    # Sourcedata is within the mario.tutorials directory
     root = get_project_root()
-    return root.parent / "sourcedata"
+    return root / "sourcedata"
 
 
 def get_derivatives_path():
