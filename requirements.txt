@@ -27,10 +27,11 @@ ipywidgets>=8.0.0
 
 # Jupyter and presentation
 jupyter>=1.0.0
-notebook>=6.5.0
-jupyterlab>=3.5.0
-RISE>=5.7.0  # For slideshow presentations
+notebook>=7.0.0  # Modern notebook version (v7+)
+jupyterlab>=4.0.0
+jupyterlab_rise>=0.43.0  # For slideshow presentations in JupyterLab
 ipython>=8.0.0
+# Note: jupyter_contrib_nbextensions is NOT compatible with notebook 7.x and should not be installed
 
 # RL environment
 gym>=0.21.0
