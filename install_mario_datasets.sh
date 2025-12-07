@@ -73,7 +73,7 @@ fi
 # Install Dependencies
 # ------------------------------------------------------------------------------
 
-print_header "Step 1/6: Installing Dependencies"
+print_header "Step 1/7: Installing Dependencies"
 
 if ! command -v datalad &> /dev/null; then
     print_info "Installing datalad..."
@@ -87,7 +87,7 @@ fi
 # Create Directory Structure
 # ------------------------------------------------------------------------------
 
-print_header "Step 2/6: Creating Directory Structure"
+print_header "Step 2/7: Creating Directory Structure"
 
 if [ ! -d "${SOURCEDATA_DIR}" ]; then
     mkdir -p "${SOURCEDATA_DIR}"
@@ -102,7 +102,7 @@ cd "${SOURCEDATA_DIR}"
 # Download Dataset Repositories
 # ------------------------------------------------------------------------------
 
-print_header "Step 3/6: Installing Dataset Repositories"
+print_header "Step 3/7: Installing Dataset Repositories"
 
 # cneuromod.processed (anatomical data)
 if [ ! -d "cneuromod.processed" ]; then
@@ -115,24 +115,24 @@ fi
 
 # mario (raw BIDS data)
 if [ ! -d "mario" ]; then
-    print_info "Installing mario..."
-    datalad install git@github.com:courtois-neuromod/mario
+    print_info "Installing mario with subdatasets..."
+    datalad install --recursive git@github.com:courtois-neuromod/mario
     print_success "mario installed"
 else
     print_warning "mario already exists"
 fi
 
-# mario.stimuli (game ROM and integration files)
-if [ ! -d "mario/mario.stimuli" ]; then
+# stimuli (game ROM and integration files)
+if [ ! -d "mario/stimuli" ]; then
     # Check if AWS credentials are available
     if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        print_warning "mario.stimuli requires AWS credentials - skipping download"
+        print_warning "stimuli requires AWS credentials - skipping download"
         echo ""
         echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${YELLOW}MARIO.STIMULI - AWS CREDENTIALS REQUIRED${NC}"
+        echo -e "${YELLOW}STIMULI - AWS CREDENTIALS REQUIRED${NC}"
         echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
-        echo "The mario.stimuli dataset contains the Super Mario Bros 3 ROM and"
+        echo "The stimuli dataset contains the Super Mario Bros ROM and"
         echo "integration files. This data is stored on AWS S3 and requires"
         echo "access credentials."
         echo ""
@@ -140,30 +140,25 @@ if [ ! -d "mario/mario.stimuli" ]; then
         echo ""
         echo "  1. Request AWS credentials from the CNeuromod team:"
         echo "     • Contact: courtois-neuromod-admin@criugm.qc.ca"
-        echo "     • Specify you need access to mario.stimuli dataset"
+        echo "     • Specify you need access to stimuli dataset"
         echo ""
         echo "  2. Obtain the ROM legally:"
-        echo "     • Purchase Super Mario Bros 3 for NES"
+        echo "     • Purchase Super Mario Bros for NES"
         echo "     • Extract ROM using legal methods"
-        echo "     • Place in sourcedata/mario/mario.stimuli/"
+        echo "     • Place in sourcedata/mario/stimuli/"
         echo ""
-        echo "Note: The tutorial can proceed without mario.stimuli, but some"
+        echo "Note: The tutorial can proceed without stimuli, but some"
         echo "      visualizations and replay analyses will be limited."
         echo ""
         echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
     else
-        print_info "Installing mario.stimuli..."
-        cd mario
-        datalad install git@github.com:courtois-neuromod/mario.stimuli
-        cd mario.stimuli
         print_info "Downloading stimuli files..."
-        datalad get .
-        cd ../..
-        print_success "mario.stimuli downloaded"
+        datalad get mario/stimuli
+        print_success "stimuli downloaded"
     fi
 else
-    print_warning "mario.stimuli already exists"
+    print_warning "mario/stimuli already exists"
 fi
 
 # mario.fmriprep (preprocessed fMRI)
@@ -193,11 +188,20 @@ else
     print_warning "mario.scenes already exists"
 fi
 
+# mario.replays (replay processing)
+if [ ! -d "mario.replays" ]; then
+    print_info "Installing mario.replays..."
+    git clone git@github.com:courtois-neuromod/mario.replays
+    print_success "mario.replays cloned"
+else
+    print_warning "mario.replays already exists"
+fi
+
 # ------------------------------------------------------------------------------
 # Download Session Data
 # ------------------------------------------------------------------------------
 
-print_header "Step 4/6: Downloading Session Data (${SUBJECT}/${SESSION})"
+print_header "Step 4/7: Downloading Session Data (${SUBJECT}/${SESSION})"
 
 print_info "This will download ~7-8 GB of data..."
 echo ""
@@ -224,7 +228,7 @@ print_success "Anatomical data downloaded"
 # Verify Downloads
 # ------------------------------------------------------------------------------
 
-print_header "Step 5/6: Verifying Downloads"
+print_header "Step 5/7: Verifying Downloads"
 
 # Check for key files
 errors=0
@@ -263,39 +267,152 @@ else
 fi
 
 # ------------------------------------------------------------------------------
+# Generate Derivatives
+# ------------------------------------------------------------------------------
+
+print_header "Step 6/7: Generating Derivatives for ${SUBJECT}/${SESSION}"
+
+print_info "Generating derivatives from mario.replays, mario.scenes, and mario.annotations..."
+echo ""
+
+# Generate replays with game variables
+if [ -d "${SOURCEDATA_DIR}/mario.replays" ]; then
+    print_info "Setting up mario.replays environment and generating derivatives..."
+    cd "${SOURCEDATA_DIR}/mario.replays"
+
+    # Create environment and setup using invoke
+    if [ ! -d "env" ]; then
+        print_info "Creating virtual environment and installing dependencies..."
+        python3 -m venv env && source env/bin/activate && invoke setup-env
+        print_success "Environment setup complete"
+    else
+        print_info "Environment already exists, activating..."
+        source env/bin/activate
+    fi
+
+    # Generate replay derivatives
+    print_info "Generating replay derivatives for ${SUBJECT} ${SESSION}..."
+    invoke create-replays \
+        --subjects "${SUBJECT}" \
+        --sessions "${SESSION}" \
+        --datapath "../mario" \
+        --save-confs \
+        --save-variables || print_warning "Failed to generate replays"
+    print_success "Replay derivatives generated in mario.replays/${SUBJECT}/"
+
+    deactivate
+    cd ../..
+else
+    print_warning "mario.replays not found - skipping replay generation"
+fi
+
+# Generate scene clips
+if [ -d "${SOURCEDATA_DIR}/mario.scenes" ] && [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ]; then
+    print_info "Setting up mario.scenes environment and generating clips..."
+    cd "${SOURCEDATA_DIR}/mario.scenes"
+
+    # Create environment and setup using invoke
+    if [ ! -d "env" ]; then
+        print_info "Creating virtual environment and installing dependencies..."
+        python3 -m venv env && source env/bin/activate && invoke setup-env && invoke get-scenes-data
+        print_success "Environment setup complete"
+    else
+        print_info "Environment already exists, activating..."
+        source env/bin/activate
+    fi
+
+    # Generate scene clips
+    print_info "Generating scene clips for ${SUBJECT} ${SESSION}..."
+    invoke create-clips \
+        --subjects "${SUBJECT}" \
+        --sessions "${SESSION}" \
+        --save-videos \
+        --save-variables || print_warning "Failed to generate scene clips"
+    print_success "Scene clips generated in mario.scenes/clips/"
+
+    deactivate
+    cd ../..
+else
+    print_warning "mario.scenes not found or replays not generated - skipping scene clip generation"
+fi
+
+# Generate annotated events
+if [ -d "${SOURCEDATA_DIR}/mario.annotations" ] && [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ]; then
+    print_info "Setting up mario.annotations environment and generating annotations..."
+    cd "${SOURCEDATA_DIR}/mario.annotations"
+
+    # Create environment and setup using invoke
+    if [ ! -d "env" ]; then
+        print_info "Creating virtual environment and installing dependencies..."
+        python3 -m venv env && source env/bin/activate && invoke setup-env
+        print_success "Environment setup complete"
+    else
+        print_info "Environment already exists, activating..."
+        source env/bin/activate
+    fi
+
+    # Generate annotated events
+    print_info "Generating annotated events for ${SUBJECT} ${SESSION}..."
+    invoke generate-annotations \
+        --datapath "../mario" \
+        --subjects "${SUBJECT}" \
+        --sessions "${SESSION}" || print_warning "Failed to generate annotations"
+    print_success "Annotated events generated in mario.annotations/annotations/"
+
+    deactivate
+    cd ../..
+else
+    print_warning "mario.annotations not found or replays not generated - skipping annotation generation"
+fi
+
+# ------------------------------------------------------------------------------
 # Summary
 # ------------------------------------------------------------------------------
 
-print_header "Step 6/6: Installation Summary"
-
-cd ..  # Return to tutorial root
+print_header "Step 7/7: Installation Summary"
 
 echo "Installation location: $(pwd)/${SOURCEDATA_DIR}"
 echo ""
 echo "Directory structure:"
 echo "  ${SOURCEDATA_DIR}/"
-echo "  ├── mario/                     # Raw BIDS data"
-echo "  ├── mario.fmriprep/            # Preprocessed fMRI"
-echo "  ├── mario.annotations/         # Behavioral events"
-echo "  ├── mario.scenes/              # Scene segmentation"
-echo "  ├── mario.stimuli/             # Game ROM and files"
-echo "  └── cneuromod.processed/       # Anatomical data"
+echo "  ├── mario/                          # Raw BIDS data"
+echo "  │   └── stimuli/                    # Game ROM and files (if AWS credentials provided)"
+echo "  ├── mario.fmriprep/                 # Preprocessed fMRI"
+echo "  ├── mario.annotations/"
+echo "  │   └── annotations/                # Annotated event files (generated)"
+echo "  │       └── ${SUBJECT}/${SESSION}/func/"
+echo "  ├── mario.scenes/"
+echo "  │   └── clips/                      # Scene clip videos (generated)"
+echo "  ├── mario.replays/"
+echo "  │   └── ${SUBJECT}/${SESSION}/beh/  # Replay derivatives with game variables (generated)"
+echo "  └── cneuromod.processed/            # Anatomical data"
 echo ""
 
 if [ $errors -eq 0 ]; then
-    print_success "All downloads verified successfully!"
+    print_success "All downloads and derivatives generated successfully!"
     echo ""
     echo "Next steps:"
-    echo "  1. Run setup script: bash setup_environment.sh"
-    echo "  2. Activate environment: source venv/bin/activate"
-    echo "  3. Start Jupyter: jupyter notebook"
-    echo "  4. Open notebooks/01_dataset_exploration.ipynb"
+    echo "  1. Activate main environment: source env/bin/activate"
+    echo "  2. Start Jupyter: jupyter notebook"
+    echo "  3. Open notebooks/01_dataset_exploration.ipynb"
     echo ""
-    print_info "Note: mario.replays derivatives need manual generation"
-    print_info "      See mario.replays/README.md for instructions"
+    echo "Note: Each Mario package (replays, scenes, annotations) has its own 'env' folder"
+    echo "      for isolated dependency management."
+    echo ""
+
+    # Check if derivatives were generated
+    if [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ] && [ -d "${SOURCEDATA_DIR}/mario.annotations/annotations" ]; then
+        print_success "Derivatives ready in their respective repos"
+    else
+        print_warning "Some derivatives may not have been generated"
+        print_info "You can generate them manually:"
+        print_info "  cd ${SOURCEDATA_DIR}/mario.replays && source env/bin/activate && invoke create-replays --save-variables --subjects ${SUBJECT} --sessions ${SESSION}"
+        print_info "  cd ${SOURCEDATA_DIR}/mario.scenes && source env/bin/activate && invoke create-clips --subjects ${SUBJECT} --sessions ${SESSION}"
+        print_info "  cd ${SOURCEDATA_DIR}/mario.annotations && source env/bin/activate && invoke generate-annotations --subjects ${SUBJECT} --sessions ${SESSION}"
+    fi
 else
     print_warning "Installation completed with ${errors} error(s)"
-    print_info "You may need to manually download some files"
+    print_info "You may need to manually download some files or generate derivatives"
 fi
 
 print_header "Installation Complete!"

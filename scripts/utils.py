@@ -1,5 +1,15 @@
 """
 General utility functions for Mario fMRI tutorial.
+
+Button Mappings (NES Super Mario Bros):
+---------------------------------------
+- A = JUMP (short taps, ~0.3s mean duration)
+- B = RUN/FIREBALL (held continuously, ~12s mean duration)
+- LEFT/RIGHT = Move left/right
+- UP = Enter pipe
+- DOWN = Crouch
+- START = Pause
+- SELECT = (unused in SMB1)
 """
 
 import os
@@ -85,11 +95,15 @@ def load_events(subject, session, run, sourcedata_path=None):
         session = f'ses-{session}'
     if isinstance(run, int):
         run = f'run-{run:02d}'
-    elif not run.startswith('run-'):
-        run = f'run-{run}'
+    elif run.startswith('run-'):
+        # Extract number and reformat with zero padding
+        run_num = run.split('-')[1]
+        run = f'run-{int(run_num):02d}'
+    else:
+        run = f'run-{int(run):02d}'
 
     # Build path to annotated events
-    events_path = (sourcedata_path / "mario.annotations" / "annotations" /
+    events_path = (sourcedata_path / "mario.annotations" /
                    subject / session / "func" /
                    f"{subject}_{session}_task-mario_{run}_desc-annotated_events.tsv")
 
@@ -133,9 +147,13 @@ def load_bold(subject, session, run, sourcedata_path=None, space='MNI152NLin2009
     if not session.startswith('ses-'):
         session = f'ses-{session}'
     if isinstance(run, int):
-        run = f'run-{run:02d}'
-    elif not run.startswith('run-'):
         run = f'run-{run}'
+    elif run.startswith('run-'):
+        # Extract number (no zero padding for fMRIPrep files)
+        run_num = run.split('-')[1]
+        run = f'run-{int(run_num)}'
+    else:
+        run = f'run-{int(run)}'
 
     # Build path to preprocessed BOLD
     bold_path = (sourcedata_path / "mario.fmriprep" / subject / session / "func" /
@@ -181,9 +199,13 @@ def load_brain_mask(subject, session, run, sourcedata_path=None, space='MNI152NL
     if not session.startswith('ses-'):
         session = f'ses-{session}'
     if isinstance(run, int):
-        run = f'run-{run:02d}'
-    elif not run.startswith('run-'):
         run = f'run-{run}'
+    elif run.startswith('run-'):
+        # Extract number (no zero padding for fMRIPrep files)
+        run_num = run.split('-')[1]
+        run = f'run-{int(run_num)}'
+    else:
+        run = f'run-{int(run)}'
 
     # Build path to brain mask
     mask_path = (sourcedata_path / "mario.fmriprep" / subject / session / "func" /
@@ -196,9 +218,9 @@ def load_brain_mask(subject, session, run, sourcedata_path=None, space='MNI152NL
     return mask_img
 
 
-def load_confounds(subject, session, run, sourcedata_path=None):
+def load_confounds(subject, session, run, sourcedata_path=None, strategy='full'):
     """
-    Load confounds from fMRIPrep.
+    Load confounds from fMRIPrep using nilearn's load_confounds.
 
     Parameters
     ----------
@@ -210,11 +232,15 @@ def load_confounds(subject, session, run, sourcedata_path=None):
         Run number
     sourcedata_path : str or Path, optional
         Path to sourcedata directory
+    strategy : str, default='full'
+        Confound loading strategy (passed to prepare_confounds later)
+        This parameter is kept for API consistency but the actual
+        strategy is applied in prepare_confounds()
 
     Returns
     -------
     pd.DataFrame
-        Confounds dataframe
+        Confounds dataframe with all available confounds
     """
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
@@ -227,18 +253,24 @@ def load_confounds(subject, session, run, sourcedata_path=None):
     if not session.startswith('ses-'):
         session = f'ses-{session}'
     if isinstance(run, int):
-        run = f'run-{run:02d}'
-    elif not run.startswith('run-'):
         run = f'run-{run}'
+    elif run.startswith('run-'):
+        # Extract number (no zero padding for fMRIPrep files)
+        run_num = run.split('-')[1]
+        run = f'run-{int(run_num)}'
+    else:
+        run = f'run-{int(run)}'
 
-    # Build path to confounds
+    # Build path to confounds file
     confounds_path = (sourcedata_path / "mario.fmriprep" / subject / session / "func" /
                       f"{subject}_{session}_task-mario_{run}_desc-confounds_timeseries.tsv")
 
     if not confounds_path.exists():
         raise FileNotFoundError(f"Confounds file not found: {confounds_path}")
 
+    # Load all confounds - selection happens in prepare_confounds()
     confounds = pd.read_csv(confounds_path, sep='\t')
+
     return confounds
 
 
@@ -280,14 +312,95 @@ def get_session_runs(subject, session, sourcedata_path=None):
     # Find all BOLD files
     bold_files = sorted(func_dir.glob(f"{subject}_{session}_task-mario_run-*_*_bold.nii.gz"))
 
-    # Extract run numbers
+    # Extract run numbers (deduplicate)
     runs = []
+    run_nums_seen = set()
     for bold_file in bold_files:
         entities = get_bids_entities(bold_file.name)
-        if 'run' in entities and entities['run'] not in runs:
+        if 'run' in entities and entities['run'] not in run_nums_seen:
+            run_nums_seen.add(entities['run'])
             runs.append(f"run-{entities['run']}")
 
-    return sorted(runs)
+    return sorted(runs, key=lambda x: int(x.split('-')[1]))
+
+
+def load_lowlevel_confounds(subject, session, run, sourcedata_path=None):
+    """
+    Load low-level confounds (luminance, optical flow, audio) from mario.replays.
+
+    Parameters
+    ----------
+    subject : str
+        Subject ID
+    session : str
+        Session ID
+    run : str or int
+        Run number
+    sourcedata_path : str or Path, optional
+        Path to sourcedata directory
+
+    Returns
+    -------
+    pd.DataFrame
+        Low-level confounds dataframe with columns: luminance, optical_flow, audio_envelope
+    """
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    else:
+        sourcedata_path = Path(sourcedata_path)
+
+    # Ensure proper formatting
+    if not subject.startswith('sub-'):
+        subject = f'sub-{subject}'
+    if not session.startswith('ses-'):
+        session = f'ses-{session}'
+
+    # Get run number for file matching
+    if isinstance(run, int):
+        run_num = run
+    elif run.startswith('run-'):
+        run_num = int(run.split('-')[1])
+    else:
+        run_num = int(run)
+
+    # Look for confounds files in mario.replays
+    confs_dir = sourcedata_path / "mario.replays" / subject / session / "beh" / "confs"
+
+    if not confs_dir.exists():
+        raise FileNotFoundError(f"Low-level confounds directory not found: {confs_dir}")
+
+    # Find matching confounds file(s) for this run
+    # Files are named: sub-01_ses-010_task-mario_level-w1l1_rep-000_confs.npy
+    conf_files = sorted(confs_dir.glob(f"{subject}_{session}_task-mario_*.npy"))
+
+    if len(conf_files) == 0:
+        raise FileNotFoundError(f"No confounds files found in {confs_dir}")
+
+    # Load all confounds and concatenate (one run may span multiple levels/replays)
+    all_luminance = []
+    all_optical_flow = []
+    all_audio = []
+
+    for conf_file in conf_files:
+        confs = np.load(conf_file, allow_pickle=True).item()
+
+        all_luminance.append(confs['luminance'])
+        all_optical_flow.append(np.array(confs['optical_flow']))
+        all_audio.append(confs['audio_envelope'])
+
+    # Concatenate all segments
+    luminance = np.concatenate(all_luminance)
+    optical_flow = np.concatenate(all_optical_flow)
+    audio_envelope = np.concatenate(all_audio)
+
+    # Create dataframe
+    lowlevel_df = pd.DataFrame({
+        'luminance': luminance,
+        'optical_flow': optical_flow,
+        'audio_envelope': audio_envelope
+    })
+
+    return lowlevel_df
 
 
 def create_output_dir(subject, session, analysis_type, derivatives_path=None):

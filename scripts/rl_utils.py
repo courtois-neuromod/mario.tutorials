@@ -265,31 +265,35 @@ def convolve_with_hrf(activations, tr, hrf_model='spm'):
         Convolved activations (n_trs, n_features)
     """
     from scipy.signal import convolve
+    from nilearn.glm.first_level import glover_hrf, spm_hrf
 
     n_trs, n_features = activations.shape
 
-    # Create HRF using nilearn
-    frame_times = np.arange(n_trs) * tr
-    hrf, _ = compute_regressor(
-        exp_condition=np.ones((n_trs, 3)),  # Dummy condition (onset, duration, amplitude)
-        hrf_model=hrf_model,
-        frame_times=frame_times,
-        oversampling=1
-    )
+    # Create HRF kernel
+    hrf_length = 32  # seconds
+    dt = 0.1  # sampling interval for HRF (100ms)
+    hrf_times = np.arange(0, hrf_length, dt)
 
-    # Get HRF kernel (first column if multiple outputs)
-    if hrf.ndim > 1:
-        hrf_kernel = hrf[:, 0]
+    if hrf_model == 'spm':
+        hrf_kernel = spm_hrf(hrf_times, oversampling=1)
+    elif hrf_model == 'glover':
+        hrf_kernel = glover_hrf(hrf_times, oversampling=1)
     else:
-        hrf_kernel = hrf
+        # Default to SPM
+        hrf_kernel = spm_hrf(hrf_times, oversampling=1)
+
+    # Resample HRF to match TR
+    from scipy.interpolate import interp1d
+    hrf_interp = interp1d(hrf_times, hrf_kernel, kind='linear', bounds_error=False, fill_value=0)
+    hrf_resampled = hrf_interp(np.arange(0, hrf_length, tr))
 
     # Normalize HRF
-    hrf_kernel = hrf_kernel / hrf_kernel.sum()
+    hrf_resampled = hrf_resampled / hrf_resampled.sum()
 
     # Convolve each feature
     convolved = np.zeros_like(activations)
     for i in range(n_features):
-        convolved[:, i] = convolve(activations[:, i], hrf_kernel, mode='same')
+        convolved[:, i] = convolve(activations[:, i], hrf_resampled, mode='same')
 
     return convolved
 

@@ -12,7 +12,55 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 
 
-def prepare_confounds(confounds_df, strategy='full'):
+def downsample_lowlevel_confounds(lowlevel_df, n_scans, tr, game_fps=60):
+    """
+    Downsample low-level confounds from game framerate to fMRI TR.
+
+    Parameters
+    ----------
+    lowlevel_df : pd.DataFrame
+        Low-level confounds at game framerate (luminance, optical_flow, audio_envelope)
+    n_scans : int
+        Number of fMRI scans/TRs
+    tr : float
+        Repetition time in seconds
+    game_fps : int, default=60
+        Game frames per second
+
+    Returns
+    -------
+    pd.DataFrame
+        Downsampled confounds matching fMRI timepoints
+    """
+    from scipy.ndimage import uniform_filter1d
+
+    # Calculate number of game frames per TR
+    frames_per_tr = int(game_fps * tr)
+
+    downsampled = {}
+
+    for col in lowlevel_df.columns:
+        signal = lowlevel_df[col].values
+
+        # Downsample by averaging over each TR window
+        downsampled_signal = []
+        for i in range(n_scans):
+            start_idx = i * frames_per_tr
+            end_idx = min((i + 1) * frames_per_tr, len(signal))
+
+            if start_idx < len(signal):
+                # Average over this TR's frames
+                downsampled_signal.append(np.mean(signal[start_idx:end_idx]))
+            else:
+                # If we've run out of game frames, use the last value
+                downsampled_signal.append(signal[-1])
+
+        downsampled[col] = np.array(downsampled_signal)
+
+    return pd.DataFrame(downsampled)
+
+
+def prepare_confounds(confounds_df, strategy='full', lowlevel_confounds=None):
     """
     Prepare confounds for GLM analysis.
 
@@ -25,6 +73,9 @@ def prepare_confounds(confounds_df, strategy='full'):
         - 'minimal': 6 motion parameters
         - 'basic': Motion + WM + CSF
         - 'full': Motion (24 params) + WM + CSF + global signal
+    lowlevel_confounds : pd.DataFrame, optional
+        Low-level confounds (luminance, optical_flow, audio_envelope)
+        If provided, these will be added to the confounds
 
     Returns
     -------
@@ -83,7 +134,29 @@ def prepare_confounds(confounds_df, strategy='full'):
     # Fill NaN values (typically first row for derivatives)
     confounds.fillna(0, inplace=True)
 
-    return confounds
+    # Add low-level confounds if provided
+    if lowlevel_confounds is not None:
+        # Ensure same number of rows
+        if len(lowlevel_confounds) != len(confounds):
+            raise ValueError(f"Low-level confounds ({len(lowlevel_confounds)} rows) must match "
+                           f"fMRIPrep confounds ({len(confounds)} rows)")
+
+        # Add each low-level confound column
+        for col in lowlevel_confounds.columns:
+            confounds[col] = lowlevel_confounds[col].values
+
+    # Standardize confounds (z-score) for better numerical stability
+    # This is important for physiological confounds (WM, CSF, GS) which have
+    # large absolute values but small relative variance
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    confounds_scaled = pd.DataFrame(
+        scaler.fit_transform(confounds),
+        columns=confounds.columns,
+        index=confounds.index
+    )
+
+    return confounds_scaled
 
 
 def add_button_press_counts(confounds_df, events_df, tr, n_scans):
@@ -127,6 +200,25 @@ def add_button_press_counts(confounds_df, events_df, tr, n_scans):
     return confounds_df
 
 
+def sanitize_trial_type(trial_type):
+    """
+    Sanitize trial type name to be a valid Python identifier.
+
+    Replaces slashes and other invalid characters with underscores.
+
+    Parameters
+    ----------
+    trial_type : str
+        Original trial type name
+
+    Returns
+    -------
+    str
+        Sanitized trial type name
+    """
+    return trial_type.replace('/', '_').replace('-', '_').replace(' ', '_')
+
+
 def create_events_for_glm(events_df, conditions, tr=None):
     """
     Create events dataframe for specific conditions.
@@ -147,6 +239,9 @@ def create_events_for_glm(events_df, conditions, tr=None):
     """
     # Filter for specified conditions
     glm_events = events_df[events_df['trial_type'].isin(conditions)].copy()
+
+    # Sanitize trial_type names for GLM compatibility
+    glm_events['trial_type'] = glm_events['trial_type'].apply(sanitize_trial_type)
 
     # Ensure required columns
     required_cols = ['onset', 'duration', 'trial_type']
@@ -215,6 +310,42 @@ def fit_run_glm(bold_img, events, confounds, tr=1.49,
     fmri_glm.fit(bold_img, events=events, confounds=confounds)
 
     return fmri_glm
+
+
+def threshold_map_clusters(stat_map, stat_threshold=3.0, cluster_threshold=10, two_sided=True):
+    """
+    Apply cluster-level inference to threshold statistical maps.
+
+    Uses cluster_level_inference to identify significant clusters and returns
+    a thresholded map showing only robust clusters.
+
+    Parameters
+    ----------
+    stat_map : Nifti1Image
+        Statistical map (z-score or t-score)
+    stat_threshold : float, default=3.0
+        Cluster-forming threshold (z-score)
+    cluster_threshold : int, default=10
+        Minimum cluster size in voxels
+    two_sided : bool, default=True
+        Whether to threshold both positive and negative clusters
+
+    Returns
+    -------
+    Nifti1Image
+        Thresholded statistical map with only significant clusters
+    """
+    from nilearn.glm import cluster_level_inference
+
+    # Get cluster table and thresholded map
+    cluster_table, thresholded_map = cluster_level_inference(
+        stat_map,
+        threshold=stat_threshold,
+        cluster_threshold=cluster_threshold,
+        two_sided=two_sided
+    )
+
+    return thresholded_map
 
 
 def compute_contrasts(fmri_glm, contrast_defs):
@@ -307,6 +438,9 @@ def get_design_matrix_figure(fmri_glm, run_label=''):
     # Plot design matrix
     ax = plotting.plot_design_matrix(design_matrix, ax=ax)
 
+    # Remove grid (it falls between columns which looks weird)
+    ax.grid(False)
+
     if run_label:
         ax.set_title(f'Design Matrix - {run_label}', fontsize=14)
     else:
@@ -343,7 +477,10 @@ def create_simple_action_models(events_df):
 
 def create_movement_model(events_df):
     """
-    Create event dataframe for directional movement model (LEFT + RIGHT).
+    Create event dataframe for hand/thumb lateralization model.
+
+    LEFT_THUMB: Direction buttons (LEFT, RIGHT, UP, DOWN) - left thumb
+    RIGHT_THUMB: Action buttons (A=JUMP, B=RUN) - right thumb
 
     Parameters
     ----------
@@ -353,9 +490,28 @@ def create_movement_model(events_df):
     Returns
     -------
     pd.DataFrame
-        Events for movement model
+        Events for movement model with LEFT_THUMB and RIGHT_THUMB conditions
     """
-    return create_events_for_glm(events_df, ['LEFT', 'RIGHT'])
+    # Left thumb: directional pad
+    left_thumb_actions = ['LEFT', 'RIGHT', 'UP', 'DOWN']
+    # Right thumb: action buttons
+    right_thumb_actions = ['A', 'B']
+
+    # Filter events
+    left_events = events_df[events_df['trial_type'].isin(left_thumb_actions)].copy()
+    right_events = events_df[events_df['trial_type'].isin(right_thumb_actions)].copy()
+
+    # Sanitize and relabel
+    left_events['trial_type'] = 'LEFT_THUMB'
+    right_events['trial_type'] = 'RIGHT_THUMB'
+
+    # Combine
+    combined = pd.concat([left_events, right_events], ignore_index=True)
+    combined = combined.sort_values('onset').reset_index(drop=True)
+
+    # Ensure required columns
+    required_cols = ['onset', 'duration', 'trial_type']
+    return combined[required_cols]
 
 
 def create_full_actions_model(events_df):
@@ -409,7 +565,10 @@ def create_game_events_model(events_df):
 
 def define_movement_contrasts():
     """
-    Define contrasts for movement model (LEFT vs RIGHT).
+    Define contrasts for hand/thumb lateralization model.
+
+    LEFT_THUMB: Direction buttons (LEFT, RIGHT, UP, DOWN) - left hand
+    RIGHT_THUMB: Action buttons (A, B) - right hand
 
     Returns
     -------
@@ -417,10 +576,10 @@ def define_movement_contrasts():
         Contrast definitions
     """
     return {
-        'LEFT': 'LEFT',
-        'RIGHT': 'RIGHT',
-        'LEFT-RIGHT': 'LEFT - RIGHT',
-        'RIGHT-LEFT': 'RIGHT - LEFT'
+        'LEFT_THUMB': 'LEFT_THUMB',
+        'RIGHT_THUMB': 'RIGHT_THUMB',
+        'LEFT_THUMB-RIGHT_THUMB': 'LEFT_THUMB - RIGHT_THUMB',
+        'RIGHT_THUMB-LEFT_THUMB': 'RIGHT_THUMB - LEFT_THUMB'
     }
 
 
@@ -428,17 +587,27 @@ def define_game_event_contrasts():
     """
     Define contrasts for game events model.
 
+    Note: Uses sanitized column names (slashes replaced with underscores).
+
+    Contrasts:
+    - Kill: Enemy kills (stomp + kick + impact)
+    - Hit_life_lost: Player deaths
+    - Kill-Hit: Positive outcome (defeating enemies) vs negative outcome (dying)
+
     Returns
     -------
     dict
         Contrast definitions
     """
     contrasts = {
-        'Powerup': 'Powerup_collected',
-        'Hit': 'Hit/life_lost',
+        'Kill_stomp': 'Kill_stomp',
+        'Kill_kick': 'Kill_kick',
+        'Kill_impact': 'Kill_impact',
+        'Hit_life_lost': 'Hit_life_lost',
     }
 
-    # Add reward vs punishment if both exist
-    contrasts['Reward-Punishment'] = 'Powerup_collected - Hit/life_lost'
+    # Positive outcome (killing enemies) vs negative outcome (dying)
+    # Note: We combine all kill types into one regressor
+    contrasts['Kill-Hit'] = 'Kill_stomp + Kill_kick + Kill_impact - Hit_life_lost'
 
     return contrasts
