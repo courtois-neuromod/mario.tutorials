@@ -24,7 +24,8 @@ import json
 
 # Import from src
 import sys
-src_path = Path(__file__).parent / 'src'
+
+src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 from rl_utils import SimpleCNN
@@ -34,9 +35,17 @@ from utils import get_sourcedata_path
 class PPOAgent:
     """PPO agent for training."""
 
-    def __init__(self, n_actions=12, lr=1e-4, gamma=0.9, gae_lambda=0.95,
-                 clip_range=0.2, value_coef=0.5, entropy_coef=0.01,
-                 device='cpu'):
+    def __init__(
+        self,
+        n_actions=12,
+        lr=1e-4,
+        gamma=0.9,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        value_coef=0.5,
+        entropy_coef=0.01,
+        device="cpu",
+    ):
         self.device = device
         self.gamma = gamma
         self.gae_lambda = gae_lambda
@@ -97,7 +106,9 @@ class PPOAgent:
         # PPO loss
         ratio = torch.exp(log_probs - old_log_probs)
         surr1 = ratio * advantages
-        surr2 = torch.clamp(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages
+        surr2 = (
+            torch.clamp(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages
+        )
         policy_loss = -torch.min(surr1, surr2).mean()
 
         # Value loss
@@ -113,10 +124,10 @@ class PPOAgent:
         self.optimizer.step()
 
         return {
-            'policy_loss': policy_loss.item(),
-            'value_loss': value_loss.item(),
-            'entropy': entropy.item(),
-            'total_loss': loss.item()
+            "policy_loss": policy_loss.item(),
+            "value_loss": value_loss.item(),
+            "entropy": entropy.item(),
+            "total_loss": loss.item(),
         }
 
 
@@ -167,6 +178,7 @@ def action_to_buttons(action):
 def preprocess_frame(frame):
     """Preprocess frame: grayscale + resize to 84x84."""
     import cv2
+
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     resized = cv2.resize(gray, (84, 84), interpolation=cv2.INTER_AREA)
     return resized.astype(np.float32) / 255.0
@@ -203,8 +215,12 @@ def compute_shaped_reward(env_data, prev_data):
 
     # Movement reward: reward for moving right
     # x position is split across player_x_posHi (high byte) and player_x_posLo (low byte)
-    curr_x = 256 * int(env_data.get('player_x_posHi', 0)) + int(env_data.get('player_x_posLo', 0))
-    prev_x = 256 * int(prev_data.get('player_x_posHi', 0)) + int(prev_data.get('player_x_posLo', 0))
+    curr_x = 256 * int(env_data.get("player_x_posHi", 0)) + int(
+        env_data.get("player_x_posLo", 0)
+    )
+    prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
+        prev_data.get("player_x_posLo", 0)
+    )
     diff_x = curr_x - prev_x
 
     # Reward forward movement (but cap to avoid exploits from warps/teleports)
@@ -212,16 +228,16 @@ def compute_shaped_reward(env_data, prev_data):
         reward += diff_x
 
     # Time penalty (encourages faster completion)
-    if prev_data.get('time') is not None:
-        time_diff = min(env_data.get('time', 0) - prev_data.get('time', 0), 0)
+    if prev_data.get("time") is not None:
+        time_diff = min(env_data.get("time", 0) - prev_data.get("time", 0), 0)
         reward += time_diff
 
     # Score reward (coins, enemy kills, etc.)
-    score_diff = env_data.get('score', 0) - prev_data.get('score', 0)
+    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
     reward += min(score_diff / 4.0, 50)  # Scale and cap score reward
 
     # Death penalty
-    if env_data.get('lives', 2) < prev_data.get('lives', 2):
+    if env_data.get("lives", 2) < prev_data.get("lives", 2):
         reward -= 15
 
     # Clip total reward to reasonable range
@@ -236,17 +252,24 @@ def train_ppo(
     n_epochs=4,
     batch_size=32,
     eval_interval=10000,
-    save_path='models/mario_ppo_agent.pth',
-    device='cpu',
+    save_path="models/mario_ppo_agent.pth",
+    device="cpu",
     levels=None,
     render=False,
-    log_path='models/training_log.json'
+    log_path="models/training_log.json",
 ):
     """Train PPO agent on multiple levels."""
 
     # Default levels (following mario_generalization training set)
     if levels is None:
-        levels = ['Level1-1', 'Level1-2', 'Level4-1', 'Level4-2', 'Level5-1', 'Level5-2']
+        levels = [
+            "Level1-1",
+            "Level1-2",
+            "Level4-1",
+            "Level4-2",
+            "Level5-1",
+            "Level5-2",
+        ]
 
     print("=" * 80)
     print("PPO Training for Super Mario Bros")
@@ -261,8 +284,8 @@ def train_ppo(
 
     # Import ROM from custom path
     sourcedata_path = get_sourcedata_path()
-    rom_path = sourcedata_path / 'mario' / 'stimuli'
-    
+    rom_path = sourcedata_path / "mario" / "stimuli"
+
     if rom_path.exists():
         print(f"Importing ROM from: {rom_path}")
         retro.data.Integrations.add_custom_path(str(rom_path))
@@ -275,14 +298,14 @@ def train_ppo(
     agent = PPOAgent(n_actions=12, device=device)
 
     # Environment will be recreated for each episode with random level
-    render_mode = 'human' if render else None
+    render_mode = "human" if render else None
     current_level = np.random.choice(levels)
 
     env = retro.make(
-        game='SuperMarioBros-Nes',
+        game="SuperMarioBros-Nes",
         state=current_level,
         inttype=retro.data.Integrations.ALL,
-        render_mode=render_mode
+        render_mode=render_mode,
     )
 
     # Training loop
@@ -301,16 +324,16 @@ def train_ppo(
 
     # Training log
     training_log = {
-        'config': {
-            'n_steps': n_steps,
-            'rollout_length': rollout_length,
-            'n_epochs': n_epochs,
-            'batch_size': batch_size,
-            'eval_interval': eval_interval,
-            'levels': levels,
-            'device': device
+        "config": {
+            "n_steps": n_steps,
+            "rollout_length": rollout_length,
+            "n_epochs": n_epochs,
+            "batch_size": batch_size,
+            "eval_interval": eval_interval,
+            "levels": levels,
+            "device": device,
         },
-        'progress': []
+        "progress": [],
     }
 
     # Progress bar
@@ -360,10 +383,10 @@ def train_ppo(
                 env.close()
                 current_level = np.random.choice(levels)
                 env = retro.make(
-                    game='SuperMarioBros-Nes',
+                    game="SuperMarioBros-Nes",
                     state=current_level,
                     inttype=retro.data.Integrations.ALL,
-                    render_mode=render_mode
+                    render_mode=render_mode,
                 )
 
                 # Reset
@@ -375,26 +398,30 @@ def train_ppo(
             # Evaluation
             if step % eval_interval == 0:
                 mean_reward = np.mean(episode_rewards[-100:]) if episode_rewards else 0
-                median_reward = np.median(episode_rewards[-100:]) if episode_rewards else 0
+                median_reward = (
+                    np.median(episode_rewards[-100:]) if episode_rewards else 0
+                )
                 max_reward = np.max(episode_rewards[-100:]) if episode_rewards else 0
 
                 # Log progress
                 log_entry = {
-                    'step': step,
-                    'episode': episode,
-                    'mean_reward': float(mean_reward),
-                    'median_reward': float(median_reward),
-                    'max_reward': float(max_reward),
-                    'n_episodes': len(episode_rewards),
-                    'current_level': current_level
+                    "step": step,
+                    "episode": episode,
+                    "mean_reward": float(mean_reward),
+                    "median_reward": float(median_reward),
+                    "max_reward": float(max_reward),
+                    "n_episodes": len(episode_rewards),
+                    "current_level": current_level,
                 }
-                training_log['progress'].append(log_entry)
+                training_log["progress"].append(log_entry)
 
-                pbar.set_postfix({
-                    'episode': episode,
-                    'mean_reward': f'{mean_reward:.2f}',
-                    'level': current_level
-                })
+                pbar.set_postfix(
+                    {
+                        "episode": episode,
+                        "mean_reward": f"{mean_reward:.2f}",
+                        "level": current_level,
+                    }
+                )
 
         # Compute returns and advantages
         advantages = agent.compute_gae(rewards, values, dones)
@@ -418,8 +445,11 @@ def train_ppo(
                 batch_advantages = [advantages[i] for i in batch_indices]
 
                 losses = agent.update(
-                    batch_states, batch_actions, batch_log_probs,
-                    batch_returns, batch_advantages
+                    batch_states,
+                    batch_actions,
+                    batch_log_probs,
+                    batch_returns,
+                    batch_advantages,
                 )
 
         # Clear buffers
@@ -442,13 +472,16 @@ def train_ppo(
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    torch.save({
-        'model_state_dict': agent.model.state_dict(),
-        'optimizer_state_dict': agent.optimizer.state_dict(),
-        'step': step,
-        'episode': episode,
-        'mean_reward': np.mean(episode_rewards[-100:])
-    }, save_path)
+    torch.save(
+        {
+            "model_state_dict": agent.model.state_dict(),
+            "optimizer_state_dict": agent.optimizer.state_dict(),
+            "step": step,
+            "episode": episode,
+            "mean_reward": np.mean(episode_rewards[-100:]),
+        },
+        save_path,
+    )
 
     print(f"✓ Model saved to: {save_path}\n")
 
@@ -456,13 +489,13 @@ def train_ppo(
     log_path = Path(log_path)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    training_log['final_stats'] = {
-        'total_episodes': episode,
-        'final_mean_reward': float(np.mean(episode_rewards[-100:])),
-        'level_episodes': level_episodes
+    training_log["final_stats"] = {
+        "total_episodes": episode,
+        "final_mean_reward": float(np.mean(episode_rewards[-100:])),
+        "level_episodes": level_episodes,
     }
 
-    with open(log_path, 'w') as f:
+    with open(log_path, "w") as f:
         json.dump(training_log, f, indent=2)
 
     print(f"✓ Training log saved to: {log_path}\n")
@@ -473,39 +506,61 @@ def train_ppo(
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train PPO agent for Mario')
-    parser.add_argument('--steps', type=int, default=5_000_000,
-                        help='Total training steps (default: 5M)')
-    parser.add_argument('--rollout', type=int, default=128,
-                        help='Rollout length (default: 128)')
-    parser.add_argument('--eval-interval', type=int, default=10000,
-                        help='Evaluation interval (default: 10k)')
-    parser.add_argument('--gpu', action='store_true',
-                        help='Use GPU if available')
-    parser.add_argument('--render', action='store_true',
-                        help='Render gameplay during training')
-    parser.add_argument('--levels', type=str, nargs='+', default=None,
-                        help='Mario levels to train on (default: 1-1, 1-2, 4-1, 4-2, 5-1, 5-2)')
-    parser.add_argument('--save-path', type=str, default='models/mario_ppo_agent.pth',
-                        help='Where to save model')
-    parser.add_argument('--log-path', type=str, default='models/training_log.json',
-                        help='Where to save training log')
+    parser = argparse.ArgumentParser(description="Train PPO agent for Mario")
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=5_000_000,
+        help="Total training steps (default: 5M)",
+    )
+    parser.add_argument(
+        "--rollout", type=int, default=128, help="Rollout length (default: 128)"
+    )
+    parser.add_argument(
+        "--eval-interval",
+        type=int,
+        default=10000,
+        help="Evaluation interval (default: 10k)",
+    )
+    parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
+    parser.add_argument(
+        "--render", action="store_true", help="Render gameplay during training"
+    )
+    parser.add_argument(
+        "--levels",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Mario levels to train on (default: 1-1, 1-2, 4-1, 4-2, 5-1, 5-2)",
+    )
+    parser.add_argument(
+        "--save-path",
+        type=str,
+        default="models/mario_ppo_agent.pth",
+        help="Where to save model",
+    )
+    parser.add_argument(
+        "--log-path",
+        type=str,
+        default="models/training_log.json",
+        help="Where to save training log",
+    )
 
     args = parser.parse_args()
 
     # Device
     if args.gpu and torch.cuda.is_available():
-        device = 'cuda'
+        device = "cuda"
     else:
-        device = 'cpu'
+        device = "cpu"
 
     # Convert level format if provided (e.g., "1-1" -> "Level1-1")
     if args.levels is not None:
         levels = []
         for level in args.levels:
-            if not level.startswith('Level'):
+            if not level.startswith("Level"):
                 # Convert "1-1" to "Level1-1"
-                levels.append(f'Level{level}')
+                levels.append(f"Level{level}")
             else:
                 levels.append(level)
     else:
@@ -520,9 +575,9 @@ def main():
         log_path=args.log_path,
         device=device,
         levels=levels,
-        render=args.render
+        render=args.render,
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
