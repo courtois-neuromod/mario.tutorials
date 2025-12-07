@@ -49,3 +49,5 @@ statsmodels>=0.13.0
 # Optional: Reporting
 reportlab>=3.6.0
 atlasreader>=0.2.0
+
+opencv-python>=4.5.0  # For image processing tasks
