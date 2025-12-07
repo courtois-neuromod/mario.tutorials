@@ -63,12 +63,16 @@ Navigate through notebooks 01-06 sequentially.
 | `05_brain_encoding.ipynb` | Ridge regression brain encoding models | 15 min |
 | `06_summary.ipynb` | Summary and extensions | 5 min |
 
-### Utility Scripts
+### Source Code Modules
 
-- `scripts/utils.py` - General utilities (data loading, BIDS helpers)
-- `scripts/glm_utils.py` - GLM analysis functions
-- `scripts/rl_utils.py` - RL agent and feature extraction
-- `scripts/encoding_utils.py` - Brain encoding models
+Analysis modules are organized in the `src/` directory:
+
+- `src/utils.py` - General utilities (data loading, BIDS helpers, path management)
+- `src/glm_utils.py` - GLM analysis functions (confounds, design matrices, fitting, contrasts)
+- `src/rl_utils.py` - RL agent utilities (CNN architecture, activations, HRF, PCA)
+- `src/encoding_utils.py` - Brain encoding models (ridge regression, evaluation, visualization)
+
+See `src/README.md` for detailed documentation of each module.
 
 ## Analysis Pipeline
 
