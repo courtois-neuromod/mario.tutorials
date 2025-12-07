@@ -21,7 +21,10 @@ cd mario.tutorials
 # Run setup script
 bash setup_environment.sh
 
-# Activate virtual environment
+# Install mario datasets
+bash install_mario_datasets.sh
+
+# Activate environment in order to run scripts or notebooks
 source venv/bin/activate
 ```
 
