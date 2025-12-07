@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 import retro
 from tqdm import tqdm
+import json
 
 # Import from src
 import sys
@@ -238,7 +239,8 @@ def train_ppo(
     save_path='models/mario_ppo_agent.pth',
     device='cpu',
     levels=None,
-    render=False
+    render=False,
+    log_path='models/training_log.json'
 ):
     """Train PPO agent on multiple levels."""
 
@@ -296,6 +298,20 @@ def train_ppo(
 
     # Rollout buffers
     states, actions, log_probs, rewards, values, dones = [], [], [], [], [], []
+
+    # Training log
+    training_log = {
+        'config': {
+            'n_steps': n_steps,
+            'rollout_length': rollout_length,
+            'n_epochs': n_epochs,
+            'batch_size': batch_size,
+            'eval_interval': eval_interval,
+            'levels': levels,
+            'device': device
+        },
+        'progress': []
+    }
 
     # Progress bar
     pbar = tqdm(total=n_steps, desc="Training", unit="steps")
@@ -359,6 +375,21 @@ def train_ppo(
             # Evaluation
             if step % eval_interval == 0:
                 mean_reward = np.mean(episode_rewards[-100:]) if episode_rewards else 0
+                median_reward = np.median(episode_rewards[-100:]) if episode_rewards else 0
+                max_reward = np.max(episode_rewards[-100:]) if episode_rewards else 0
+
+                # Log progress
+                log_entry = {
+                    'step': step,
+                    'episode': episode,
+                    'mean_reward': float(mean_reward),
+                    'median_reward': float(median_reward),
+                    'max_reward': float(max_reward),
+                    'n_episodes': len(episode_rewards),
+                    'current_level': current_level
+                }
+                training_log['progress'].append(log_entry)
+
                 pbar.set_postfix({
                     'episode': episode,
                     'mean_reward': f'{mean_reward:.2f}',
@@ -421,6 +452,21 @@ def train_ppo(
 
     print(f"✓ Model saved to: {save_path}\n")
 
+    # Save training log
+    log_path = Path(log_path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    training_log['final_stats'] = {
+        'total_episodes': episode,
+        'final_mean_reward': float(np.mean(episode_rewards[-100:])),
+        'level_episodes': level_episodes
+    }
+
+    with open(log_path, 'w') as f:
+        json.dump(training_log, f, indent=2)
+
+    print(f"✓ Training log saved to: {log_path}\n")
+
     env.close()
 
     return agent
@@ -442,6 +488,8 @@ def main():
                         help='Mario levels to train on (default: 1-1, 1-2, 4-1, 4-2, 5-1, 5-2)')
     parser.add_argument('--save-path', type=str, default='models/mario_ppo_agent.pth',
                         help='Where to save model')
+    parser.add_argument('--log-path', type=str, default='models/training_log.json',
+                        help='Where to save training log')
 
     args = parser.parse_args()
 
@@ -469,6 +517,7 @@ def main():
         rollout_length=args.rollout,
         eval_interval=args.eval_interval,
         save_path=args.save_path,
+        log_path=args.log_path,
         device=device,
         levels=levels,
         render=args.render

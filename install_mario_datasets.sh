@@ -5,7 +5,7 @@
 # This script downloads the CNeuromod Mario dataset for the tutorial
 # Focus: Single subject (sub-01), single session (ses-010)
 # Total download: ~7-8 GB
-# Duration: ~20-30 minutes (depending on connection)
+# Duration: ~10-15 minutes (depending on connection)
 # ==============================================================================
 
 set -e  # Exit on error
