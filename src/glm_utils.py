@@ -316,7 +316,7 @@ def threshold_map_clusters(stat_map, stat_threshold=3.0, cluster_threshold=10, t
     """
     Apply cluster-level inference to threshold statistical maps.
 
-    Uses cluster_level_inference to identify significant clusters and returns
+    Uses nilearn's thresholding to identify significant clusters and returns
     a thresholded map showing only robust clusters.
 
     Parameters
@@ -326,7 +326,7 @@ def threshold_map_clusters(stat_map, stat_threshold=3.0, cluster_threshold=10, t
     stat_threshold : float, default=3.0
         Cluster-forming threshold (z-score)
     cluster_threshold : int, default=10
-        Minimum cluster size in voxels
+        Minimum cluster size in voxels (for manual thresholding)
     two_sided : bool, default=True
         Whether to threshold both positive and negative clusters
 
@@ -335,10 +335,10 @@ def threshold_map_clusters(stat_map, stat_threshold=3.0, cluster_threshold=10, t
     Nifti1Image
         Thresholded statistical map with only significant clusters
     """
-    from nilearn.glm import cluster_level_inference
+    from nilearn.image import threshold_img
 
-    # Get cluster table and thresholded map
-    cluster_table, thresholded_map = cluster_level_inference(
+    # Use threshold_img with cluster size parameter
+    thresholded_map = threshold_img(
         stat_map,
         threshold=stat_threshold,
         cluster_threshold=cluster_threshold,
@@ -413,6 +413,184 @@ def aggregate_runs_fixed_effects(contrast_maps_list, variance_maps_list):
     )
 
     return fixed_fx
+
+
+def plot_event_frequencies(session_events, button_events_count, game_events_count,
+                           subject, session, figsize=(16, 6)):
+    """
+    Plot event frequency breakdown.
+
+    Parameters
+    ----------
+    session_events : pd.DataFrame
+        All events across session
+    button_events_count : int
+        Number of button press events
+    game_events_count : int
+        Number of game events
+    subject : str
+        Subject ID
+    session : str
+        Session ID
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+
+    # Event frequencies
+    event_counts = session_events['trial_type'].value_counts().head(15)
+    event_counts.plot(kind='barh', ax=ax1, color='steelblue')
+    ax1.set_xlabel('Count', fontsize=13, fontweight='bold')
+    ax1.set_ylabel('Event Type', fontsize=13, fontweight='bold')
+    ax1.set_title('Top 15 Event Types', fontsize=15, fontweight='bold')
+    ax1.grid(axis='x', alpha=0.3)
+
+    # Category breakdown
+    categories = ['Buttons', 'Game Events', 'Other']
+    counts = [button_events_count, game_events_count,
+              len(session_events) - button_events_count - game_events_count]
+    colors = ['#3498db', '#e74c3c', '#95a5a6']
+
+    ax2.bar(categories, counts, color=colors, alpha=0.8, width=0.6)
+    ax2.set_ylabel('Count', fontsize=13, fontweight='bold')
+    ax2.set_title('Event Categories', fontsize=15, fontweight='bold')
+    ax2.grid(axis='y', alpha=0.3)
+
+    for i, (cat, count) in enumerate(zip(categories, counts)):
+        pct = count/len(session_events)*100
+        ax2.text(i, count, f'{count}\n({pct:.1f}%)',
+                ha='center', va='bottom', fontsize=12, fontweight='bold')
+
+    plt.suptitle(f'Session Event Summary - {subject} {session}',
+                 fontsize=16, fontweight='bold', y=1.02)
+    plt.tight_layout()
+
+    return fig
+
+
+def plot_event_timeline(events_df, run_label, button_events_list, figsize=(16, 8)):
+    """
+    Plot event timeline for a single run.
+
+    Parameters
+    ----------
+    events_df : pd.DataFrame
+        Events for one run
+    run_label : str
+        Run identifier
+    button_events_list : list of str
+        List of button event types
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    fig, axes = plt.subplots(2, 1, figsize=figsize, sharex=True)
+
+    # Button timeline
+    ax1 = axes[0]
+    for idx, button in enumerate(button_events_list):
+        button_data = events_df[events_df['trial_type'] == button]
+        if len(button_data) > 0:
+            ax1.scatter(button_data['onset'], [idx] * len(button_data),
+                       label=button, alpha=0.6, s=30)
+
+    ax1.set_ylabel('Button', fontsize=13, fontweight='bold')
+    ax1.set_yticks(range(len(button_events_list)))
+    ax1.set_yticklabels(button_events_list)
+    ax1.set_title(f'Button Press Timeline - {run_label}', fontsize=15, fontweight='bold')
+    ax1.legend(loc='upper right', ncol=6)
+    ax1.grid(alpha=0.3)
+
+    # Event density
+    ax2 = axes[1]
+    bin_size = 10  # seconds
+    max_time = events_df['onset'].max()
+    bins = np.arange(0, max_time + bin_size, bin_size)
+
+    button_onsets = events_df[events_df['trial_type'].isin(button_events_list)]['onset']
+    hist, _ = np.histogram(button_onsets, bins=bins)
+
+    ax2.bar(bins[:-1], hist, width=bin_size*0.9, alpha=0.7, color='steelblue')
+    ax2.set_xlabel('Time (seconds)', fontsize=13, fontweight='bold')
+    ax2.set_ylabel('Events per 10s', fontsize=13, fontweight='bold')
+    ax2.set_title('Event Density', fontsize=15, fontweight='bold')
+    ax2.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+
+    return fig
+
+
+def plot_confounds_structure(confounds_df, run_label, button_count=None, figsize=(14, 14)):
+    """
+    Visualize confound structure for a run.
+
+    Parameters
+    ----------
+    confounds_df : pd.DataFrame
+        Confounds dataframe
+    run_label : str
+        Run identifier
+    button_count : np.ndarray, optional
+        Button press counts to plot separately
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    fig, axes = plt.subplots(4, 1, figsize=figsize)
+
+    # Motion parameters
+    motion_cols = [c for c in confounds_df.columns if 'trans' in c or 'rot' in c]
+    if len(motion_cols) > 0:
+        confounds_df[motion_cols].plot(ax=axes[0], alpha=0.7)
+        axes[0].set_title('Motion Parameters (mm and radians)', fontweight='bold')
+        axes[0].set_xlabel('TR')
+        axes[0].legend(loc='upper right', ncol=3, fontsize=9)
+        axes[0].grid(alpha=0.3)
+
+    # Physiology confounds
+    physio_cols = [c for c in confounds_df.columns
+                   if 'csf' in c or 'white_matter' in c or 'global_signal' in c]
+    if len(physio_cols) > 0:
+        confounds_df[physio_cols].plot(ax=axes[1], alpha=0.7)
+        axes[1].set_title('Physiological Confounds (WM, CSF, Global)', fontweight='bold')
+        axes[1].set_xlabel('TR')
+        axes[1].legend(loc='upper right', ncol=2, fontsize=9)
+        axes[1].grid(alpha=0.3)
+
+    # Low-level features (luminance, optical_flow, audio_envelope)
+    lowlevel_cols = [c for c in confounds_df.columns
+                     if c in ['luminance', 'optical_flow', 'audio_envelope']]
+    if len(lowlevel_cols) > 0:
+        confounds_df[lowlevel_cols].plot(ax=axes[2], alpha=0.7)
+        axes[2].set_title('Low-level Features (Luminance, Optical Flow, Audio)', fontweight='bold')
+        axes[2].set_xlabel('TR')
+        axes[2].legend(loc='upper right', ncol=3, fontsize=9)
+        axes[2].grid(alpha=0.3)
+
+    # Button presses
+    if button_count is not None:
+        axes[3].bar(range(len(button_count)), button_count, alpha=0.7, color='steelblue')
+        axes[3].set_title('Button Press Counts per TR', fontweight='bold')
+        axes[3].set_ylabel('Count')
+
+    axes[3].set_xlabel('TR')
+    axes[3].grid(alpha=0.3)
+
+    plt.suptitle(f'Confound Structure - {run_label}', fontsize=15, fontweight='bold', y=0.995)
+    plt.tight_layout()
+
+    return fig
 
 
 def get_design_matrix_figure(fmri_glm, run_label=''):
@@ -611,3 +789,230 @@ def define_game_event_contrasts():
     contrasts['Kill-Hit'] = 'Kill_stomp + Kill_kick + Kill_impact - Hit_life_lost'
 
     return contrasts
+
+
+def plot_contrast_surfaces(z_map, contrast_name, stat_threshold=3.0,
+                           cluster_threshold=10, figsize=(16, 10)):
+    """
+    Plot contrast z-map on brain surfaces (4 views: left/right × lateral/medial).
+
+    Parameters
+    ----------
+    z_map : nibabel.Nifti1Image
+        Z-score statistical map from GLM contrast
+    contrast_name : str
+        Name of the contrast (for title)
+    stat_threshold : float, default=3.0
+        Z-score threshold for display
+    cluster_threshold : int, default=10
+        Minimum cluster size in voxels
+    figsize : tuple, default=(16, 10)
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with 4 surface plots
+    """
+    from nilearn.image import threshold_img
+    from nilearn import datasets
+    from nilearn.surface import vol_to_surf
+    from nilearn.plotting import plot_surf_stat_map
+
+    # Threshold the map
+    z_thresh = threshold_img(
+        z_map,
+        threshold=stat_threshold,
+        cluster_threshold=cluster_threshold,
+        two_sided=True
+    )
+
+    print(f"✓ Contrast: {contrast_name}")
+    print(f"  Threshold: |Z| > {stat_threshold}, cluster > {cluster_threshold} voxels")
+    print(f"  (uncorrected for multiple comparisons)")
+
+    # Fetch fsaverage surface
+    print("\nFetching fsaverage surface...")
+    fsaverage = datasets.fetch_surf_fsaverage('fsaverage5')
+
+    # Project volume to surface for each hemisphere
+    print("Projecting volume to surface...")
+    texture_left = vol_to_surf(z_thresh, fsaverage.infl_left)
+    texture_right = vol_to_surf(z_thresh, fsaverage.infl_right)
+
+    # Create figure with 4 subplots + space for colorbar
+    fig = plt.figure(figsize=figsize)
+
+    # Create GridSpec for better layout control
+    from matplotlib.gridspec import GridSpec
+    gs = GridSpec(2, 3, figure=fig, width_ratios=[1, 1, 0.05],
+                  hspace=0.3, wspace=0.1)
+
+    # Get min/max from both textures for symmetric colormap
+    vmin = min(np.nanmin(texture_left), np.nanmin(texture_right))
+    vmax = max(np.nanmax(texture_left), np.nanmax(texture_right))
+    # Make symmetric around zero for diverging colormap
+    abs_max = max(abs(vmin), abs(vmax))
+
+    # Left hemisphere - lateral
+    ax1 = fig.add_subplot(gs[0, 0], projection='3d')
+    plot_surf_stat_map(
+        fsaverage.infl_left, texture_left, hemi='left', view='lateral',
+        threshold=0.1, cmap='cold_hot', colorbar=False,
+        bg_map=fsaverage.sulc_left, title='Left Hemisphere - Lateral',
+        axes=ax1, vmin=-abs_max, vmax=abs_max
+    )
+
+    # Left hemisphere - medial
+    ax2 = fig.add_subplot(gs[1, 0], projection='3d')
+    plot_surf_stat_map(
+        fsaverage.infl_left, texture_left, hemi='left', view='medial',
+        threshold=0.1, cmap='cold_hot', colorbar=False,
+        bg_map=fsaverage.sulc_left, title='Left Hemisphere - Medial',
+        axes=ax2, vmin=-abs_max, vmax=abs_max
+    )
+
+    # Right hemisphere - lateral
+    ax3 = fig.add_subplot(gs[0, 1], projection='3d')
+    plot_surf_stat_map(
+        fsaverage.infl_right, texture_right, hemi='right', view='lateral',
+        threshold=0.1, cmap='cold_hot', colorbar=False,
+        bg_map=fsaverage.sulc_right, title='Right Hemisphere - Lateral',
+        axes=ax3, vmin=-abs_max, vmax=abs_max
+    )
+
+    # Right hemisphere - medial
+    ax4 = fig.add_subplot(gs[1, 1], projection='3d')
+    plot_surf_stat_map(
+        fsaverage.infl_right, texture_right, hemi='right', view='medial',
+        threshold=0.1, cmap='cold_hot', colorbar=False,
+        bg_map=fsaverage.sulc_right, title='Right Hemisphere - Medial',
+        axes=ax4, vmin=-abs_max, vmax=abs_max
+    )
+
+    # Add single colorbar on the right
+    from matplotlib import cm
+    from matplotlib.colors import Normalize
+
+    norm = Normalize(vmin=-abs_max, vmax=abs_max)
+
+    # Create colorbar axis
+    cbar_ax = fig.add_subplot(gs[:, 2])
+    cmap = cm.get_cmap('cold_hot')
+    cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap),
+                      cax=cbar_ax, label='Z-score')
+
+    plt.suptitle(f'{contrast_name}', fontsize=16, fontweight='bold', y=0.98)
+
+    return fig
+
+
+def plot_contrast_glass_brain(z_map, contrast_name, stat_threshold=3.0,
+                              cluster_threshold=10, figsize=(14, 4)):
+    """
+    Plot contrast z-map as glass brain (simple alternative to surface plots).
+
+    Parameters
+    ----------
+    z_map : nibabel.Nifti1Image
+        Z-score statistical map from GLM contrast
+    contrast_name : str
+        Name of the contrast (for title)
+    stat_threshold : float, default=3.0
+        Z-score threshold for display
+    cluster_threshold : int, default=10
+        Minimum cluster size in voxels
+    figsize : tuple, default=(14, 4)
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with glass brain plot
+    """
+    from nilearn.image import threshold_img
+    from nilearn.plotting import plot_glass_brain
+
+    # Threshold the map
+    z_thresh = threshold_img(
+        z_map,
+        threshold=stat_threshold,
+        cluster_threshold=cluster_threshold,
+        two_sided=True
+    )
+
+    print(f"✓ Contrast: {contrast_name}")
+    print(f"  Threshold: |Z| > {stat_threshold}, cluster > {cluster_threshold} voxels")
+
+    # Create glass brain plot
+    fig = plt.figure(figsize=figsize)
+
+    plot_glass_brain(
+        z_thresh,
+        colorbar=True,
+        cmap='cold_hot',
+        plot_abs=False,
+        display_mode='lyrz',
+        title=contrast_name
+    )
+
+    plt.tight_layout()
+
+    return fig
+
+
+def plot_contrast_stat_map(z_map, contrast_name, stat_threshold=3.0,
+                           cluster_threshold=10, n_cuts=8, figsize=(14, 6)):
+    """
+    Plot contrast z-map as axial slices.
+
+    Parameters
+    ----------
+    z_map : nibabel.Nifti1Image
+        Z-score statistical map from GLM contrast
+    contrast_name : str
+        Name of the contrast (for title)
+    stat_threshold : float, default=3.0
+        Z-score threshold for display
+    cluster_threshold : int, default=10
+        Minimum cluster size in voxels
+    n_cuts : int, default=8
+        Number of axial slices
+    figsize : tuple, default=(14, 6)
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with axial slice plot
+    """
+    from nilearn.image import threshold_img
+    from nilearn.plotting import plot_stat_map
+
+    # Threshold the map
+    z_thresh = threshold_img(
+        z_map,
+        threshold=stat_threshold,
+        cluster_threshold=cluster_threshold,
+        two_sided=True
+    )
+
+    print(f"✓ Contrast: {contrast_name}")
+    print(f"  Threshold: |Z| > {stat_threshold}, cluster > {cluster_threshold} voxels")
+
+    # Create stat map plot
+    fig = plt.figure(figsize=figsize)
+
+    plot_stat_map(
+        z_thresh,
+        threshold=0.1,
+        cmap='cold_hot',
+        colorbar=True,
+        cut_coords=n_cuts,
+        display_mode='z',
+        title=contrast_name
+    )
+
+    plt.tight_layout()
+
+    return fig
