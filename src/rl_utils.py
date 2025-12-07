@@ -406,7 +406,7 @@ def load_pretrained_model(model_path, device='cpu'):
     model = SimpleCNN()
 
     # Load state dict
-    checkpoint = torch.load(model_path, map_location=device)
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
 
     # Handle different checkpoint formats
     if 'state_dict' in checkpoint:
@@ -420,3 +420,219 @@ def load_pretrained_model(model_path, device='cpu'):
     model.eval()
 
     return model
+
+
+def action_to_buttons(action):
+    """
+    Convert action index to NES button array.
+
+    COMPLEX_MOVEMENT action space (12 actions):
+    0: NOOP
+    1: right
+    2: right + A (jump)
+    3: right + B (run)
+    4: right + A + B (run + jump)
+    5: A (jump)
+    6: left
+    7: left + A
+    8: left + B
+    9: left + A + B
+    10: down
+    11: up
+
+    Parameters
+    ----------
+    action : int
+        Action index (0-11)
+
+    Returns
+    -------
+    list
+        Array of 9 buttons: [B, null, select, start, up, down, left, right, A]
+    """
+    buttons = [0] * 9  # 9 buttons for NES
+
+    if action == 1:  # right
+        buttons[7] = 1
+    elif action == 2:  # right + A
+        buttons[7] = 1
+        buttons[8] = 1
+    elif action == 3:  # right + B
+        buttons[7] = 1
+        buttons[0] = 1
+    elif action == 4:  # right + A + B
+        buttons[7] = 1
+        buttons[8] = 1
+        buttons[0] = 1
+    elif action == 5:  # A
+        buttons[8] = 1
+    elif action == 6:  # left
+        buttons[6] = 1
+    elif action == 7:  # left + A
+        buttons[6] = 1
+        buttons[8] = 1
+    elif action == 8:  # left + B
+        buttons[6] = 1
+        buttons[0] = 1
+    elif action == 9:  # left + A + B
+        buttons[6] = 1
+        buttons[8] = 1
+        buttons[0] = 1
+    elif action == 10:  # down
+        buttons[5] = 1
+    elif action == 11:  # up
+        buttons[4] = 1
+    # action == 0 is NOOP (all zeros)
+
+    return buttons
+
+
+def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cpu', fps=60):
+    """
+    Play one episode with trained agent.
+
+    Parameters
+    ----------
+    model : SimpleCNN
+        Trained model
+    level : str
+        Level to play (e.g., 'Level1-1')
+    sourcedata_path : Path
+        Path to sourcedata (for ROM)
+    max_steps : int, default=5000
+        Maximum steps per episode
+    device : str, default='cpu'
+        Device for model
+    fps : int, default=60
+        Target frames per second for display
+
+    Returns
+    -------
+    dict
+        Episode statistics (steps, reward, completed)
+    """
+    import retro
+    import cv2
+    import time
+
+    # Import ROM from custom path
+    rom_path = sourcedata_path / 'mario' / 'stimuli'
+    if rom_path.exists():
+        retro.data.Integrations.add_custom_path(str(rom_path))
+
+    # Create environment WITHOUT render_mode (we'll handle display ourselves)
+    env = retro.make(
+        game='SuperMarioBros-Nes',
+        state=level,
+        inttype=retro.data.Integrations.ALL,
+        render_mode=None
+    )
+
+    # Window name for OpenCV
+    window_name = 'Mario Agent'
+    window_open = True
+    user_quit = False
+    
+    # Create window
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_name, 512, 480)
+
+    def check_window_closed():
+        """Check if OpenCV window was closed."""
+        try:
+            # getWindowProperty returns -1 if window is closed
+            return cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1
+        except cv2.error:
+            return True
+
+    try:
+        # Play one episode
+        obs, info = env.reset()
+        frame_stack = [preprocess_frame(obs)] * 4
+
+        episode_reward = 0
+        done = False
+        step = 0
+        terminated = False
+        frame_time = 1.0 / fps
+
+        model = model.to(device)
+        model.eval()
+
+        while not done and step < max_steps and not user_quit:
+            start_time = time.time()
+            
+            # Check if window was closed
+            if check_window_closed():
+                print("\nWindow closed by user.")
+                user_quit = True
+                break
+
+            # Stack frames
+            state = torch.from_numpy(np.stack(frame_stack)).unsqueeze(0).float().to(device)
+
+            # Get action from model
+            with torch.no_grad():
+                action_logits, value = model(state)
+                action_probs = torch.softmax(action_logits, dim=-1)
+                action = torch.argmax(action_probs, dim=-1).item()
+
+            # Convert to button array
+            buttons = action_to_buttons(action)
+
+            # Step environment
+            try:
+                next_obs, reward, terminated, truncated, info = env.step(buttons)
+            except Exception as e:
+                print(f"\nEnvironment error: {e}")
+                user_quit = True
+                break
+
+            done = terminated or truncated
+
+            # Display frame using OpenCV
+            # Convert RGB to BGR for OpenCV
+            display_frame = cv2.cvtColor(next_obs, cv2.COLOR_RGB2BGR)
+            cv2.imshow(window_name, display_frame)
+
+            # Update state
+            frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
+            episode_reward += reward
+            step += 1
+
+            # Check for key press (q or ESC to quit)
+            # waitKey also pumps the event loop which is necessary for window updates
+            elapsed = time.time() - start_time
+            wait_ms = max(1, int((frame_time - elapsed) * 1000))
+            key = cv2.waitKey(wait_ms) & 0xFF
+            
+            if key == ord('q') or key == 27:  # 'q' or ESC
+                print("\nUser pressed quit key.")
+                user_quit = True
+                break
+
+    except KeyboardInterrupt:
+        print("\nInterrupted by user.")
+        user_quit = True
+
+    finally:
+        # Clean up
+        try:
+            env.close()
+        except Exception:
+            pass
+        
+        # Destroy OpenCV window
+        try:
+            cv2.destroyWindow(window_name)
+            # Multiple waitKey calls help ensure window is destroyed
+            for _ in range(5):
+                cv2.waitKey(1)
+        except Exception:
+            pass
+
+    return {
+        'steps': step,
+        'reward': episode_reward,
+        'completed': terminated and not user_quit
+    }
