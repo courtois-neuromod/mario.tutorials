@@ -54,27 +54,6 @@ echo "✓ All packages installed"
 
 echo ""
 
-# Create directory structure
-echo "Creating directory structure..."
-
-# Notebooks directory
-mkdir -p notebooks
-echo "✓ Created notebooks/"
-
-# Scripts directory
-mkdir -p scripts
-echo "✓ Created scripts/"
-
-# Derivatives directories
-mkdir -p derivatives/glm_tutorial
-mkdir -p derivatives/rl_agent
-mkdir -p derivatives/encoding
-mkdir -p derivatives/presentation_cache
-mkdir -p derivatives/figures
-echo "✓ Created derivatives/ subdirectories"
-
-echo ""
-
 # Install JupyterLab extensions
 echo "Installing JupyterLab extensions..."
 # Note: jupyterlab_rise is the slideshow extension for JupyterLab 4.x
