@@ -193,11 +193,14 @@ def compute_shaped_reward(env_data, prev_data):
     """
     Compute shaped reward based on game state.
 
-    Based on mario_generalization reward shaping:
-    - Reward forward movement (x position increase)
-    - Penalize time running out
-    - Reward score increases (coins, enemies)
-    - Penalize death
+    Reward function design:
+    - Heavily penalize losing a life (-50): Teaches agent to avoid dying
+    - Reward score increases: Incentivizes collecting coins and defeating enemies
+    - Reward forward movement: Encourages level progression
+    - Small time penalty: Promotes efficiency
+
+    The asymmetry between negative (life loss) and positive (score gain) rewards
+    creates a cautious but progress-oriented agent behavior.
 
     Parameters
     ----------
@@ -233,15 +236,18 @@ def compute_shaped_reward(env_data, prev_data):
         reward += time_diff
 
     # Score reward (coins, enemy kills, etc.)
+    # Increased weight to make score gains more rewarding
     score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
-    reward += min(score_diff / 4.0, 50)  # Scale and cap score reward
+    reward += min(score_diff / 2.0, 50)  # Scale and cap score reward
 
-    # Death penalty
+    # Life loss penalty - HEAVILY NEGATIVE to strongly discourage dying
+    # This is the dominant negative signal in the reward function
     if env_data.get("lives", 2) < prev_data.get("lives", 2):
-        reward -= 15
+        reward -= 50
 
     # Clip total reward to reasonable range
-    reward = max(min(reward, 15), -15)
+    # Asymmetric bounds: larger negative range to emphasize life preservation
+    reward = max(min(reward, 15), -50)
 
     return reward
 

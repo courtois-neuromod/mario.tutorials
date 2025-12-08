@@ -636,3 +636,90 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
         'reward': episode_reward,
         'completed': terminated and not user_quit
     }
+
+def extract_layer_activations(model, level, sourcedata_path, max_steps=1000, device='cpu'):
+    """
+    Extract CNN layer activations from agent gameplay.
+
+    Parameters
+    ----------
+    model : SimpleCNN
+        Trained model
+    level : str
+        Level to play (e.g., 'Level1-1')
+    sourcedata_path : Path
+        Path to sourcedata (for ROM)
+    max_steps : int, default=1000
+        Maximum steps per episode
+    device : str, default='cpu'
+        Device for model
+
+    Returns
+    -------
+    dict
+        Dictionary mapping layer names to activation arrays (steps, features)
+    """
+    import retro
+
+    # Import ROM from custom path
+    rom_path = sourcedata_path / 'mario' / 'stimuli'
+    if rom_path.exists():
+        retro.data.Integrations.add_custom_path(str(rom_path))
+
+    # Create environment
+    env = retro.make(
+        game='SuperMarioBros-Nes',
+        state=level,
+        inttype=retro.data.Integrations.ALL,
+        render_mode=None
+    )
+
+    model.eval()
+    model.to(device)
+
+    # Storage for activations
+    layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'linear']
+    activations_dict = {name: [] for name in layer_names}
+
+    # Reset environment
+    obs, _ = env.reset()
+    frame_stack = [preprocess_frame(obs)] * 4
+
+    for step in range(max_steps):
+        # Create input
+        state = create_frame_stack(frame_stack)
+        state_tensor = torch.from_numpy(state).unsqueeze(0).to(device)
+
+        # Get activations
+        with torch.no_grad():
+            acts = model(state_tensor, return_activations=True)
+
+        # Store activations (flatten spatial dimensions)
+        for layer_name in layer_names:
+            act = acts[layer_name].cpu().numpy()
+            if len(act.shape) == 4:  # Conv layers (B, C, H, W)
+                act = act.reshape(act.shape[0], -1)  # Flatten to (B, C*H*W)
+            activations_dict[layer_name].append(act[0])  # Remove batch dim
+
+        # Get action
+        action_logits = acts['action_logits']
+        action = torch.argmax(action_logits, dim=1).item()
+        buttons = action_to_buttons(action)
+
+        # Step environment
+        obs, reward, terminated, truncated, info = env.step(buttons)
+        done = terminated or truncated
+
+        # Update frame stack
+        frame_stack = frame_stack[1:] + [preprocess_frame(obs)]
+
+        if done:
+            break
+
+    env.close()
+
+    # Convert lists to arrays
+    for layer_name in layer_names:
+        activations_dict[layer_name] = np.array(activations_dict[layer_name])
+
+    return activations_dict
