@@ -51,3 +51,6 @@ reportlab>=3.6.0
 atlasreader>=0.2.0
 
 opencv-python>=4.5.0  # For image processing tasks
+
+# Model visualization
+torchinfo>=1.8.0

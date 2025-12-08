@@ -232,6 +232,22 @@ See `requirements.txt` for full list. Key packages:
 - **Nilearn Documentation**: https://nilearn.github.io
 - **DataLad Handbook**: https://handbook.datalad.org/
 
+## Optional: Generate Architecture Diagram
+
+To create the beautiful 3D CNN architecture visualization for notebook 02:
+
+```bash
+# Install LaTeX and ImageMagick (one-time)
+sudo apt-get install texlive-latex-extra imagemagick
+
+# Generate and compile the diagram
+python generate_architecture_diagram.py
+pdflatex ppo_architecture.tex
+convert -density 300 ppo_architecture.pdf -quality 90 -background white -alpha remove notebooks/figures/ppo_architecture.png
+```
+
+See `README_ARCHITECTURE_DIAGRAM.md` for detailed instructions and customization options.
+
 ## Troubleshooting
 
 ### Common Issues
