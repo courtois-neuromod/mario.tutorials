@@ -214,16 +214,30 @@ See `requirements.txt` for full list. Key packages:
 **CNeuromod Mario Dataset**
 - Task: Play Super Mario Bros (NES) naturally
 - Subjects: 5 (sub-01, sub-02, sub-03, sub-05, sub-06)
-- Sessions: 17-30 per subject
-- Runs: ~5 per session, ~5 minutes each
+- Sessions: 21-29 per subject
+- Runs: Variable per session, ~10-50 minutes each (median ~40 min)
 - TR: 1.49 seconds
-- Levels: 6 training (w1l1, w1l2, w4l1, w4l2, w5l1, w5l2) + 2 OOD (w2l1, w3l1)
+- Levels: 22 levels across 8 worlds:
+  - World 1: w1l1, w1l2, w1l3
+  - World 2: w2l1, w2l3
+  - World 3: w3l1, w3l2, w3l3
+  - World 4: w4l1, w4l2, w4l3
+  - World 5: w5l1, w5l2, w5l3
+  - World 6: w6l1, w6l2, w6l3
+  - World 7: w7l1, w7l3
+  - World 8: w8l1, w8l2, w8l3
+
+  *Selection rationale: All non-underwater, non-Bowser levels for gameplay consistency*
+
+**Experimental Regimen**:
+- **Discovery Phase**: Players explored levels sequentially to learn game mechanics and level layouts
+- **Practice Phase**: Levels presented in random order to test generalization and skill transfer
 
 **Annotations**:
-- Actions: A, B, LEFT, RIGHT, UP, DOWN
-- Events: Kills, hits, powerups, coins
+- Actions: A (JUMP), B (RUN/FIREBALL), LEFT, RIGHT, UP, DOWN
+- Events: Kills, hits, powerups, coins, level completions
 - Scenes: Level segmentation
-- Replays: .bk2 files with frame-by-frame state
+- Replays: .bk2 files with frame-by-frame state and JSON metadata
 
 ## Resources
 

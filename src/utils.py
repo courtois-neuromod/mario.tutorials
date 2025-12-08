@@ -17,6 +17,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import nibabel as nib
+import json
+from collections import defaultdict
 
 
 def get_project_root():
@@ -479,3 +481,118 @@ def save_stat_map(img, subject, session, model_name, contrast_name,
     nib.save(img, filepath)
 
     return filepath
+
+
+def load_replay_metadata(sourcedata_path=None):
+    """
+    Load all replay metadata from JSON sidecars in mario.replays dataset.
+
+    Parameters
+    ----------
+    sourcedata_path : str or Path, optional
+        Path to sourcedata directory
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with all replay metadata including:
+        - Subject, World, Level, Duration, Cleared, Phase
+        - ScoreGained, Lives_lost, Hits_taken, Enemies_killed
+        - Powerups_collected, CoinsGained, etc.
+    """
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    else:
+        sourcedata_path = Path(sourcedata_path)
+
+    replays_path = sourcedata_path / "mario.replays"
+
+    if not replays_path.exists():
+        raise FileNotFoundError(f"Replays directory not found: {replays_path}")
+
+    # Find all JSON files
+    json_files = sorted(replays_path.glob("*/*/beh/infos/*.json"))
+
+    if len(json_files) == 0:
+        raise FileNotFoundError(f"No JSON metadata files found in {replays_path}")
+
+    # Load all JSONs
+    all_data = []
+    for json_file in json_files:
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+            all_data.append(data)
+
+    # Create dataframe
+    df = pd.DataFrame(all_data)
+
+    return df
+
+
+def compute_dataset_statistics(sourcedata_path=None):
+    """
+    Compute global statistics across the entire Mario dataset.
+
+    Parameters
+    ----------
+    sourcedata_path : str or Path, optional
+        Path to sourcedata directory
+
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - per_subject: DataFrame with stats per subject
+        - unique_levels: List of all unique levels played
+        - total_stats: Overall dataset statistics
+    """
+    df = load_replay_metadata(sourcedata_path)
+
+    # Compute per-subject statistics
+    subject_stats = []
+    for subject in sorted(df['Subject'].unique()):
+        sub_df = df[df['Subject'] == subject]
+
+        # Extract unique sessions for this subject
+        unique_sessions = sub_df['Bk2File'].str.extract(r'ses-(\d+)')[0].unique()
+
+        stats = {
+            'Subject': f'sub-{subject}',
+            'Total Repetitions': len(sub_df),
+            'Successful Completions': int(sub_df['Cleared'].sum()),
+            'Failures': int((~sub_df['Cleared']).sum()),
+            'Success Rate (%)': round(100 * sub_df['Cleared'].mean(), 1),
+            'Total Duration (min)': round(sub_df['Duration'].sum() / 60, 1),
+            'Sessions': len(unique_sessions)
+        }
+        subject_stats.append(stats)
+
+    per_subject = pd.DataFrame(subject_stats)
+
+    # Get unique levels
+    unique_levels = sorted(df['LevelFullName'].unique())
+
+    # Get levels grouped by world
+    levels_by_world = defaultdict(list)
+    for level in unique_levels:
+        world = int(level[1])  # e.g., 'w1l1' -> 1
+        levels_by_world[world].append(level)
+
+    # Compute total statistics
+    total_stats = {
+        'Total Repetitions': len(df),
+        'Total Successful Completions': int(df['Cleared'].sum()),
+        'Total Failures': int((~df['Cleared']).sum()),
+        'Overall Success Rate (%)': round(100 * df['Cleared'].mean(), 1),
+        'Total Playtime (hours)': round(df['Duration'].sum() / 3600, 1),
+        'Discovery Phase Reps': int((df['Phase'] == 'discovery').sum()),
+        'Practice Phase Reps': int((df['Phase'] == 'practice').sum()),
+    }
+
+    return {
+        'per_subject': per_subject,
+        'unique_levels': unique_levels,
+        'levels_by_world': dict(levels_by_world),
+        'total_stats': total_stats,
+        'raw_data': df
+    }
