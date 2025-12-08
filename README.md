@@ -30,7 +30,7 @@ The CNeuromod Mario subdataset is part of the Courtois Neuromod databank. More i
 - **Session**: A single recording session, totalling between 3 and 5 runs.
 - **Level**: Levels are grouped by world. Their name is written a w1l1 (world-1 level-1) or Level1-1 (in the SuperMarioBros-Nes gym-retro implementation)
 - **Scene**: A segment of a level, defined from set boundaries on the horizontal axis. Their name are written as w1l1s1 (world-1 level-1 scene-1). Scenes and clips are generated via mario.scenes.
-- **Clip**: A single attempt over a scene. Identified with a clip-code constituted of 14 numbers as follows : AAABBCCDDDDDDD with AAA representing the session, BB the run, CC the index of the repetition within the run, and DDDDDDD the index of the first frame corresponding to that clip, within the repetition.
+- **Clip**: A single attempt over a scene. Identified with a clip-code constituted of 14 digits as follows : AAABBCCDDDDDDD with AAA representing the session, BB the run, CC the index of the repetition within the run, and DDDDDDD the index of the first frame corresponding to that clip, within the repetition.
 
 ## Tutorials
 
@@ -227,7 +227,7 @@ See `requirements.txt` for full list. Key packages:
 - Task: Play Super Mario Bros (NES) naturally
 - Subjects: 5 (sub-01, sub-02, sub-03, sub-05, sub-06)
 - Sessions: 21-29 per subject
-- Runs: Variable per session, ~10 minutes each
+- Runs: 3 to 5 per session, ~10 minutes each
 - TR: 1.49 seconds
 - Levels: 22 levels across 8 worlds:
   - World 1: w1l1, w1l2, w1l3
