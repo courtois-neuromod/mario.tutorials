@@ -10,6 +10,16 @@ This tutorial demonstrates a complete fMRI analysis pipeline from data explorati
 
 **Scope**: Single subject (sub-01), single session (ses-010) - optimized for laptop execution (~30-45 minutes)
 
+
+### Glossary
+
+- **Repetition**: An attempt (3 lives) on a given level. Corresponds to one *.bk2 file.
+- **Run**: A series of several repetitions (usually around 8-10). Minimum duration of 10 mins.
+- **Session**: A single recording session, totalling between 3 and 5 runs.
+- **Level**: Levels are grouped by world. Their name is written a w1l1 (world-1 level-1) or Level1-1 (in the SuperMarioBros-Nes gym-retro implementation)
+- **Scene**: A segment of a level, defined from set boundaries on the horizontal axis. Their name are written as w1l1s1 (world-1 level-1 scene-1). Scenes and clips are generated via mario.scenes.
+- **Clip**: A single attempt over a scene. Identified with a clip-code constituted of 14 numbers as follows : AAABBCCDDDDDDD with AAA representing the session, BB the run, CC the index of the repetition within the run, and DDDDDDD the index of the first frame corresponding to that clip, within the repetition.
+
 ## Installation
 
 ### Prerequisites
@@ -262,8 +272,6 @@ python generate_architecture_diagram.py
 pdflatex ppo_architecture.tex
 convert -density 300 ppo_architecture.pdf -quality 90 -background white -alpha remove notebooks/figures/ppo_architecture.png
 ```
-
-See `README_ARCHITECTURE_DIAGRAM.md` for detailed instructions and customization options.
 
 ## Troubleshooting
 
