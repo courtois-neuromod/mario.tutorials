@@ -54,11 +54,11 @@ echo "✓ All packages installed"
 
 echo ""
 
-# Install JupyterLab extensions
-echo "Installing JupyterLab extensions..."
-# Note: jupyterlab_rise is the slideshow extension for JupyterLab 4.x
-# It installs as a standard pip package and doesn't require separate enable step
-echo "✓ JupyterLab extensions configured (jupyterlab_rise)"
+# Install Jupyter Notebook extensions
+echo "Installing Jupyter Notebook extensions..."
+# Note: RISE is the slideshow extension for classic Jupyter Notebook
+# It installs as a standard pip package with notebook 6.x
+echo "✓ Jupyter Notebook extensions configured (RISE)"
 
 echo ""
 
@@ -89,15 +89,15 @@ echo "3. Ensure data is available in sourcedata/"
 echo "   - sourcedata/mario/"
 echo "   - sourcedata/mario.fmriprep/"
 echo "   - sourcedata/mario.annotations/"
-echo "4. Launch JupyterLab: jupyter lab"
-echo "5. Start with notebooks/01_dataset_exploration.ipynb"
-echo "   or notebooks/00_presentation_RISE.ipynb for the slideshow"
+echo "4. Launch Jupyter Notebook: jupyter notebook"
+echo "5. Start with any tutorial notebook in the notebooks/ folder"
 echo ""
-echo "For RISE presentations in JupyterLab:"
-echo "  - Open 00_presentation_RISE.ipynb"
-echo "  - Click the presentation icon in the toolbar to start slideshow"
+echo "For RISE slideshow presentations:"
+echo "  - Open any tutorial notebook (e.g., 01_event_based_analysis.ipynb)"
+echo "  - Click the bar chart icon in the toolbar to start slideshow"
+echo "  - Or use View > Cell Toolbar > Slideshow to configure slides"
 echo "  - Use spacebar to advance, shift+spacebar to go back"
-echo "  - Or use View > Activate Presentation Mode"
+echo "  - Press Esc to exit slideshow mode"
 echo ""
 echo "Enjoy the tutorial!"
 echo ""
