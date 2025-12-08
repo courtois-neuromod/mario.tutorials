@@ -266,15 +266,39 @@ def train_ppo(
 ):
     """Train PPO agent on multiple levels."""
 
-    # Default levels (following mario_generalization training set)
+    # Default levels (comprehensive training set across multiple worlds)
     if levels is None:
         levels = [
+            # World 1
             "Level1-1",
             "Level1-2",
+            "Level1-3",
+            # World 2
+            "Level2-1",
+            "Level2-3",
+            # World 3
+            "Level3-1",
+            "Level3-2",
+            "Level3-3",
+            # World 4
             "Level4-1",
             "Level4-2",
+            "Level4-3",
+            # World 5
             "Level5-1",
             "Level5-2",
+            "Level5-3",
+            # World 6
+            "Level6-1",
+            "Level6-2",
+            "Level6-3",
+            # World 7
+            "Level7-1",
+            "Level7-3",
+            # World 8
+            "Level8-1",
+            "Level8-2",
+            "Level8-3",
         ]
 
     print("=" * 80)
