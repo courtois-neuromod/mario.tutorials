@@ -1,0 +1,4532 @@
+{
+  "config": {
+    "n_steps": 5000000,
+    "rollout_length": 128,
+    "n_epochs": 4,
+    "batch_size": 32,
+    "eval_interval": 10000,
+    "levels": [
+      "Level1-1",
+      "Level1-2",
+      "Level4-1",
+      "Level4-2",
+      "Level5-1",
+      "Level5-2"
+    ],
+    "device": "cuda"
+  },
+  "progress": [
+    {
+      "step": 10000,
+      "episode": 0,
+      "mean_reward": 0.0,
+      "median_reward": 0.0,
+      "max_reward": 0.0,
+      "n_episodes": 0,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 20000,
+      "episode": 0,
+      "mean_reward": 0.0,
+      "median_reward": 0.0,
+      "max_reward": 0.0,
+      "n_episodes": 0,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 30000,
+      "episode": 1,
+      "mean_reward": 697.0,
+      "median_reward": 697.0,
+      "max_reward": 697.0,
+      "n_episodes": 1,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 40000,
+      "episode": 2,
+      "mean_reward": 1091.0,
+      "median_reward": 1091.0,
+      "max_reward": 1485.0,
+      "n_episodes": 2,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 50000,
+      "episode": 2,
+      "mean_reward": 1091.0,
+      "median_reward": 1091.0,
+      "max_reward": 1485.0,
+      "n_episodes": 2,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 60000,
+      "episode": 4,
+      "mean_reward": 976.375,
+      "median_reward": 883.0,
+      "max_reward": 1485.0,
+      "n_episodes": 4,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 70000,
+      "episode": 6,
+      "mean_reward": 982.0,
+      "median_reward": 988.5,
+      "max_reward": 1485.0,
+      "n_episodes": 6,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 80000,
+      "episode": 6,
+      "mean_reward": 982.0,
+      "median_reward": 988.5,
+      "max_reward": 1485.0,
+      "n_episodes": 6,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 90000,
+      "episode": 6,
+      "mean_reward": 982.0,
+      "median_reward": 988.5,
+      "max_reward": 1485.0,
+      "n_episodes": 6,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 100000,
+      "episode": 9,
+      "mean_reward": 875.0,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 9,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 110000,
+      "episode": 9,
+      "mean_reward": 875.0,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 9,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 120000,
+      "episode": 9,
+      "mean_reward": 875.0,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 9,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 130000,
+      "episode": 10,
+      "mean_reward": 771.8,
+      "median_reward": 786.5,
+      "max_reward": 1485.0,
+      "n_episodes": 10,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 140000,
+      "episode": 10,
+      "mean_reward": 771.8,
+      "median_reward": 786.5,
+      "max_reward": 1485.0,
+      "n_episodes": 10,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 150000,
+      "episode": 11,
+      "mean_reward": 822.0454545454545,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 11,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 160000,
+      "episode": 12,
+      "mean_reward": 848.375,
+      "median_reward": 892.0,
+      "max_reward": 1485.0,
+      "n_episodes": 12,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 170000,
+      "episode": 13,
+      "mean_reward": 834.8846153846154,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 13,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 180000,
+      "episode": 13,
+      "mean_reward": 834.8846153846154,
+      "median_reward": 876.0,
+      "max_reward": 1485.0,
+      "n_episodes": 13,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 190000,
+      "episode": 16,
+      "mean_reward": 866.03125,
+      "median_reward": 892.0,
+      "max_reward": 1485.0,
+      "n_episodes": 16,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 200000,
+      "episode": 18,
+      "mean_reward": 931.4722222222222,
+      "median_reward": 985.5,
+      "max_reward": 1514.0,
+      "n_episodes": 18,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 210000,
+      "episode": 18,
+      "mean_reward": 931.4722222222222,
+      "median_reward": 985.5,
+      "max_reward": 1514.0,
+      "n_episodes": 18,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 220000,
+      "episode": 21,
+      "mean_reward": 878.952380952381,
+      "median_reward": 876.0,
+      "max_reward": 1514.0,
+      "n_episodes": 21,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 230000,
+      "episode": 24,
+      "mean_reward": 951.0416666666666,
+      "median_reward": 985.5,
+      "max_reward": 1514.0,
+      "n_episodes": 24,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 240000,
+      "episode": 27,
+      "mean_reward": 926.3518518518518,
+      "median_reward": 876.0,
+      "max_reward": 1514.0,
+      "n_episodes": 27,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 250000,
+      "episode": 28,
+      "mean_reward": 903.4821428571429,
+      "median_reward": 848.75,
+      "max_reward": 1514.0,
+      "n_episodes": 28,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 260000,
+      "episode": 28,
+      "mean_reward": 903.4821428571429,
+      "median_reward": 848.75,
+      "max_reward": 1514.0,
+      "n_episodes": 28,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 270000,
+      "episode": 31,
+      "mean_reward": 894.8548387096774,
+      "median_reward": 821.5,
+      "max_reward": 1514.0,
+      "n_episodes": 31,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 280000,
+      "episode": 32,
+      "mean_reward": 895.84375,
+      "median_reward": 848.75,
+      "max_reward": 1514.0,
+      "n_episodes": 32,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 290000,
+      "episode": 32,
+      "mean_reward": 895.84375,
+      "median_reward": 848.75,
+      "max_reward": 1514.0,
+      "n_episodes": 32,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 300000,
+      "episode": 32,
+      "mean_reward": 895.84375,
+      "median_reward": 848.75,
+      "max_reward": 1514.0,
+      "n_episodes": 32,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 310000,
+      "episode": 35,
+      "mean_reward": 931.5285714285715,
+      "median_reward": 876.0,
+      "max_reward": 2036.0,
+      "n_episodes": 35,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 320000,
+      "episode": 35,
+      "mean_reward": 931.5285714285715,
+      "median_reward": 876.0,
+      "max_reward": 2036.0,
+      "n_episodes": 35,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 330000,
+      "episode": 35,
+      "mean_reward": 931.5285714285715,
+      "median_reward": 876.0,
+      "max_reward": 2036.0,
+      "n_episodes": 35,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 340000,
+      "episode": 36,
+      "mean_reward": 895.0694444444445,
+      "median_reward": 848.75,
+      "max_reward": 2036.0,
+      "n_episodes": 36,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 350000,
+      "episode": 36,
+      "mean_reward": 895.0694444444445,
+      "median_reward": 848.75,
+      "max_reward": 2036.0,
+      "n_episodes": 36,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 360000,
+      "episode": 39,
+      "mean_reward": 866.6794871794872,
+      "median_reward": 821.5,
+      "max_reward": 2036.0,
+      "n_episodes": 39,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 370000,
+      "episode": 40,
+      "mean_reward": 881.925,
+      "median_reward": 848.75,
+      "max_reward": 2036.0,
+      "n_episodes": 40,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 380000,
+      "episode": 40,
+      "mean_reward": 881.925,
+      "median_reward": 848.75,
+      "max_reward": 2036.0,
+      "n_episodes": 40,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 390000,
+      "episode": 43,
+      "mean_reward": 942.453488372093,
+      "median_reward": 898.5,
+      "max_reward": 2940.5,
+      "n_episodes": 43,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 400000,
+      "episode": 48,
+      "mean_reward": 969.2291666666666,
+      "median_reward": 925.25,
+      "max_reward": 2940.5,
+      "n_episodes": 48,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 410000,
+      "episode": 52,
+      "mean_reward": 1018.7307692307693,
+      "median_reward": 996.0,
+      "max_reward": 2940.5,
+      "n_episodes": 52,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 420000,
+      "episode": 56,
+      "mean_reward": 1065.205357142857,
+      "median_reward": 1066.0,
+      "max_reward": 2940.5,
+      "n_episodes": 56,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 430000,
+      "episode": 57,
+      "mean_reward": 1078.4649122807018,
+      "median_reward": 1069.0,
+      "max_reward": 2940.5,
+      "n_episodes": 57,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 440000,
+      "episode": 57,
+      "mean_reward": 1078.4649122807018,
+      "median_reward": 1069.0,
+      "max_reward": 2940.5,
+      "n_episodes": 57,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 450000,
+      "episode": 60,
+      "mean_reward": 1078.3916666666667,
+      "median_reward": 1066.0,
+      "max_reward": 2940.5,
+      "n_episodes": 60,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 460000,
+      "episode": 60,
+      "mean_reward": 1078.3916666666667,
+      "median_reward": 1066.0,
+      "max_reward": 2940.5,
+      "n_episodes": 60,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 470000,
+      "episode": 60,
+      "mean_reward": 1078.3916666666667,
+      "median_reward": 1066.0,
+      "max_reward": 2940.5,
+      "n_episodes": 60,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 480000,
+      "episode": 61,
+      "mean_reward": 1069.655737704918,
+      "median_reward": 1063.0,
+      "max_reward": 2940.5,
+      "n_episodes": 61,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 490000,
+      "episode": 63,
+      "mean_reward": 1071.436507936508,
+      "median_reward": 1063.0,
+      "max_reward": 2940.5,
+      "n_episodes": 63,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 500000,
+      "episode": 63,
+      "mean_reward": 1071.436507936508,
+      "median_reward": 1063.0,
+      "max_reward": 2940.5,
+      "n_episodes": 63,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 510000,
+      "episode": 63,
+      "mean_reward": 1071.436507936508,
+      "median_reward": 1063.0,
+      "max_reward": 2940.5,
+      "n_episodes": 63,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 520000,
+      "episode": 65,
+      "mean_reward": 1077.7923076923078,
+      "median_reward": 1063.0,
+      "max_reward": 2940.5,
+      "n_episodes": 65,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 530000,
+      "episode": 66,
+      "mean_reward": 1071.6742424242425,
+      "median_reward": 1059.5,
+      "max_reward": 2940.5,
+      "n_episodes": 66,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 540000,
+      "episode": 67,
+      "mean_reward": 1064.6492537313434,
+      "median_reward": 1056.0,
+      "max_reward": 2940.5,
+      "n_episodes": 67,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 550000,
+      "episode": 68,
+      "mean_reward": 1058.5808823529412,
+      "median_reward": 1042.0,
+      "max_reward": 2940.5,
+      "n_episodes": 68,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 560000,
+      "episode": 68,
+      "mean_reward": 1058.5808823529412,
+      "median_reward": 1042.0,
+      "max_reward": 2940.5,
+      "n_episodes": 68,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 570000,
+      "episode": 68,
+      "mean_reward": 1058.5808823529412,
+      "median_reward": 1042.0,
+      "max_reward": 2940.5,
+      "n_episodes": 68,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 580000,
+      "episode": 69,
+      "mean_reward": 1047.2753623188405,
+      "median_reward": 1028.0,
+      "max_reward": 2940.5,
+      "n_episodes": 69,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 590000,
+      "episode": 69,
+      "mean_reward": 1047.2753623188405,
+      "median_reward": 1028.0,
+      "max_reward": 2940.5,
+      "n_episodes": 69,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 600000,
+      "episode": 71,
+      "mean_reward": 1038.887323943662,
+      "median_reward": 979.0,
+      "max_reward": 2940.5,
+      "n_episodes": 71,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 610000,
+      "episode": 72,
+      "mean_reward": 1035.5555555555557,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 72,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 620000,
+      "episode": 73,
+      "mean_reward": 1034.5342465753424,
+      "median_reward": 974.0,
+      "max_reward": 2940.5,
+      "n_episodes": 73,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 630000,
+      "episode": 73,
+      "mean_reward": 1034.5342465753424,
+      "median_reward": 974.0,
+      "max_reward": 2940.5,
+      "n_episodes": 73,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 640000,
+      "episode": 76,
+      "mean_reward": 1028.1842105263158,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 76,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 650000,
+      "episode": 76,
+      "mean_reward": 1028.1842105263158,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 76,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 660000,
+      "episode": 78,
+      "mean_reward": 1034.9102564102564,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 78,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 670000,
+      "episode": 82,
+      "mean_reward": 1062.2256097560976,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 82,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 680000,
+      "episode": 82,
+      "mean_reward": 1062.2256097560976,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 82,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 690000,
+      "episode": 85,
+      "mean_reward": 1067.1470588235295,
+      "median_reward": 979.0,
+      "max_reward": 2940.5,
+      "n_episodes": 85,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 700000,
+      "episode": 85,
+      "mean_reward": 1067.1470588235295,
+      "median_reward": 979.0,
+      "max_reward": 2940.5,
+      "n_episodes": 85,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 710000,
+      "episode": 87,
+      "mean_reward": 1078.787356321839,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 87,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 720000,
+      "episode": 87,
+      "mean_reward": 1078.787356321839,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 87,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 730000,
+      "episode": 87,
+      "mean_reward": 1078.787356321839,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 87,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 740000,
+      "episode": 89,
+      "mean_reward": 1065.9831460674156,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 89,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 750000,
+      "episode": 91,
+      "mean_reward": 1062.60989010989,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 91,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 760000,
+      "episode": 91,
+      "mean_reward": 1062.60989010989,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 91,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 770000,
+      "episode": 91,
+      "mean_reward": 1062.60989010989,
+      "median_reward": 994.0,
+      "max_reward": 2940.5,
+      "n_episodes": 91,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 780000,
+      "episode": 92,
+      "mean_reward": 1056.7826086956522,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 92,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 790000,
+      "episode": 94,
+      "mean_reward": 1064.776595744681,
+      "median_reward": 1011.0,
+      "max_reward": 2940.5,
+      "n_episodes": 94,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 800000,
+      "episode": 95,
+      "mean_reward": 1070.7105263157894,
+      "median_reward": 1028.0,
+      "max_reward": 2940.5,
+      "n_episodes": 95,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 810000,
+      "episode": 96,
+      "mean_reward": 1066.0364583333333,
+      "median_reward": 1011.0,
+      "max_reward": 2940.5,
+      "n_episodes": 96,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 820000,
+      "episode": 96,
+      "mean_reward": 1066.0364583333333,
+      "median_reward": 1011.0,
+      "max_reward": 2940.5,
+      "n_episodes": 96,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 830000,
+      "episode": 100,
+      "mean_reward": 1076.69,
+      "median_reward": 1038.0,
+      "max_reward": 2940.5,
+      "n_episodes": 100,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 840000,
+      "episode": 102,
+      "mean_reward": 1072.47,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 102,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 850000,
+      "episode": 102,
+      "mean_reward": 1072.47,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 102,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 860000,
+      "episode": 103,
+      "mean_reward": 1073.7,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 103,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 870000,
+      "episode": 105,
+      "mean_reward": 1073.54,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 105,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 880000,
+      "episode": 105,
+      "mean_reward": 1073.54,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 105,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 890000,
+      "episode": 107,
+      "mean_reward": 1076.47,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 107,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 900000,
+      "episode": 107,
+      "mean_reward": 1076.47,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 107,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 910000,
+      "episode": 111,
+      "mean_reward": 1083.32,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 111,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 920000,
+      "episode": 111,
+      "mean_reward": 1083.32,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 111,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 930000,
+      "episode": 111,
+      "mean_reward": 1083.32,
+      "median_reward": 1011.5,
+      "max_reward": 2940.5,
+      "n_episodes": 111,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 940000,
+      "episode": 113,
+      "mean_reward": 1078.015,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 113,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 950000,
+      "episode": 113,
+      "mean_reward": 1078.015,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 113,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 960000,
+      "episode": 113,
+      "mean_reward": 1078.015,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 113,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 970000,
+      "episode": 114,
+      "mean_reward": 1069.59,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 114,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 980000,
+      "episode": 114,
+      "mean_reward": 1069.59,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 114,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 990000,
+      "episode": 114,
+      "mean_reward": 1069.59,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 114,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1000000,
+      "episode": 115,
+      "mean_reward": 1064.48,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 115,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1010000,
+      "episode": 115,
+      "mean_reward": 1064.48,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 115,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1020000,
+      "episode": 118,
+      "mean_reward": 1046.65,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 118,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1030000,
+      "episode": 118,
+      "mean_reward": 1046.65,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 118,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1040000,
+      "episode": 119,
+      "mean_reward": 1049.365,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 119,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1050000,
+      "episode": 119,
+      "mean_reward": 1049.365,
+      "median_reward": 969.0,
+      "max_reward": 2940.5,
+      "n_episodes": 119,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1060000,
+      "episode": 120,
+      "mean_reward": 1055.745,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 120,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1070000,
+      "episode": 123,
+      "mean_reward": 1049.165,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 123,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1080000,
+      "episode": 127,
+      "mean_reward": 1057.735,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 127,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1090000,
+      "episode": 128,
+      "mean_reward": 1073.095,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 128,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1100000,
+      "episode": 130,
+      "mean_reward": 1071.93,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 130,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1110000,
+      "episode": 133,
+      "mean_reward": 1087.935,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 133,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1120000,
+      "episode": 133,
+      "mean_reward": 1087.935,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 133,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1130000,
+      "episode": 133,
+      "mean_reward": 1087.935,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 133,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1140000,
+      "episode": 134,
+      "mean_reward": 1065.265,
+      "median_reward": 976.5,
+      "max_reward": 2940.5,
+      "n_episodes": 134,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1150000,
+      "episode": 136,
+      "mean_reward": 1078.8,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 136,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1160000,
+      "episode": 137,
+      "mean_reward": 1089.565,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 137,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1170000,
+      "episode": 140,
+      "mean_reward": 1111.615,
+      "median_reward": 994.5,
+      "max_reward": 2940.5,
+      "n_episodes": 140,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1180000,
+      "episode": 141,
+      "mean_reward": 1109.705,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 141,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1190000,
+      "episode": 141,
+      "mean_reward": 1109.705,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 141,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1200000,
+      "episode": 141,
+      "mean_reward": 1109.705,
+      "median_reward": 986.5,
+      "max_reward": 2940.5,
+      "n_episodes": 141,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1210000,
+      "episode": 142,
+      "mean_reward": 1084.525,
+      "median_reward": 976.5,
+      "max_reward": 2780.0,
+      "n_episodes": 142,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1220000,
+      "episode": 143,
+      "mean_reward": 1073.895,
+      "median_reward": 973.0,
+      "max_reward": 2780.0,
+      "n_episodes": 143,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1230000,
+      "episode": 144,
+      "mean_reward": 1070.975,
+      "median_reward": 973.0,
+      "max_reward": 2780.0,
+      "n_episodes": 144,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1240000,
+      "episode": 145,
+      "mean_reward": 1064.76,
+      "median_reward": 973.0,
+      "max_reward": 2780.0,
+      "n_episodes": 145,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1250000,
+      "episode": 146,
+      "mean_reward": 1068.55,
+      "median_reward": 976.5,
+      "max_reward": 2780.0,
+      "n_episodes": 146,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1260000,
+      "episode": 146,
+      "mean_reward": 1068.55,
+      "median_reward": 976.5,
+      "max_reward": 2780.0,
+      "n_episodes": 146,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1270000,
+      "episode": 147,
+      "mean_reward": 1059.62,
+      "median_reward": 973.0,
+      "max_reward": 2780.0,
+      "n_episodes": 147,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1280000,
+      "episode": 150,
+      "mean_reward": 1043.115,
+      "median_reward": 957.25,
+      "max_reward": 2780.0,
+      "n_episodes": 150,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1290000,
+      "episode": 151,
+      "mean_reward": 1029.62,
+      "median_reward": 949.25,
+      "max_reward": 2780.0,
+      "n_episodes": 151,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1300000,
+      "episode": 153,
+      "mean_reward": 1003.79,
+      "median_reward": 942.0,
+      "max_reward": 2780.0,
+      "n_episodes": 153,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1310000,
+      "episode": 154,
+      "mean_reward": 994.74,
+      "median_reward": 935.5,
+      "max_reward": 2780.0,
+      "n_episodes": 154,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1320000,
+      "episode": 154,
+      "mean_reward": 994.74,
+      "median_reward": 935.5,
+      "max_reward": 2780.0,
+      "n_episodes": 154,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1330000,
+      "episode": 156,
+      "mean_reward": 981.835,
+      "median_reward": 926.5,
+      "max_reward": 2780.0,
+      "n_episodes": 156,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1340000,
+      "episode": 156,
+      "mean_reward": 981.835,
+      "median_reward": 926.5,
+      "max_reward": 2780.0,
+      "n_episodes": 156,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1350000,
+      "episode": 158,
+      "mean_reward": 973.995,
+      "median_reward": 921.5,
+      "max_reward": 2780.0,
+      "n_episodes": 158,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1360000,
+      "episode": 158,
+      "mean_reward": 973.995,
+      "median_reward": 921.5,
+      "max_reward": 2780.0,
+      "n_episodes": 158,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1370000,
+      "episode": 159,
+      "mean_reward": 973.81,
+      "median_reward": 921.5,
+      "max_reward": 2780.0,
+      "n_episodes": 159,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1380000,
+      "episode": 159,
+      "mean_reward": 973.81,
+      "median_reward": 921.5,
+      "max_reward": 2780.0,
+      "n_episodes": 159,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1390000,
+      "episode": 161,
+      "mean_reward": 976.035,
+      "median_reward": 921.5,
+      "max_reward": 2780.0,
+      "n_episodes": 161,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1400000,
+      "episode": 164,
+      "mean_reward": 977.89,
+      "median_reward": 887.0,
+      "max_reward": 2780.0,
+      "n_episodes": 164,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1410000,
+      "episode": 165,
+      "mean_reward": 956.88,
+      "median_reward": 867.0,
+      "max_reward": 2697.0,
+      "n_episodes": 165,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1420000,
+      "episode": 169,
+      "mean_reward": 952.52,
+      "median_reward": 867.0,
+      "max_reward": 2697.0,
+      "n_episodes": 169,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1430000,
+      "episode": 174,
+      "mean_reward": 944.695,
+      "median_reward": 845.0,
+      "max_reward": 2697.0,
+      "n_episodes": 174,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1440000,
+      "episode": 177,
+      "mean_reward": 932.65,
+      "median_reward": 822.0,
+      "max_reward": 2697.0,
+      "n_episodes": 177,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1450000,
+      "episode": 181,
+      "mean_reward": 898.565,
+      "median_reward": 784.5,
+      "max_reward": 2697.0,
+      "n_episodes": 181,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1460000,
+      "episode": 182,
+      "mean_reward": 888.075,
+      "median_reward": 782.5,
+      "max_reward": 2697.0,
+      "n_episodes": 182,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 1470000,
+      "episode": 186,
+      "mean_reward": 876.855,
+      "median_reward": 779.0,
+      "max_reward": 2697.0,
+      "n_episodes": 186,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1480000,
+      "episode": 187,
+      "mean_reward": 859.775,
+      "median_reward": 778.25,
+      "max_reward": 2697.0,
+      "n_episodes": 187,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1490000,
+      "episode": 187,
+      "mean_reward": 859.775,
+      "median_reward": 778.25,
+      "max_reward": 2697.0,
+      "n_episodes": 187,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1500000,
+      "episode": 188,
+      "mean_reward": 861.52,
+      "median_reward": 778.25,
+      "max_reward": 2697.0,
+      "n_episodes": 188,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1510000,
+      "episode": 189,
+      "mean_reward": 862.64,
+      "median_reward": 778.25,
+      "max_reward": 2697.0,
+      "n_episodes": 189,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1520000,
+      "episode": 192,
+      "mean_reward": 853.95,
+      "median_reward": 777.25,
+      "max_reward": 2697.0,
+      "n_episodes": 192,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1530000,
+      "episode": 194,
+      "mean_reward": 838.34,
+      "median_reward": 776.0,
+      "max_reward": 2697.0,
+      "n_episodes": 194,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1540000,
+      "episode": 197,
+      "mean_reward": 826.345,
+      "median_reward": 756.5,
+      "max_reward": 2697.0,
+      "n_episodes": 197,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1550000,
+      "episode": 197,
+      "mean_reward": 826.345,
+      "median_reward": 756.5,
+      "max_reward": 2697.0,
+      "n_episodes": 197,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1560000,
+      "episode": 198,
+      "mean_reward": 815.125,
+      "median_reward": 755.5,
+      "max_reward": 2697.0,
+      "n_episodes": 198,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1570000,
+      "episode": 198,
+      "mean_reward": 815.125,
+      "median_reward": 755.5,
+      "max_reward": 2697.0,
+      "n_episodes": 198,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1580000,
+      "episode": 198,
+      "mean_reward": 815.125,
+      "median_reward": 755.5,
+      "max_reward": 2697.0,
+      "n_episodes": 198,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1590000,
+      "episode": 199,
+      "mean_reward": 796.685,
+      "median_reward": 755.0,
+      "max_reward": 2697.0,
+      "n_episodes": 199,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1600000,
+      "episode": 199,
+      "mean_reward": 796.685,
+      "median_reward": 755.0,
+      "max_reward": 2697.0,
+      "n_episodes": 199,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1610000,
+      "episode": 199,
+      "mean_reward": 796.685,
+      "median_reward": 755.0,
+      "max_reward": 2697.0,
+      "n_episodes": 199,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1620000,
+      "episode": 200,
+      "mean_reward": 788.625,
+      "median_reward": 754.5,
+      "max_reward": 2697.0,
+      "n_episodes": 200,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1630000,
+      "episode": 200,
+      "mean_reward": 788.625,
+      "median_reward": 754.5,
+      "max_reward": 2697.0,
+      "n_episodes": 200,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1640000,
+      "episode": 201,
+      "mean_reward": 786.19,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 201,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1650000,
+      "episode": 201,
+      "mean_reward": 786.19,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 201,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1660000,
+      "episode": 203,
+      "mean_reward": 795.945,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 203,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1670000,
+      "episode": 206,
+      "mean_reward": 783.755,
+      "median_reward": 725.0,
+      "max_reward": 2697.0,
+      "n_episodes": 206,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1680000,
+      "episode": 208,
+      "mean_reward": 787.1,
+      "median_reward": 705.0,
+      "max_reward": 2697.0,
+      "n_episodes": 208,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1690000,
+      "episode": 208,
+      "mean_reward": 787.1,
+      "median_reward": 705.0,
+      "max_reward": 2697.0,
+      "n_episodes": 208,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1700000,
+      "episode": 210,
+      "mean_reward": 782.715,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 210,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1710000,
+      "episode": 214,
+      "mean_reward": 791.32,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 214,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1720000,
+      "episode": 215,
+      "mean_reward": 792.63,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 215,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1730000,
+      "episode": 216,
+      "mean_reward": 787.71,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 216,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1740000,
+      "episode": 216,
+      "mean_reward": 787.71,
+      "median_reward": 754.0,
+      "max_reward": 2697.0,
+      "n_episodes": 216,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1750000,
+      "episode": 218,
+      "mean_reward": 782.28,
+      "median_reward": 750.5,
+      "max_reward": 2697.0,
+      "n_episodes": 218,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1760000,
+      "episode": 219,
+      "mean_reward": 782.57,
+      "median_reward": 750.5,
+      "max_reward": 2697.0,
+      "n_episodes": 219,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1770000,
+      "episode": 219,
+      "mean_reward": 782.57,
+      "median_reward": 750.5,
+      "max_reward": 2697.0,
+      "n_episodes": 219,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1780000,
+      "episode": 221,
+      "mean_reward": 766.47,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 221,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1790000,
+      "episode": 221,
+      "mean_reward": 766.47,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 221,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1800000,
+      "episode": 222,
+      "mean_reward": 762.805,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 222,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1810000,
+      "episode": 222,
+      "mean_reward": 762.805,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 222,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1820000,
+      "episode": 222,
+      "mean_reward": 762.805,
+      "median_reward": 727.0,
+      "max_reward": 2697.0,
+      "n_episodes": 222,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1830000,
+      "episode": 223,
+      "mean_reward": 749.9,
+      "median_reward": 702.5,
+      "max_reward": 2697.0,
+      "n_episodes": 223,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1840000,
+      "episode": 225,
+      "mean_reward": 732.695,
+      "median_reward": 691.25,
+      "max_reward": 2697.0,
+      "n_episodes": 225,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1850000,
+      "episode": 225,
+      "mean_reward": 732.695,
+      "median_reward": 691.25,
+      "max_reward": 2697.0,
+      "n_episodes": 225,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1860000,
+      "episode": 225,
+      "mean_reward": 732.695,
+      "median_reward": 691.25,
+      "max_reward": 2697.0,
+      "n_episodes": 225,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1870000,
+      "episode": 227,
+      "mean_reward": 731.19,
+      "median_reward": 691.25,
+      "max_reward": 2697.0,
+      "n_episodes": 227,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 1880000,
+      "episode": 228,
+      "mean_reward": 718.885,
+      "median_reward": 683.75,
+      "max_reward": 2697.0,
+      "n_episodes": 228,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 1890000,
+      "episode": 229,
+      "mean_reward": 716.04,
+      "median_reward": 682.0,
+      "max_reward": 2697.0,
+      "n_episodes": 229,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1900000,
+      "episode": 229,
+      "mean_reward": 716.04,
+      "median_reward": 682.0,
+      "max_reward": 2697.0,
+      "n_episodes": 229,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1910000,
+      "episode": 229,
+      "mean_reward": 716.04,
+      "median_reward": 682.0,
+      "max_reward": 2697.0,
+      "n_episodes": 229,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1920000,
+      "episode": 231,
+      "mean_reward": 708.79,
+      "median_reward": 682.0,
+      "max_reward": 2697.0,
+      "n_episodes": 231,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1930000,
+      "episode": 231,
+      "mean_reward": 708.79,
+      "median_reward": 682.0,
+      "max_reward": 2697.0,
+      "n_episodes": 231,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1940000,
+      "episode": 234,
+      "mean_reward": 690.485,
+      "median_reward": 682.0,
+      "max_reward": 2558.0,
+      "n_episodes": 234,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1950000,
+      "episode": 235,
+      "mean_reward": 698.47,
+      "median_reward": 682.0,
+      "max_reward": 2558.0,
+      "n_episodes": 235,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1960000,
+      "episode": 236,
+      "mean_reward": 696.515,
+      "median_reward": 682.0,
+      "max_reward": 2558.0,
+      "n_episodes": 236,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 1970000,
+      "episode": 239,
+      "mean_reward": 699.86,
+      "median_reward": 682.0,
+      "max_reward": 2558.0,
+      "n_episodes": 239,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 1980000,
+      "episode": 240,
+      "mean_reward": 685.2,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 240,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 1990000,
+      "episode": 240,
+      "mean_reward": 685.2,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 240,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2000000,
+      "episode": 241,
+      "mean_reward": 676.255,
+      "median_reward": 681.0,
+      "max_reward": 1905.0,
+      "n_episodes": 241,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2010000,
+      "episode": 241,
+      "mean_reward": 676.255,
+      "median_reward": 681.0,
+      "max_reward": 1905.0,
+      "n_episodes": 241,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2020000,
+      "episode": 242,
+      "mean_reward": 675.72,
+      "median_reward": 681.0,
+      "max_reward": 1905.0,
+      "n_episodes": 242,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2030000,
+      "episode": 243,
+      "mean_reward": 692.12,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 243,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2040000,
+      "episode": 243,
+      "mean_reward": 692.12,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 243,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2050000,
+      "episode": 245,
+      "mean_reward": 701.405,
+      "median_reward": 683.75,
+      "max_reward": 1905.0,
+      "n_episodes": 245,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2060000,
+      "episode": 246,
+      "mean_reward": 694.165,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 246,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2070000,
+      "episode": 246,
+      "mean_reward": 694.165,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 246,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2080000,
+      "episode": 246,
+      "mean_reward": 694.165,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 246,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2090000,
+      "episode": 247,
+      "mean_reward": 693.145,
+      "median_reward": 682.0,
+      "max_reward": 1905.0,
+      "n_episodes": 247,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2100000,
+      "episode": 248,
+      "mean_reward": 697.015,
+      "median_reward": 683.75,
+      "max_reward": 1905.0,
+      "n_episodes": 248,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2110000,
+      "episode": 249,
+      "mean_reward": 698.775,
+      "median_reward": 694.75,
+      "max_reward": 1905.0,
+      "n_episodes": 249,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2120000,
+      "episode": 253,
+      "mean_reward": 717.175,
+      "median_reward": 720.75,
+      "max_reward": 2043.5,
+      "n_episodes": 253,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2130000,
+      "episode": 254,
+      "mean_reward": 719.475,
+      "median_reward": 740.75,
+      "max_reward": 2043.5,
+      "n_episodes": 254,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2140000,
+      "episode": 256,
+      "mean_reward": 732.91,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 256,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2150000,
+      "episode": 258,
+      "mean_reward": 731.11,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 258,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2160000,
+      "episode": 259,
+      "mean_reward": 726.305,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 259,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2170000,
+      "episode": 260,
+      "mean_reward": 726.285,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 260,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2180000,
+      "episode": 261,
+      "mean_reward": 729.965,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 261,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2190000,
+      "episode": 261,
+      "mean_reward": 729.965,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 261,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2200000,
+      "episode": 263,
+      "mean_reward": 736.63,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 263,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2210000,
+      "episode": 263,
+      "mean_reward": 736.63,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 263,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2220000,
+      "episode": 263,
+      "mean_reward": 736.63,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 263,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2230000,
+      "episode": 265,
+      "mean_reward": 735.925,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 265,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2240000,
+      "episode": 266,
+      "mean_reward": 746.955,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 266,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2250000,
+      "episode": 267,
+      "mean_reward": 750.57,
+      "median_reward": 754.0,
+      "max_reward": 2043.5,
+      "n_episodes": 267,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2260000,
+      "episode": 268,
+      "mean_reward": 753.085,
+      "median_reward": 754.0,
+      "max_reward": 2043.5,
+      "n_episodes": 268,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2270000,
+      "episode": 270,
+      "mean_reward": 753.405,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 270,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 2280000,
+      "episode": 271,
+      "mean_reward": 751.775,
+      "median_reward": 748.25,
+      "max_reward": 2043.5,
+      "n_episodes": 271,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2290000,
+      "episode": 273,
+      "mean_reward": 753.7,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 273,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2300000,
+      "episode": 274,
+      "mean_reward": 760.58,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 274,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2310000,
+      "episode": 274,
+      "mean_reward": 760.58,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 274,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2320000,
+      "episode": 275,
+      "mean_reward": 760.435,
+      "median_reward": 751.75,
+      "max_reward": 2043.5,
+      "n_episodes": 275,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2330000,
+      "episode": 277,
+      "mean_reward": 752.63,
+      "median_reward": 740.75,
+      "max_reward": 2043.5,
+      "n_episodes": 277,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2340000,
+      "episode": 282,
+      "mean_reward": 757.31,
+      "median_reward": 740.5,
+      "max_reward": 2043.5,
+      "n_episodes": 282,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 2350000,
+      "episode": 284,
+      "mean_reward": 754.9,
+      "median_reward": 736.25,
+      "max_reward": 2043.5,
+      "n_episodes": 284,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2360000,
+      "episode": 284,
+      "mean_reward": 754.9,
+      "median_reward": 736.25,
+      "max_reward": 2043.5,
+      "n_episodes": 284,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2370000,
+      "episode": 286,
+      "mean_reward": 741.155,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 286,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2380000,
+      "episode": 286,
+      "mean_reward": 741.155,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 286,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2390000,
+      "episode": 286,
+      "mean_reward": 741.155,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 286,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2400000,
+      "episode": 287,
+      "mean_reward": 745.56,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 287,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2410000,
+      "episode": 287,
+      "mean_reward": 745.56,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 287,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2420000,
+      "episode": 288,
+      "mean_reward": 749.645,
+      "median_reward": 719.25,
+      "max_reward": 2043.5,
+      "n_episodes": 288,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2430000,
+      "episode": 291,
+      "mean_reward": 766.15,
+      "median_reward": 733.0,
+      "max_reward": 2043.5,
+      "n_episodes": 291,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 2440000,
+      "episode": 294,
+      "mean_reward": 771.77,
+      "median_reward": 741.0,
+      "max_reward": 2043.5,
+      "n_episodes": 294,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2450000,
+      "episode": 294,
+      "mean_reward": 771.77,
+      "median_reward": 741.0,
+      "max_reward": 2043.5,
+      "n_episodes": 294,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2460000,
+      "episode": 296,
+      "mean_reward": 771.985,
+      "median_reward": 741.0,
+      "max_reward": 2043.5,
+      "n_episodes": 296,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2470000,
+      "episode": 298,
+      "mean_reward": 807.555,
+      "median_reward": 746.25,
+      "max_reward": 2196.0,
+      "n_episodes": 298,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2480000,
+      "episode": 300,
+      "mean_reward": 820.67,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 300,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2490000,
+      "episode": 301,
+      "mean_reward": 820.235,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 301,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2500000,
+      "episode": 301,
+      "mean_reward": 820.235,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 301,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2510000,
+      "episode": 303,
+      "mean_reward": 804.505,
+      "median_reward": 753.25,
+      "max_reward": 2196.0,
+      "n_episodes": 303,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2520000,
+      "episode": 303,
+      "mean_reward": 804.505,
+      "median_reward": 753.25,
+      "max_reward": 2196.0,
+      "n_episodes": 303,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2530000,
+      "episode": 306,
+      "mean_reward": 808.885,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 306,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2540000,
+      "episode": 307,
+      "mean_reward": 803.24,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 307,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2550000,
+      "episode": 307,
+      "mean_reward": 803.24,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 307,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2560000,
+      "episode": 308,
+      "mean_reward": 797.345,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 308,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2570000,
+      "episode": 308,
+      "mean_reward": 797.345,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 308,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2580000,
+      "episode": 308,
+      "mean_reward": 797.345,
+      "median_reward": 765.25,
+      "max_reward": 2196.0,
+      "n_episodes": 308,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2590000,
+      "episode": 310,
+      "mean_reward": 804.485,
+      "median_reward": 753.25,
+      "max_reward": 2196.0,
+      "n_episodes": 310,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2600000,
+      "episode": 312,
+      "mean_reward": 806.705,
+      "median_reward": 752.75,
+      "max_reward": 2196.0,
+      "n_episodes": 312,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 2610000,
+      "episode": 314,
+      "mean_reward": 830.67,
+      "median_reward": 764.75,
+      "max_reward": 2196.0,
+      "n_episodes": 314,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2620000,
+      "episode": 314,
+      "mean_reward": 830.67,
+      "median_reward": 764.75,
+      "max_reward": 2196.0,
+      "n_episodes": 314,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2630000,
+      "episode": 316,
+      "mean_reward": 838.125,
+      "median_reward": 776.25,
+      "max_reward": 2196.0,
+      "n_episodes": 316,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2640000,
+      "episode": 316,
+      "mean_reward": 838.125,
+      "median_reward": 776.25,
+      "max_reward": 2196.0,
+      "n_episodes": 316,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2650000,
+      "episode": 317,
+      "mean_reward": 842.805,
+      "median_reward": 783.0,
+      "max_reward": 2196.0,
+      "n_episodes": 317,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2660000,
+      "episode": 317,
+      "mean_reward": 842.805,
+      "median_reward": 783.0,
+      "max_reward": 2196.0,
+      "n_episodes": 317,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2670000,
+      "episode": 317,
+      "mean_reward": 842.805,
+      "median_reward": 783.0,
+      "max_reward": 2196.0,
+      "n_episodes": 317,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2680000,
+      "episode": 318,
+      "mean_reward": 843.19,
+      "median_reward": 783.0,
+      "max_reward": 2196.0,
+      "n_episodes": 318,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 2690000,
+      "episode": 321,
+      "mean_reward": 849.925,
+      "median_reward": 807.75,
+      "max_reward": 2196.0,
+      "n_episodes": 321,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2700000,
+      "episode": 322,
+      "mean_reward": 851.515,
+      "median_reward": 807.75,
+      "max_reward": 2196.0,
+      "n_episodes": 322,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2710000,
+      "episode": 322,
+      "mean_reward": 851.515,
+      "median_reward": 807.75,
+      "max_reward": 2196.0,
+      "n_episodes": 322,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2720000,
+      "episode": 324,
+      "mean_reward": 864.265,
+      "median_reward": 813.0,
+      "max_reward": 2196.0,
+      "n_episodes": 324,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2730000,
+      "episode": 324,
+      "mean_reward": 864.265,
+      "median_reward": 813.0,
+      "max_reward": 2196.0,
+      "n_episodes": 324,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2740000,
+      "episode": 326,
+      "mean_reward": 881.065,
+      "median_reward": 847.5,
+      "max_reward": 2196.0,
+      "n_episodes": 326,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2750000,
+      "episode": 326,
+      "mean_reward": 881.065,
+      "median_reward": 847.5,
+      "max_reward": 2196.0,
+      "n_episodes": 326,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2760000,
+      "episode": 326,
+      "mean_reward": 881.065,
+      "median_reward": 847.5,
+      "max_reward": 2196.0,
+      "n_episodes": 326,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2770000,
+      "episode": 327,
+      "mean_reward": 881.08,
+      "median_reward": 847.5,
+      "max_reward": 2196.0,
+      "n_episodes": 327,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2780000,
+      "episode": 327,
+      "mean_reward": 881.08,
+      "median_reward": 847.5,
+      "max_reward": 2196.0,
+      "n_episodes": 327,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2790000,
+      "episode": 330,
+      "mean_reward": 906.275,
+      "median_reward": 868.75,
+      "max_reward": 2196.0,
+      "n_episodes": 330,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2800000,
+      "episode": 332,
+      "mean_reward": 931.975,
+      "median_reward": 870.0,
+      "max_reward": 2721.5,
+      "n_episodes": 332,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2810000,
+      "episode": 333,
+      "mean_reward": 933.735,
+      "median_reward": 876.0,
+      "max_reward": 2721.5,
+      "n_episodes": 333,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 2820000,
+      "episode": 334,
+      "mean_reward": 931.525,
+      "median_reward": 876.0,
+      "max_reward": 2721.5,
+      "n_episodes": 334,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2830000,
+      "episode": 334,
+      "mean_reward": 931.525,
+      "median_reward": 876.0,
+      "max_reward": 2721.5,
+      "n_episodes": 334,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2840000,
+      "episode": 334,
+      "mean_reward": 931.525,
+      "median_reward": 876.0,
+      "max_reward": 2721.5,
+      "n_episodes": 334,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2850000,
+      "episode": 339,
+      "mean_reward": 913.145,
+      "median_reward": 862.25,
+      "max_reward": 2721.5,
+      "n_episodes": 339,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2860000,
+      "episode": 342,
+      "mean_reward": 929.92,
+      "median_reward": 869.75,
+      "max_reward": 2721.5,
+      "n_episodes": 342,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2870000,
+      "episode": 345,
+      "mean_reward": 921.42,
+      "median_reward": 854.5,
+      "max_reward": 2721.5,
+      "n_episodes": 345,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2880000,
+      "episode": 349,
+      "mean_reward": 936.425,
+      "median_reward": 862.25,
+      "max_reward": 2721.5,
+      "n_episodes": 349,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2890000,
+      "episode": 354,
+      "mean_reward": 944.785,
+      "median_reward": 862.25,
+      "max_reward": 2721.5,
+      "n_episodes": 354,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 2900000,
+      "episode": 357,
+      "mean_reward": 945.07,
+      "median_reward": 836.0,
+      "max_reward": 2721.5,
+      "n_episodes": 357,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2910000,
+      "episode": 363,
+      "mean_reward": 942.655,
+      "median_reward": 801.75,
+      "max_reward": 2721.5,
+      "n_episodes": 363,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2920000,
+      "episode": 369,
+      "mean_reward": 925.45,
+      "median_reward": 786.5,
+      "max_reward": 2721.5,
+      "n_episodes": 369,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2930000,
+      "episode": 373,
+      "mean_reward": 933.365,
+      "median_reward": 813.75,
+      "max_reward": 2721.5,
+      "n_episodes": 373,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 2940000,
+      "episode": 377,
+      "mean_reward": 947.235,
+      "median_reward": 842.5,
+      "max_reward": 2721.5,
+      "n_episodes": 377,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 2950000,
+      "episode": 379,
+      "mean_reward": 976.915,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 379,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 2960000,
+      "episode": 381,
+      "mean_reward": 978.465,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 381,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2970000,
+      "episode": 381,
+      "mean_reward": 978.465,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 381,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2980000,
+      "episode": 382,
+      "mean_reward": 981.895,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 382,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 2990000,
+      "episode": 385,
+      "mean_reward": 992.135,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 385,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3000000,
+      "episode": 388,
+      "mean_reward": 999.68,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 388,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3010000,
+      "episode": 388,
+      "mean_reward": 999.68,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 388,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3020000,
+      "episode": 389,
+      "mean_reward": 987.51,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 389,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 3030000,
+      "episode": 390,
+      "mean_reward": 982.115,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 390,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3040000,
+      "episode": 392,
+      "mean_reward": 984.71,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 392,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3050000,
+      "episode": 393,
+      "mean_reward": 987.32,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 393,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3060000,
+      "episode": 394,
+      "mean_reward": 991.955,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 394,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3070000,
+      "episode": 396,
+      "mean_reward": 1000.48,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 396,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3080000,
+      "episode": 399,
+      "mean_reward": 996.875,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 399,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3090000,
+      "episode": 400,
+      "mean_reward": 990.645,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 400,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3100000,
+      "episode": 401,
+      "mean_reward": 1003.93,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 401,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3110000,
+      "episode": 402,
+      "mean_reward": 1010.195,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 402,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3120000,
+      "episode": 402,
+      "mean_reward": 1010.195,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 402,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3130000,
+      "episode": 404,
+      "mean_reward": 1014.64,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 404,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3140000,
+      "episode": 406,
+      "mean_reward": 1026.59,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 406,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3150000,
+      "episode": 406,
+      "mean_reward": 1026.59,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 406,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3160000,
+      "episode": 407,
+      "mean_reward": 1037.445,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 407,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3170000,
+      "episode": 407,
+      "mean_reward": 1037.445,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 407,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3180000,
+      "episode": 408,
+      "mean_reward": 1045.15,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 408,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3190000,
+      "episode": 408,
+      "mean_reward": 1045.15,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 408,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3200000,
+      "episode": 409,
+      "mean_reward": 1053.4,
+      "median_reward": 876.0,
+      "max_reward": 3709.0,
+      "n_episodes": 409,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3210000,
+      "episode": 411,
+      "mean_reward": 1046.96,
+      "median_reward": 876.0,
+      "max_reward": 3709.0,
+      "n_episodes": 411,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3220000,
+      "episode": 411,
+      "mean_reward": 1046.96,
+      "median_reward": 876.0,
+      "max_reward": 3709.0,
+      "n_episodes": 411,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3230000,
+      "episode": 411,
+      "mean_reward": 1046.96,
+      "median_reward": 876.0,
+      "max_reward": 3709.0,
+      "n_episodes": 411,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3240000,
+      "episode": 412,
+      "mean_reward": 1033.46,
+      "median_reward": 870.75,
+      "max_reward": 3709.0,
+      "n_episodes": 412,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3250000,
+      "episode": 415,
+      "mean_reward": 1022.78,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 415,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3260000,
+      "episode": 416,
+      "mean_reward": 1020.32,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 416,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3270000,
+      "episode": 420,
+      "mean_reward": 1029.895,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 420,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3280000,
+      "episode": 420,
+      "mean_reward": 1029.895,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 420,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3290000,
+      "episode": 420,
+      "mean_reward": 1029.895,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 420,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3300000,
+      "episode": 421,
+      "mean_reward": 1027.215,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 421,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3310000,
+      "episode": 423,
+      "mean_reward": 1039.295,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 423,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3320000,
+      "episode": 424,
+      "mean_reward": 1032.745,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 424,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3330000,
+      "episode": 425,
+      "mean_reward": 1030.65,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 425,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3340000,
+      "episode": 428,
+      "mean_reward": 1021.405,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 428,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3350000,
+      "episode": 428,
+      "mean_reward": 1021.405,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 428,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3360000,
+      "episode": 428,
+      "mean_reward": 1021.405,
+      "median_reward": 856.0,
+      "max_reward": 3709.0,
+      "n_episodes": 428,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3370000,
+      "episode": 432,
+      "mean_reward": 1023.595,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 432,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3380000,
+      "episode": 432,
+      "mean_reward": 1023.595,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 432,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3390000,
+      "episode": 432,
+      "mean_reward": 1023.595,
+      "median_reward": 862.0,
+      "max_reward": 3709.0,
+      "n_episodes": 432,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3400000,
+      "episode": 434,
+      "mean_reward": 1042.175,
+      "median_reward": 869.25,
+      "max_reward": 3709.0,
+      "n_episodes": 434,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3410000,
+      "episode": 437,
+      "mean_reward": 1063.29,
+      "median_reward": 873.75,
+      "max_reward": 3709.0,
+      "n_episodes": 437,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3420000,
+      "episode": 440,
+      "mean_reward": 1062.545,
+      "median_reward": 878.0,
+      "max_reward": 3709.0,
+      "n_episodes": 440,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 3430000,
+      "episode": 443,
+      "mean_reward": 1080.08,
+      "median_reward": 881.5,
+      "max_reward": 3709.0,
+      "n_episodes": 443,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3440000,
+      "episode": 446,
+      "mean_reward": 1076.805,
+      "median_reward": 881.5,
+      "max_reward": 3709.0,
+      "n_episodes": 446,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3450000,
+      "episode": 448,
+      "mean_reward": 1087.445,
+      "median_reward": 890.75,
+      "max_reward": 3709.0,
+      "n_episodes": 448,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3460000,
+      "episode": 451,
+      "mean_reward": 1096.08,
+      "median_reward": 890.75,
+      "max_reward": 3709.0,
+      "n_episodes": 451,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3470000,
+      "episode": 455,
+      "mean_reward": 1109.71,
+      "median_reward": 890.75,
+      "max_reward": 3709.0,
+      "n_episodes": 455,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3480000,
+      "episode": 458,
+      "mean_reward": 1092.91,
+      "median_reward": 890.75,
+      "max_reward": 3709.0,
+      "n_episodes": 458,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3490000,
+      "episode": 459,
+      "mean_reward": 1102.87,
+      "median_reward": 890.75,
+      "max_reward": 3709.0,
+      "n_episodes": 459,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3500000,
+      "episode": 460,
+      "mean_reward": 1112.09,
+      "median_reward": 899.75,
+      "max_reward": 3709.0,
+      "n_episodes": 460,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3510000,
+      "episode": 463,
+      "mean_reward": 1136.06,
+      "median_reward": 915.5,
+      "max_reward": 3709.0,
+      "n_episodes": 463,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3520000,
+      "episode": 468,
+      "mean_reward": 1160.955,
+      "median_reward": 963.5,
+      "max_reward": 3709.0,
+      "n_episodes": 468,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3530000,
+      "episode": 470,
+      "mean_reward": 1164.075,
+      "median_reward": 963.5,
+      "max_reward": 3709.0,
+      "n_episodes": 470,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3540000,
+      "episode": 471,
+      "mean_reward": 1185.63,
+      "median_reward": 979.0,
+      "max_reward": 3709.0,
+      "n_episodes": 471,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 3550000,
+      "episode": 475,
+      "mean_reward": 1193.44,
+      "median_reward": 973.0,
+      "max_reward": 3709.0,
+      "n_episodes": 475,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3560000,
+      "episode": 475,
+      "mean_reward": 1193.44,
+      "median_reward": 973.0,
+      "max_reward": 3709.0,
+      "n_episodes": 475,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3570000,
+      "episode": 476,
+      "mean_reward": 1188.465,
+      "median_reward": 959.5,
+      "max_reward": 3709.0,
+      "n_episodes": 476,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3580000,
+      "episode": 479,
+      "mean_reward": 1157.055,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 479,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 3590000,
+      "episode": 480,
+      "mean_reward": 1157.02,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 480,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3600000,
+      "episode": 480,
+      "mean_reward": 1157.02,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 480,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3610000,
+      "episode": 484,
+      "mean_reward": 1165.675,
+      "median_reward": 973.0,
+      "max_reward": 3318.0,
+      "n_episodes": 484,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3620000,
+      "episode": 485,
+      "mean_reward": 1170.455,
+      "median_reward": 985.5,
+      "max_reward": 3318.0,
+      "n_episodes": 485,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3630000,
+      "episode": 486,
+      "mean_reward": 1177.405,
+      "median_reward": 1013.5,
+      "max_reward": 3318.0,
+      "n_episodes": 486,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3640000,
+      "episode": 487,
+      "mean_reward": 1183.475,
+      "median_reward": 1037.0,
+      "max_reward": 3318.0,
+      "n_episodes": 487,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3650000,
+      "episode": 487,
+      "mean_reward": 1183.475,
+      "median_reward": 1037.0,
+      "max_reward": 3318.0,
+      "n_episodes": 487,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3660000,
+      "episode": 489,
+      "mean_reward": 1194.575,
+      "median_reward": 1060.0,
+      "max_reward": 3318.0,
+      "n_episodes": 489,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3670000,
+      "episode": 490,
+      "mean_reward": 1200.195,
+      "median_reward": 1074.0,
+      "max_reward": 3318.0,
+      "n_episodes": 490,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3680000,
+      "episode": 493,
+      "mean_reward": 1200.785,
+      "median_reward": 1060.0,
+      "max_reward": 3318.0,
+      "n_episodes": 493,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3690000,
+      "episode": 493,
+      "mean_reward": 1200.785,
+      "median_reward": 1060.0,
+      "max_reward": 3318.0,
+      "n_episodes": 493,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3700000,
+      "episode": 495,
+      "mean_reward": 1182.925,
+      "median_reward": 997.0,
+      "max_reward": 3318.0,
+      "n_episodes": 495,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3710000,
+      "episode": 498,
+      "mean_reward": 1171.27,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 498,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3720000,
+      "episode": 498,
+      "mean_reward": 1171.27,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 498,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3730000,
+      "episode": 500,
+      "mean_reward": 1191.88,
+      "median_reward": 984.0,
+      "max_reward": 3318.0,
+      "n_episodes": 500,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3740000,
+      "episode": 501,
+      "mean_reward": 1181.755,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 501,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3750000,
+      "episode": 501,
+      "mean_reward": 1181.755,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 501,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3760000,
+      "episode": 502,
+      "mean_reward": 1182.115,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 502,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3770000,
+      "episode": 505,
+      "mean_reward": 1182.43,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 505,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3780000,
+      "episode": 505,
+      "mean_reward": 1182.43,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 505,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3790000,
+      "episode": 506,
+      "mean_reward": 1169.095,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 506,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3800000,
+      "episode": 509,
+      "mean_reward": 1176.22,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 509,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3810000,
+      "episode": 510,
+      "mean_reward": 1175.545,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 510,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3820000,
+      "episode": 510,
+      "mean_reward": 1175.545,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 510,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 3830000,
+      "episode": 512,
+      "mean_reward": 1195.36,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 512,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3840000,
+      "episode": 512,
+      "mean_reward": 1195.36,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 512,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3850000,
+      "episode": 514,
+      "mean_reward": 1171.93,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 514,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3860000,
+      "episode": 516,
+      "mean_reward": 1184.295,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 516,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3870000,
+      "episode": 517,
+      "mean_reward": 1178.12,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 517,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3880000,
+      "episode": 518,
+      "mean_reward": 1176.09,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 518,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3890000,
+      "episode": 518,
+      "mean_reward": 1176.09,
+      "median_reward": 959.5,
+      "max_reward": 3318.0,
+      "n_episodes": 518,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3900000,
+      "episode": 519,
+      "mean_reward": 1164.275,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 519,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3910000,
+      "episode": 519,
+      "mean_reward": 1164.275,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 519,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3920000,
+      "episode": 519,
+      "mean_reward": 1164.275,
+      "median_reward": 949.25,
+      "max_reward": 3318.0,
+      "n_episodes": 519,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 3930000,
+      "episode": 521,
+      "mean_reward": 1152.93,
+      "median_reward": 941.25,
+      "max_reward": 3318.0,
+      "n_episodes": 521,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3940000,
+      "episode": 521,
+      "mean_reward": 1152.93,
+      "median_reward": 941.25,
+      "max_reward": 3318.0,
+      "n_episodes": 521,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3950000,
+      "episode": 521,
+      "mean_reward": 1152.93,
+      "median_reward": 941.25,
+      "max_reward": 3318.0,
+      "n_episodes": 521,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3960000,
+      "episode": 522,
+      "mean_reward": 1150.47,
+      "median_reward": 941.25,
+      "max_reward": 3318.0,
+      "n_episodes": 522,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 3970000,
+      "episode": 524,
+      "mean_reward": 1145.685,
+      "median_reward": 930.0,
+      "max_reward": 3318.0,
+      "n_episodes": 524,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 3980000,
+      "episode": 526,
+      "mean_reward": 1144.915,
+      "median_reward": 930.0,
+      "max_reward": 3318.0,
+      "n_episodes": 526,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 3990000,
+      "episode": 526,
+      "mean_reward": 1144.915,
+      "median_reward": 930.0,
+      "max_reward": 3318.0,
+      "n_episodes": 526,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4000000,
+      "episode": 527,
+      "mean_reward": 1142.15,
+      "median_reward": 930.0,
+      "max_reward": 3318.0,
+      "n_episodes": 527,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4010000,
+      "episode": 528,
+      "mean_reward": 1138.85,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 528,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4020000,
+      "episode": 528,
+      "mean_reward": 1138.85,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 528,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4030000,
+      "episode": 528,
+      "mean_reward": 1138.85,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 528,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4040000,
+      "episode": 529,
+      "mean_reward": 1137.61,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 529,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4050000,
+      "episode": 529,
+      "mean_reward": 1137.61,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 529,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4060000,
+      "episode": 531,
+      "mean_reward": 1117.54,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 531,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4070000,
+      "episode": 533,
+      "mean_reward": 1119.58,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 533,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4080000,
+      "episode": 533,
+      "mean_reward": 1119.58,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 533,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4090000,
+      "episode": 533,
+      "mean_reward": 1119.58,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 533,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4100000,
+      "episode": 534,
+      "mean_reward": 1109.97,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 534,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4110000,
+      "episode": 534,
+      "mean_reward": 1109.97,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 534,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4120000,
+      "episode": 536,
+      "mean_reward": 1090.82,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 536,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4130000,
+      "episode": 536,
+      "mean_reward": 1090.82,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 536,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4140000,
+      "episode": 538,
+      "mean_reward": 1093.4,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 538,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4150000,
+      "episode": 538,
+      "mean_reward": 1093.4,
+      "median_reward": 920.5,
+      "max_reward": 3318.0,
+      "n_episodes": 538,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4160000,
+      "episode": 540,
+      "mean_reward": 1089.165,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 540,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4170000,
+      "episode": 542,
+      "mean_reward": 1066.57,
+      "median_reward": 872.5,
+      "max_reward": 3318.0,
+      "n_episodes": 542,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4180000,
+      "episode": 543,
+      "mean_reward": 1057.46,
+      "median_reward": 872.5,
+      "max_reward": 3318.0,
+      "n_episodes": 543,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4190000,
+      "episode": 547,
+      "mean_reward": 1057.78,
+      "median_reward": 896.5,
+      "max_reward": 3318.0,
+      "n_episodes": 547,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4200000,
+      "episode": 549,
+      "mean_reward": 1057.99,
+      "median_reward": 915.0,
+      "max_reward": 3318.0,
+      "n_episodes": 549,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4210000,
+      "episode": 553,
+      "mean_reward": 1029.92,
+      "median_reward": 915.0,
+      "max_reward": 2984.5,
+      "n_episodes": 553,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4220000,
+      "episode": 557,
+      "mean_reward": 1017.49,
+      "median_reward": 867.5,
+      "max_reward": 2984.5,
+      "n_episodes": 557,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4230000,
+      "episode": 558,
+      "mean_reward": 1012.61,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 558,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4240000,
+      "episode": 558,
+      "mean_reward": 1012.61,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 558,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4250000,
+      "episode": 559,
+      "mean_reward": 989.635,
+      "median_reward": 859.0,
+      "max_reward": 2984.5,
+      "n_episodes": 559,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4260000,
+      "episode": 559,
+      "mean_reward": 989.635,
+      "median_reward": 859.0,
+      "max_reward": 2984.5,
+      "n_episodes": 559,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4270000,
+      "episode": 561,
+      "mean_reward": 998.79,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 561,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4280000,
+      "episode": 563,
+      "mean_reward": 989.055,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 563,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4290000,
+      "episode": 563,
+      "mean_reward": 989.055,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 563,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4300000,
+      "episode": 564,
+      "mean_reward": 987.055,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 564,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4310000,
+      "episode": 565,
+      "mean_reward": 993.145,
+      "median_reward": 867.5,
+      "max_reward": 2984.5,
+      "n_episodes": 565,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4320000,
+      "episode": 566,
+      "mean_reward": 990.58,
+      "median_reward": 867.5,
+      "max_reward": 2984.5,
+      "n_episodes": 566,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4330000,
+      "episode": 566,
+      "mean_reward": 990.58,
+      "median_reward": 867.5,
+      "max_reward": 2984.5,
+      "n_episodes": 566,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4340000,
+      "episode": 568,
+      "mean_reward": 977.96,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 568,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4350000,
+      "episode": 569,
+      "mean_reward": 975.41,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 569,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4360000,
+      "episode": 570,
+      "mean_reward": 975.23,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 570,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4370000,
+      "episode": 570,
+      "mean_reward": 975.23,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 570,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4380000,
+      "episode": 570,
+      "mean_reward": 975.23,
+      "median_reward": 864.0,
+      "max_reward": 2984.5,
+      "n_episodes": 570,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4390000,
+      "episode": 574,
+      "mean_reward": 941.63,
+      "median_reward": 855.0,
+      "max_reward": 2386.0,
+      "n_episodes": 574,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4400000,
+      "episode": 575,
+      "mean_reward": 939.82,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 575,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4410000,
+      "episode": 576,
+      "mean_reward": 937.94,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 576,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4420000,
+      "episode": 576,
+      "mean_reward": 937.94,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 576,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4430000,
+      "episode": 580,
+      "mean_reward": 925.305,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 580,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4440000,
+      "episode": 581,
+      "mean_reward": 923.09,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 581,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4450000,
+      "episode": 582,
+      "mean_reward": 925.885,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 582,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4460000,
+      "episode": 582,
+      "mean_reward": 925.885,
+      "median_reward": 851.0,
+      "max_reward": 2386.0,
+      "n_episodes": 582,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4470000,
+      "episode": 584,
+      "mean_reward": 919.735,
+      "median_reward": 848.0,
+      "max_reward": 2386.0,
+      "n_episodes": 584,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4480000,
+      "episode": 584,
+      "mean_reward": 919.735,
+      "median_reward": 848.0,
+      "max_reward": 2386.0,
+      "n_episodes": 584,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4490000,
+      "episode": 585,
+      "mean_reward": 910.325,
+      "median_reward": 838.5,
+      "max_reward": 2386.0,
+      "n_episodes": 585,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4500000,
+      "episode": 585,
+      "mean_reward": 910.325,
+      "median_reward": 838.5,
+      "max_reward": 2386.0,
+      "n_episodes": 585,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4510000,
+      "episode": 586,
+      "mean_reward": 912.495,
+      "median_reward": 838.5,
+      "max_reward": 2386.0,
+      "n_episodes": 586,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4520000,
+      "episode": 586,
+      "mean_reward": 912.495,
+      "median_reward": 838.5,
+      "max_reward": 2386.0,
+      "n_episodes": 586,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4530000,
+      "episode": 589,
+      "mean_reward": 901.205,
+      "median_reward": 823.5,
+      "max_reward": 2386.0,
+      "n_episodes": 589,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4540000,
+      "episode": 589,
+      "mean_reward": 901.205,
+      "median_reward": 823.5,
+      "max_reward": 2386.0,
+      "n_episodes": 589,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4550000,
+      "episode": 589,
+      "mean_reward": 901.205,
+      "median_reward": 823.5,
+      "max_reward": 2386.0,
+      "n_episodes": 589,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4560000,
+      "episode": 590,
+      "mean_reward": 894.45,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 590,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4570000,
+      "episode": 590,
+      "mean_reward": 894.45,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 590,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4580000,
+      "episode": 591,
+      "mean_reward": 877.965,
+      "median_reward": 812.5,
+      "max_reward": 2386.0,
+      "n_episodes": 591,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4590000,
+      "episode": 593,
+      "mean_reward": 877.065,
+      "median_reward": 811.0,
+      "max_reward": 2386.0,
+      "n_episodes": 593,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4600000,
+      "episode": 593,
+      "mean_reward": 877.065,
+      "median_reward": 811.0,
+      "max_reward": 2386.0,
+      "n_episodes": 593,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4610000,
+      "episode": 595,
+      "mean_reward": 893.69,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 595,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4620000,
+      "episode": 596,
+      "mean_reward": 895.755,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 596,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4630000,
+      "episode": 596,
+      "mean_reward": 895.755,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 596,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4640000,
+      "episode": 597,
+      "mean_reward": 886.64,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 597,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4650000,
+      "episode": 598,
+      "mean_reward": 888.945,
+      "median_reward": 815.0,
+      "max_reward": 2386.0,
+      "n_episodes": 598,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4660000,
+      "episode": 600,
+      "mean_reward": 866.015,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 600,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4670000,
+      "episode": 600,
+      "mean_reward": 866.015,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 600,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4680000,
+      "episode": 600,
+      "mean_reward": 866.015,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 600,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4690000,
+      "episode": 602,
+      "mean_reward": 860.005,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 602,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4700000,
+      "episode": 602,
+      "mean_reward": 860.005,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 602,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4710000,
+      "episode": 603,
+      "mean_reward": 858.12,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 603,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4720000,
+      "episode": 604,
+      "mean_reward": 860.48,
+      "median_reward": 811.0,
+      "max_reward": 2186.0,
+      "n_episodes": 604,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 4730000,
+      "episode": 607,
+      "mean_reward": 841.965,
+      "median_reward": 807.75,
+      "max_reward": 1954.0,
+      "n_episodes": 607,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4740000,
+      "episode": 607,
+      "mean_reward": 841.965,
+      "median_reward": 807.75,
+      "max_reward": 1954.0,
+      "n_episodes": 607,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4750000,
+      "episode": 611,
+      "mean_reward": 835.93,
+      "median_reward": 807.75,
+      "max_reward": 1954.0,
+      "n_episodes": 611,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4760000,
+      "episode": 613,
+      "mean_reward": 822.39,
+      "median_reward": 805.25,
+      "max_reward": 1954.0,
+      "n_episodes": 613,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4770000,
+      "episode": 613,
+      "mean_reward": 822.39,
+      "median_reward": 805.25,
+      "max_reward": 1954.0,
+      "n_episodes": 613,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 4780000,
+      "episode": 614,
+      "mean_reward": 823.925,
+      "median_reward": 805.25,
+      "max_reward": 1954.0,
+      "n_episodes": 614,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4790000,
+      "episode": 616,
+      "mean_reward": 829.985,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 616,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4800000,
+      "episode": 616,
+      "mean_reward": 829.985,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 616,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4810000,
+      "episode": 616,
+      "mean_reward": 829.985,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 616,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4820000,
+      "episode": 617,
+      "mean_reward": 824.595,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 617,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4830000,
+      "episode": 618,
+      "mean_reward": 822.04,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 618,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4840000,
+      "episode": 618,
+      "mean_reward": 822.04,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 618,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4850000,
+      "episode": 619,
+      "mean_reward": 815.565,
+      "median_reward": 781.25,
+      "max_reward": 2181.5,
+      "n_episodes": 619,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 4860000,
+      "episode": 621,
+      "mean_reward": 829.675,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 621,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4870000,
+      "episode": 621,
+      "mean_reward": 829.675,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 621,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4880000,
+      "episode": 622,
+      "mean_reward": 833.52,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 622,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4890000,
+      "episode": 622,
+      "mean_reward": 833.52,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 622,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4900000,
+      "episode": 623,
+      "mean_reward": 826.35,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 623,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4910000,
+      "episode": 624,
+      "mean_reward": 832.315,
+      "median_reward": 817.0,
+      "max_reward": 2181.5,
+      "n_episodes": 624,
+      "current_level": "Level4-1"
+    },
+    {
+      "step": 4920000,
+      "episode": 626,
+      "mean_reward": 824.67,
+      "median_reward": 817.0,
+      "max_reward": 2181.5,
+      "n_episodes": 626,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4930000,
+      "episode": 628,
+      "mean_reward": 831.435,
+      "median_reward": 823.5,
+      "max_reward": 2181.5,
+      "n_episodes": 628,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4940000,
+      "episode": 628,
+      "mean_reward": 831.435,
+      "median_reward": 823.5,
+      "max_reward": 2181.5,
+      "n_episodes": 628,
+      "current_level": "Level1-2"
+    },
+    {
+      "step": 4950000,
+      "episode": 629,
+      "mean_reward": 823.58,
+      "median_reward": 823.5,
+      "max_reward": 2181.5,
+      "n_episodes": 629,
+      "current_level": "Level5-2"
+    },
+    {
+      "step": 4960000,
+      "episode": 630,
+      "mean_reward": 829.005,
+      "median_reward": 823.5,
+      "max_reward": 2181.5,
+      "n_episodes": 630,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4970000,
+      "episode": 633,
+      "mean_reward": 818.025,
+      "median_reward": 823.5,
+      "max_reward": 2181.5,
+      "n_episodes": 633,
+      "current_level": "Level4-2"
+    },
+    {
+      "step": 4980000,
+      "episode": 637,
+      "mean_reward": 808.19,
+      "median_reward": 817.0,
+      "max_reward": 2181.5,
+      "n_episodes": 637,
+      "current_level": "Level5-1"
+    },
+    {
+      "step": 4990000,
+      "episode": 639,
+      "mean_reward": 800.365,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 639,
+      "current_level": "Level1-1"
+    },
+    {
+      "step": 5000000,
+      "episode": 639,
+      "mean_reward": 800.365,
+      "median_reward": 811.75,
+      "max_reward": 2181.5,
+      "n_episodes": 639,
+      "current_level": "Level1-1"
+    }
+  ],
+  "final_stats": {
+    "total_episodes": 639,
+    "final_mean_reward": 800.365,
+    "level_episodes": {
+      "Level1-1": 114,
+      "Level1-2": 117,
+      "Level4-1": 97,
+      "Level4-2": 108,
+      "Level5-1": 99,
+      "Level5-2": 104
+    }
+  }
+}
