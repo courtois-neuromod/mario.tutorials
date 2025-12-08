@@ -269,31 +269,31 @@ def convolve_with_hrf(activations, tr, hrf_model='spm'):
 
     n_trs, n_features = activations.shape
 
-    # Create HRF kernel
+    # Create HRF kernel at TR resolution
     hrf_length = 32  # seconds
-    dt = 0.1  # sampling interval for HRF (100ms)
-    hrf_times = np.arange(0, hrf_length, dt)
+    oversampling = 16  # Higher oversampling for smoother HRF
 
     if hrf_model == 'spm':
-        hrf_kernel = spm_hrf(hrf_times, oversampling=1)
+        hrf_kernel = spm_hrf(tr, oversampling=oversampling, time_length=hrf_length)
     elif hrf_model == 'glover':
-        hrf_kernel = glover_hrf(hrf_times, oversampling=1)
+        hrf_kernel = glover_hrf(tr, oversampling=oversampling, time_length=hrf_length)
     else:
         # Default to SPM
-        hrf_kernel = spm_hrf(hrf_times, oversampling=1)
+        hrf_kernel = spm_hrf(tr, oversampling=oversampling, time_length=hrf_length)
 
-    # Resample HRF to match TR
-    from scipy.interpolate import interp1d
-    hrf_interp = interp1d(hrf_times, hrf_kernel, kind='linear', bounds_error=False, fill_value=0)
-    hrf_resampled = hrf_interp(np.arange(0, hrf_length, tr))
+    # Downsample HRF to TR resolution
+    # The HRF is generated at (tr / oversampling) resolution
+    # We need to take every oversampling-th point
+    hrf_at_tr = hrf_kernel[::oversampling]
 
     # Normalize HRF
-    hrf_resampled = hrf_resampled / hrf_resampled.sum()
+    if hrf_at_tr.sum() != 0:
+        hrf_at_tr = hrf_at_tr / hrf_at_tr.sum()
 
     # Convolve each feature
     convolved = np.zeros_like(activations)
     for i in range(n_features):
-        convolved[:, i] = convolve(activations[:, i], hrf_resampled, mode='same')
+        convolved[:, i] = convolve(activations[:, i], hrf_at_tr, mode='same')
 
     return convolved
 
@@ -335,6 +335,80 @@ def apply_pca(activations, n_components=50, variance_threshold=0.9):
     print(f"Using {pca.n_components_} components (explains {cumsum_var[-1]*100:.1f}% variance)")
 
     return activations_pca, pca, pca.explained_variance_ratio_
+
+
+def apply_pca_with_nan_handling(activations_dict, mask, n_components=50, variance_threshold=0.9):
+    """
+    Apply PCA to layer activations with proper NaN handling.
+
+    Parameters
+    ----------
+    activations_dict : dict
+        Dictionary mapping layer names to activation arrays (n_trs, n_features)
+        Arrays may contain NaN values for non-gameplay periods
+    mask : np.ndarray
+        Boolean mask indicating valid (non-NaN) TRs (n_trs,)
+    n_components : int, default=50
+        Number of PCA components to keep
+    variance_threshold : float, default=0.9
+        Variance threshold for determining minimum components
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'reduced_activations': dict mapping layer names to PCA-reduced arrays (n_trs, n_components)
+        - 'pca_models': dict mapping layer names to fitted PCA objects
+        - 'variance_explained': dict mapping layer names to variance ratios
+    """
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
+
+    print("\nApplying PCA to layer activations...")
+
+    reduced_activations = {}
+    pca_models = {}
+    variance_explained = {}
+
+    for layer_name, acts in activations_dict.items():
+        print(f"\n  {layer_name}:")
+
+        # Extract valid (non-NaN) samples for PCA fitting
+        valid_acts = acts[mask]
+
+        print(f"    Original features: {valid_acts.shape[1]}")
+
+        # Standardize
+        scaler = StandardScaler()
+        valid_acts_scaled = scaler.fit_transform(valid_acts)
+
+        # Fit PCA
+        n_comp = min(n_components, valid_acts.shape[1], valid_acts.shape[0])
+        pca = PCA(n_components=n_comp)
+        valid_acts_pca = pca.fit_transform(valid_acts_scaled)
+
+        # Check variance explained
+        cumsum_var = np.cumsum(pca.explained_variance_ratio_)
+        n_needed = np.searchsorted(cumsum_var, variance_threshold) + 1
+
+        print(f"    PCA: {n_needed} components explain {variance_threshold*100:.1f}% variance")
+        print(f"    Using {pca.n_components_} components (explains {cumsum_var[-1]*100:.1f}% variance)")
+
+        # Create output array with NaN for invalid TRs
+        reduced = np.full((acts.shape[0], pca.n_components_), np.nan)
+        reduced[mask] = valid_acts_pca
+
+        reduced_activations[layer_name] = reduced
+        pca_models[layer_name] = {'pca': pca, 'scaler': scaler}
+        variance_explained[layer_name] = pca.explained_variance_ratio_
+
+    print("\n✓ PCA complete")
+
+    return {
+        'reduced_activations': reduced_activations,
+        'pca_models': pca_models,
+        'variance_explained': variance_explained
+    }
 
 
 def create_simple_proxy_features(events_df, n_trs, tr):
@@ -723,3 +797,421 @@ def extract_layer_activations(model, level, sourcedata_path, max_steps=1000, dev
         activations_dict[layer_name] = np.array(activations_dict[layer_name])
 
     return activations_dict
+
+
+def load_replay_and_extract_frames(replay_path, sourcedata_path, level_name):
+    """
+    Load a replay file (.bk2) and extract all frames.
+
+    Parameters
+    ----------
+    replay_path : str or Path
+        Path to .bk2 replay file
+    sourcedata_path : Path
+        Path to sourcedata directory (for ROM)
+    level_name : str
+        Level name (e.g., 'w1l1' -> 'Level1-1')
+
+    Returns
+    -------
+    list of np.ndarray
+        List of RGB frames (H, W, 3)
+    """
+    import retro
+    import os
+
+    # Resolve symlinks (git-annex uses symlinks)
+    replay_path = Path(replay_path)
+    if replay_path.is_symlink():
+        replay_path = replay_path.resolve()
+
+    if not replay_path.exists():
+        raise FileNotFoundError(f"Replay file not found: {replay_path}")
+
+    # Convert level name from annotation format to retro format
+    # w1l1 -> Level1-1, w4l2 -> Level4-2, etc.
+    if level_name.startswith('w') and 'l' in level_name:
+        world = level_name[1:level_name.index('l')]
+        level = level_name[level_name.index('l')+1:]
+        state_name = f'Level{world}-{level}'
+    else:
+        state_name = level_name
+
+    print(f"    Level format: {level_name} -> {state_name}")
+
+    # Import ROM from custom path
+    rom_path = sourcedata_path / 'mario' / 'stimuli'
+    if rom_path.exists():
+        retro.data.Integrations.add_custom_path(str(rom_path))
+    else:
+        raise FileNotFoundError(f"ROM path not found: {rom_path}")
+
+    # Load the replay using retro.Movie
+    movie = retro.Movie(str(replay_path))
+
+    # Create environment with the replay
+    env = retro.make(
+        game='SuperMarioBros-Nes',
+        state=state_name,
+        inttype=retro.data.Integrations.ALL,
+        render_mode=None,
+        players=movie.players
+    )
+
+    # Configure movie with environment
+    movie.configure(state_name, env.em)
+
+    frames = []
+    obs, _ = env.reset()
+    frames.append(obs.copy())
+
+    step_count = 0
+    max_steps = 50000  # Safety limit
+
+    while movie.step():
+        if step_count >= max_steps:
+            print(f"    Warning: Reached max steps ({max_steps}), truncating replay")
+            break
+
+        # Get keys from movie
+        keys = []
+        for p in range(movie.players):
+            for i in range(env.num_buttons):
+                keys.append(movie.get_key(i, p))
+
+        # Step environment with replay actions
+        obs, reward, terminated, truncated, info = env.step(keys)
+        frames.append(obs.copy())
+        step_count += 1
+
+        if terminated or truncated:
+            break
+
+    env.close()
+    movie.close()
+
+    return frames
+
+
+def extract_activations_from_replay(model, replay_path, sourcedata_path, level_name,
+                                     frame_start=None, frame_stop=None, device='cpu'):
+    """
+    Extract RL activations from a replay file.
+
+    Parameters
+    ----------
+    model : SimpleCNN
+        Trained RL model
+    replay_path : str or Path
+        Path to .bk2 replay file
+    sourcedata_path : Path
+        Path to sourcedata directory
+    level_name : str
+        Level name (e.g., 'w1l1')
+    frame_start : int, optional
+        Start frame index (for sub-segment extraction)
+    frame_stop : int, optional
+        Stop frame index (for sub-segment extraction)
+    device : str, default='cpu'
+        Device for computation
+
+    Returns
+    -------
+    dict
+        Dictionary mapping layer names to activation arrays (n_frames, n_features)
+    """
+    # Load replay and extract frames
+    print(f"  Loading replay: {Path(replay_path).name}")
+    frames = load_replay_and_extract_frames(replay_path, sourcedata_path, level_name)
+
+    # Extract sub-segment if specified
+    if frame_start is not None or frame_stop is not None:
+        frame_start = frame_start or 0
+        frame_stop = frame_stop or len(frames)
+        frames = frames[int(frame_start):int(frame_stop)]
+
+    print(f"  Processing {len(frames)} frames...")
+
+    # Preprocess all frames
+    preprocessed = [preprocess_frame(f) for f in frames]
+
+    # Create frame stacks (4 consecutive frames per timepoint)
+    frame_stacks = []
+    for i in range(len(preprocessed)):
+        if i < 3:
+            # For first 3 frames, repeat first frame to fill stack
+            stack = [preprocessed[0]] * (3 - i) + preprocessed[:i+1]
+        else:
+            stack = preprocessed[i-3:i+1]
+        frame_stacks.append(np.stack(stack, axis=0))
+
+    frame_stacks = np.array(frame_stacks)  # (n_frames, 4, 84, 84)
+
+    # Extract activations
+    layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'linear']
+    activations = extract_activations_from_frames(
+        model, frame_stacks, layer_names, device=device, batch_size=32
+    )
+
+    return activations
+
+
+def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
+                               tr=1.49, device='cpu', apply_hrf=True):
+    """
+    Align RL activations to BOLD data using replay files and annotations.
+
+    This function:
+    1. Loads annotation files to find gym-retro_game segments
+    2. For each segment, loads the replay and extracts RL activations
+    3. Downsamples activations from 60Hz to TR
+    4. Masks inter-game periods with NaN
+    5. Applies HRF convolution (optional)
+
+    Parameters
+    ----------
+    model : SimpleCNN
+        Trained RL model
+    subject : str
+        Subject ID (e.g., 'sub-01')
+    session : str
+        Session ID (e.g., 'ses-010')
+    runs : list of str
+        List of run IDs (e.g., ['run-1', 'run-2', ...])
+    sourcedata_path : Path
+        Path to sourcedata directory
+    tr : float, default=1.49
+        Repetition time in seconds
+    device : str, default='cpu'
+        Device for computation
+    apply_hrf : bool, default=True
+        Whether to apply HRF convolution
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'activations': dict mapping layer names to arrays (n_trs_total, n_features)
+        - 'mask': boolean array indicating valid (gameplay) TRs (n_trs_total,)
+        - 'run_info': list of dicts with info per run
+    """
+    import pandas as pd
+    from pathlib import Path
+
+    print(f"\n{'='*70}")
+    print(f"Aligning RL activations to BOLD for {subject} {session}")
+    print(f"{'='*70}\n")
+
+    model.eval()
+    model.to(device)
+
+    layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'linear']
+
+    # Storage for all runs
+    all_run_activations = {layer: [] for layer in layer_names}
+    all_run_masks = []
+    run_info = []
+
+    for run in runs:
+        print(f"\nProcessing {run}:")
+        print("-" * 50)
+
+        # Normalize run format (run-1 -> run-01, or keep as is)
+        run_num = run.split('-')[1]
+        run_normalized = f"run-{int(run_num):02d}"
+
+        # Load events from mario/ (not mario.annotations)
+        events_path = (sourcedata_path / 'mario' / subject / session / 'func' /
+                      f"{subject}_{session}_task-mario_{run_normalized}_events.tsv")
+
+        if not events_path.exists():
+            print(f"  ⚠ Events file not found: {events_path}")
+            continue
+
+        events_df = pd.read_csv(events_path, sep='\t')
+
+        # Find gym-retro_game trials
+        game_trials = events_df[events_df['trial_type'] == 'gym-retro_game'].copy()
+
+        if len(game_trials) == 0:
+            print(f"  ⚠ No gym-retro_game trials found in {run}")
+            continue
+
+        print(f"  Found {len(game_trials)} game trial(s)")
+
+        # Calculate durations from onset differences (or use end of run for last trial)
+        # Get run duration from BOLD image or use last event
+        # For now, estimate from next event onset
+        game_trials = game_trials.reset_index(drop=True)
+        durations = []
+        for idx in range(len(game_trials)):
+            if idx < len(game_trials) - 1:
+                # Duration = next trial onset - current onset
+                duration = game_trials.loc[idx + 1, 'onset'] - game_trials.loc[idx, 'onset']
+            else:
+                # Last trial: estimate from subsequent events or use default
+                all_subsequent = events_df[events_df['onset'] > game_trials.loc[idx, 'onset']]
+                if len(all_subsequent) > 0:
+                    duration = all_subsequent['onset'].min() - game_trials.loc[idx, 'onset']
+                else:
+                    # Default to 60 seconds if no subsequent events
+                    duration = 60.0
+            durations.append(duration)
+
+        game_trials['duration'] = durations
+
+        # Get run duration
+        run_duration = events_df['onset'].max() + 10.0  # Add buffer
+        n_trs = int(np.ceil(run_duration / tr))
+
+        print(f"  Run duration: {run_duration:.2f}s → {n_trs} TRs")
+
+        # Initialize activations for this run (will be NaN for non-game periods)
+        # Determine feature dimensions from first segment
+        run_activations = None
+        run_mask = np.zeros(n_trs, dtype=bool)
+
+        # Process each game trial
+        for bk2_idx, trial in game_trials.iterrows():
+            level = trial['level']
+            onset = trial['onset']
+            duration = trial['duration']
+            replay_file = trial['stim_file']
+
+            print(f"\n  Repetition {bk2_idx}: {level}")
+            print(f"    Onset: {onset:.2f}s, Duration: {duration:.2f}s")
+
+            # Construct replay path
+            replay_path = sourcedata_path / 'mario' / replay_file
+
+            if not replay_path.exists():
+                print(f"    ⚠ Replay file not found: {replay_path}")
+                continue
+
+            # Extract activations from this trial (full replay)
+            try:
+                segment_acts = extract_activations_from_replay(
+                    model, replay_path, sourcedata_path, level,
+                    frame_start=None, frame_stop=None, device=device
+                )
+            except Exception as e:
+                print(f"    ⚠ Error extracting activations: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+
+            # Downsample to TR
+            # Frames are at 60Hz, so frame times relative to segment onset
+            n_frames = list(segment_acts.values())[0].shape[0]
+            frame_times = np.arange(n_frames) / 60.0  # 60 Hz
+
+            print(f"    Extracted {n_frames} frames → downsampling to TR...")
+
+            # Downsample each layer
+            segment_acts_downsampled = {}
+            for layer in layer_names:
+                downsampled = downsample_activations_to_tr(
+                    segment_acts[layer], frame_times, tr, duration
+                )
+                segment_acts_downsampled[layer] = downsampled
+
+            # Determine which TRs this segment occupies
+            tr_start_idx = int(np.floor(onset / tr))
+            tr_end_idx = tr_start_idx + downsampled.shape[0]
+
+            # Clip to run length
+            tr_end_idx = min(tr_end_idx, n_trs)
+            n_trs_segment = tr_end_idx - tr_start_idx
+
+            print(f"    → {n_trs_segment} TRs (indices {tr_start_idx}-{tr_end_idx})")
+
+            # Initialize run_activations if first segment
+            if run_activations is None:
+                n_features = {layer: segment_acts_downsampled[layer].shape[1]
+                             for layer in layer_names}
+                run_activations = {layer: np.full((n_trs, n_features[layer]), np.nan)
+                                  for layer in layer_names}
+
+            # Place downsampled activations in run array
+            for layer in layer_names:
+                # Make sure we don't exceed array bounds
+                acts_to_place = segment_acts_downsampled[layer][:n_trs_segment]
+                run_activations[layer][tr_start_idx:tr_end_idx] = acts_to_place
+
+            # Update mask
+            run_mask[tr_start_idx:tr_end_idx] = True
+
+        # Store run results
+        if run_activations is not None:
+            for layer in layer_names:
+                all_run_activations[layer].append(run_activations[layer])
+            all_run_masks.append(run_mask)
+
+            run_info.append({
+                'run': run,
+                'n_trs': n_trs,
+                'n_valid_trs': run_mask.sum(),
+                'n_segments': len(game_segments)
+            })
+
+            print(f"\n  ✓ {run}: {run_mask.sum()}/{n_trs} TRs with gameplay")
+
+    # Check if any runs were processed successfully
+    if len(all_run_masks) == 0:
+        print(f"\n{'='*70}")
+        print("❌ ERROR: No runs were successfully processed!")
+        print(f"{'='*70}\n")
+        print("Possible issues:")
+        print("  1. Annotation files not found")
+        print("  2. No gym-retro_game segments in annotation files")
+        print("  3. Replay files (.bk2) not found")
+        print("  4. Error during activation extraction")
+        print("\nPlease check the error messages above.")
+        raise ValueError("No valid runs to process. Check annotation and replay files.")
+
+    # Concatenate all runs
+    print(f"\n{'='*70}")
+    print("Concatenating runs...")
+
+    concatenated_activations = {}
+    for layer in layer_names:
+        concatenated_activations[layer] = np.concatenate(all_run_activations[layer], axis=0)
+
+    concatenated_mask = np.concatenate(all_run_masks, axis=0)
+
+    total_trs = concatenated_mask.shape[0]
+    valid_trs = concatenated_mask.sum()
+
+    print(f"  Total TRs: {total_trs}")
+    print(f"  Valid TRs (gameplay): {valid_trs} ({valid_trs/total_trs*100:.1f}%)")
+
+    # Apply HRF convolution if requested
+    if apply_hrf:
+        print("\nApplying HRF convolution...")
+        for layer in layer_names:
+            # Only convolve valid (non-NaN) activations
+            # We'll convolve the entire timeseries but NaNs will remain NaN
+            acts = concatenated_activations[layer].copy()
+
+            # Replace NaN with 0 for convolution
+            acts_filled = np.nan_to_num(acts, nan=0.0)
+
+            # Convolve
+            acts_convolved = convolve_with_hrf(acts_filled, tr, hrf_model='spm')
+
+            # Restore NaN mask
+            acts_convolved[~concatenated_mask] = np.nan
+
+            concatenated_activations[layer] = acts_convolved
+
+        print("  ✓ HRF convolution complete")
+
+    print(f"\n{'='*70}")
+    print("✓ Alignment complete!")
+    print(f"{'='*70}\n")
+
+    return {
+        'activations': concatenated_activations,
+        'mask': concatenated_mask,
+        'run_info': run_info
+    }

@@ -205,7 +205,8 @@ def load_and_prepare_bold(bold_imgs, mask_img, confounds_list=None,
 
 
 def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
-                                 train_indices, test_indices, alphas=None):
+                                 train_indices, test_indices, alphas=None,
+                                 valid_mask=None):
     """
     Fit encoding models for each layer separately.
 
@@ -223,6 +224,9 @@ def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
         Indices for testing
     alphas : array-like, optional
         Alpha values for ridge regression
+    valid_mask : np.ndarray, optional
+        Boolean mask indicating valid (non-NaN) samples (n_samples,)
+        If provided, only valid samples will be used for training/testing
 
     Returns
     -------
@@ -244,6 +248,30 @@ def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
         X_test = activations[test_indices]
         y_train = bold_data[train_indices]
         y_test = bold_data[test_indices]
+
+        # Handle NaN masking if provided
+        if valid_mask is not None:
+            # Get valid samples in train/test sets
+            train_valid = valid_mask[train_indices]
+            test_valid = valid_mask[test_indices]
+
+            # Check if activations contain NaNs
+            has_nan = np.isnan(X_train).any()
+
+            if has_nan or not train_valid.all():
+                # Filter to valid samples only
+                X_train = X_train[train_valid]
+                y_train = y_train[train_valid]
+                X_test = X_test[test_valid]
+                y_test = y_test[test_valid]
+
+                print(f"  Using {train_valid.sum()}/{len(train_valid)} train samples")
+                print(f"  Using {test_valid.sum()}/{len(test_valid)} test samples")
+
+        # Check if we have any valid samples
+        if len(X_train) == 0 or len(X_test) == 0:
+            print(f"  ⚠ No valid samples for {layer_name}, skipping...")
+            continue
 
         # Create and fit model
         model = RidgeEncodingModel(alphas=alphas, cv=3, standardize=True)
