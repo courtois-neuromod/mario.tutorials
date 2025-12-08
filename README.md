@@ -21,12 +21,7 @@ A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod
 
 ## Overview
 
-This tutorial demonstrates a complete fMRI analysis pipeline from data exploration to brain encoding, following methodologies inspired from:
-- [**shinobi_fmri**](https://github.com/courtois-neuromod/shinobi_fmri): Session-level GLM modeling and visualization ([**reference**](https://osf.io/preprints/psyarxiv/uakq9_v3))
-- [**mario_generalization**](https://github.com/courtois-neuromod/mario_generalization): RL agent training and brain encoding ([**reference**](https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf))
-
-**Scope**: Single subject (sub-01), single session (ses-010) - optimized for laptop execution (~30-45 minutes)
-
+The CNeuromod Mario subdataset is part of the Courtois Neuromod databank. More information can be found [here](https://docs.cneuromod.ca/en/latest/DATASETS.html#mario). The dataset itself is openly available via datalad, and can be explored on [GitHub](https://github.com/courtois-neuromod/mario).
 
 ### Glossary
 
@@ -36,6 +31,15 @@ This tutorial demonstrates a complete fMRI analysis pipeline from data explorati
 - **Level**: Levels are grouped by world. Their name is written a w1l1 (world-1 level-1) or Level1-1 (in the SuperMarioBros-Nes gym-retro implementation)
 - **Scene**: A segment of a level, defined from set boundaries on the horizontal axis. Their name are written as w1l1s1 (world-1 level-1 scene-1). Scenes and clips are generated via mario.scenes.
 - **Clip**: A single attempt over a scene. Identified with a clip-code constituted of 14 numbers as follows : AAABBCCDDDDDDD with AAA representing the session, BB the run, CC the index of the repetition within the run, and DDDDDDD the index of the first frame corresponding to that clip, within the repetition.
+
+## Tutorials
+
+This tutorial demonstrates a complete fMRI analysis pipeline from data exploration to brain encoding, following methodologies inspired from:
+- [**shinobi_fmri**](https://github.com/courtois-neuromod/shinobi_fmri): Session-level GLM modeling and visualization ([**reference**](https://osf.io/preprints/psyarxiv/uakq9_v3))
+- [**mario_generalization**](https://github.com/courtois-neuromod/mario_generalization): RL agent training and brain encoding ([**reference**](https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf))
+
+**Scope**: Single subject (sub-01), single session (ses-010) - optimized for laptop execution
+
 
 ## Installation
 
@@ -48,7 +52,8 @@ This tutorial demonstrates a complete fMRI analysis pipeline from data explorati
 
 ### Platform-Specific Setup
 
-#### Linux
+#### Linux (or Windows via WSL)
+**Note**: To run this tutorial on Windows we recommend Windows Subsystem for Linux (WSL). If you don't have WSL installed, follow the [official WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 ```bash
 # Install DataLad (Ubuntu/Debian)
@@ -59,6 +64,7 @@ sudo apt-get install datalad
 pip install datalad
 
 # Navigate to tutorial directory
+git clone git@github.com:courtois-neuromod/mario.tutorials
 cd mario.tutorials
 
 # Run setup script
@@ -93,35 +99,14 @@ bash install_mario_datasets.sh
 source venv/bin/activate
 ```
 
-#### Windows (via WSL)
-
-**Note**: This tutorial requires Windows Subsystem for Linux (WSL). If you don't have WSL installed, follow the [official WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install).
-
-```bash
-# Open WSL terminal (Ubuntu recommended)
-# Install DataLad
-sudo apt-get update
-sudo apt-get install datalad
-
-# Navigate to tutorial directory
-cd mario.tutorials
-
-# Run setup script
-bash setup_environment.sh
-
-# Install mario datasets
-bash install_mario_datasets.sh
-
-# Activate environment
-source venv/bin/activate
-```
 
 ### 2. Ensure Data Availability
 
 Required data (should be in `../sourcedata/`):
 - `mario/sub-01/ses-010/` - Raw BIDS data
 - `mario.fmriprep/sub-01/ses-010/` - Preprocessed fMRI
-- `mario.annotations/annotations/sub-01/ses-010/` - Behavioral annotations
+- `mario.annotations/sub-01/ses-010/` - Behavioral annotations
+- `mario.replays/sub-01/ses-010/` - Replay files, including game metadata, videos, variables and RAM dumps
 - `cneuromod.processed/smriprep/sub-01/anat/` - Anatomical data
 
 Total: ~7-8 GB for single session
@@ -141,10 +126,7 @@ Navigate to the `notebooks/` directory and open the tutorials in order.
 ### Notebooks
 
 The tutorial is organized into four main notebooks:
-# Define constants
-SUBJECT = 'sub-01'
-SESSION = 'ses-010'
-TR = 1.49
+
 | Notebook | Description | Duration |
 |----------|-------------|----------|
 | `00_dataset_overview.ipynb` | Dataset exploration and behavioral annotations | 15 min |
@@ -245,7 +227,7 @@ See `requirements.txt` for full list. Key packages:
 - Task: Play Super Mario Bros (NES) naturally
 - Subjects: 5 (sub-01, sub-02, sub-03, sub-05, sub-06)
 - Sessions: 21-29 per subject
-- Runs: Variable per session, ~10-50 minutes each (median ~40 min)
+- Runs: Variable per session, ~10 minutes each
 - TR: 1.49 seconds
 - Levels: 22 levels across 8 worlds:
   - World 1: w1l1, w1l2, w1l3
