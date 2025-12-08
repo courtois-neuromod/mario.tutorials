@@ -1,6 +1,23 @@
+
 # Super Mario Bros. fMRI Dataset - Complete Tutorial
 
 A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod Mario dataset, combining session-level GLM analysis, brain map visualization, RL agent training, and brain encoding models.
+
+<div align="center">
+
+<img src="images/logo_neuromod_black.png" width="300">
+<img src="images/Universite_de_Montreal_logo.png" width="100">
+&nbsp;&nbsp;&nbsp;&nbsp;
+<img src="images/IUGM_logo_noir.png" width="100">
+
+<br><br>
+
+<img src="images/SuperMarioBros_homescreen.jpg" width="600">
+
+---
+
+</div>
+
 
 ## Overview
 
