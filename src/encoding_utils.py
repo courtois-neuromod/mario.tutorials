@@ -41,7 +41,7 @@ class RidgeEncodingModel:
         self.cv = cv
         self.standardize = standardize
 
-        self.ridge = RidgeCV(alphas=alphas, cv=cv, store_cv_values=True)
+        self.ridge = RidgeCV(alphas=alphas, cv=cv)
         self.feature_scaler = StandardScaler() if standardize else None
         self.target_scaler = StandardScaler() if standardize else None
 
