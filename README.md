@@ -4,9 +4,9 @@ A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod
 
 ## Overview
 
-This tutorial demonstrates a complete fMRI analysis pipeline from data exploration to brain encoding, following methodologies from:
-- **shinobi_fmri**: Session-level GLM modeling and visualization
-- **mario_generalization**: RL agent training and brain encoding
+This tutorial demonstrates a complete fMRI analysis pipeline from data exploration to brain encoding, following methodologies inspired from:
+- [**shinobi_fmri**](https://github.com/courtois-neuromod/shinobi_fmri): Session-level GLM modeling and visualization ([**reference**](https://osf.io/preprints/psyarxiv/uakq9_v3))
+- [**mario_generalization**](https://github.com/courtois-neuromod/mario_generalization): RL agent training and brain encoding ([**reference**](https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf))
 
 **Scope**: Single subject (sub-01), single session (ses-010) - optimized for laptop execution (~30-45 minutes)
 
@@ -114,7 +114,10 @@ Navigate to the `notebooks/` directory and open the tutorials in order.
 ### Notebooks
 
 The tutorial is organized into four main notebooks:
-
+# Define constants
+SUBJECT = 'sub-01'
+SESSION = 'ses-010'
+TR = 1.49
 | Notebook | Description | Duration |
 |----------|-------------|----------|
 | `00_dataset_overview.ipynb` | Dataset exploration and behavioral annotations | 15 min |
@@ -174,7 +177,7 @@ See `src/README.md` for detailed documentation of each module.
 
 ## Key Features
 
-### GLM Analysis (shinobi_fmri style)
+### GLM Analysis
 - **Confound strategy**: 24 motion params + WM/CSF + global signal
 - **Models**:
   - Simple actions (one at a time)
@@ -184,7 +187,7 @@ See `src/README.md` for detailed documentation of each module.
 - **Session-level aggregation**: Fixed-effects across runs
 - **HRF**: SPM canonical, AR(1) noise model
 
-### Brain Encoding (mario_generalization style)
+### Brain Encoding
 - **RL Agent**: 4-layer CNN (PPO architecture)
 - **Training options**:
   - Quick: Imitation learning (~5 min)
