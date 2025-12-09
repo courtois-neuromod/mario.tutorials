@@ -415,19 +415,16 @@ def aggregate_runs_fixed_effects(contrast_maps_list, variance_maps_list):
     return fixed_fx
 
 
-def plot_event_frequencies(session_events, button_events_count, game_events_count,
-                           subject, session, figsize=(16, 6)):
+def plot_event_frequencies(session_events, replay_metadata, subject, session, figsize=(16, 6)):
     """
-    Plot event frequency breakdown.
+    Plot event frequency breakdown with colored bars and replay statistics.
 
     Parameters
     ----------
     session_events : pd.DataFrame
         All events across session
-    button_events_count : int
-        Number of button press events
-    game_events_count : int
-        Number of game events
+    replay_metadata : list of dict
+        Replay metadata from mario.replays for this session
     subject : str
         Subject ID
     session : str
@@ -439,31 +436,96 @@ def plot_event_frequencies(session_events, button_events_count, game_events_coun
     -------
     matplotlib.figure.Figure
     """
+    import pandas as pd
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
-    # Event frequencies
-    event_counts = session_events['trial_type'].value_counts().head(15)
-    event_counts.plot(kind='barh', ax=ax1, color='steelblue')
+    # Define event categories
+    button_events = ['A', 'B', 'LEFT', 'RIGHT', 'UP', 'DOWN']
+    game_events = ['Kill/stomp', 'Kill/kick', 'Kill/impact', 'Hit/life_lost',
+                   'Powerup_collected', 'Coin_collected', 'Flag_reached', 'brick_smashes']
+
+    # Filter out gym-retro_game events
+    filtered_events = session_events[session_events['trial_type'] != 'gym-retro_game']
+
+    # Event frequencies with colored bars
+    event_counts = filtered_events['trial_type'].value_counts().head(15)
+
+    # Assign colors based on event type
+    colors = []
+    for event in event_counts.index:
+        if event in button_events:
+            colors.append('#3498db')  # Blue for buttons
+        elif event in game_events:
+            colors.append('#e74c3c')  # Red for game events
+        else:
+            colors.append('#e74c3c')  # Red for any other game-related events
+
+    event_counts.plot(kind='barh', ax=ax1, color=colors)
     ax1.set_xlabel('Count', fontsize=13, fontweight='bold')
     ax1.set_ylabel('Event Type', fontsize=13, fontweight='bold')
     ax1.set_title('Top 15 Event Types', fontsize=15, fontweight='bold')
     ax1.grid(axis='x', alpha=0.3)
 
-    # Category breakdown
-    categories = ['Buttons', 'Game Events', 'Other']
-    counts = [button_events_count, game_events_count,
-              len(session_events) - button_events_count - game_events_count]
-    colors = ['#3498db', '#e74c3c', '#95a5a6']
+    # Add legend
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(facecolor='#3498db', label='Player Actions'),
+                      Patch(facecolor='#e74c3c', label='Game Events')]
+    ax1.legend(handles=legend_elements, loc='lower right', fontsize=10)
 
-    ax2.bar(categories, counts, color=colors, alpha=0.8, width=0.6)
-    ax2.set_ylabel('Count', fontsize=13, fontweight='bold')
-    ax2.set_title('Event Categories', fontsize=15, fontweight='bold')
-    ax2.grid(axis='y', alpha=0.3)
+    # Replay statistics
+    if replay_metadata:
+        df_replays = pd.DataFrame(replay_metadata)
 
-    for i, (cat, count) in enumerate(zip(categories, counts)):
-        pct = count/len(session_events)*100
-        ax2.text(i, count, f'{count}\n({pct:.1f}%)',
+        # Calculate statistics
+        levels_played = len(df_replays)
+        cleared = df_replays['Cleared'].sum()
+        failed = (~df_replays['Cleared']).sum()
+        enemies = df_replays['Enemies_killed'].sum()
+        powerups = df_replays['Powerups_collected'].sum()
+        coins = df_replays['CoinsGained'].sum()
+
+        # Create bar chart with stacked Cleared/Failed
+        categories = ['Levels\nPlayed', 'Enemies\nKilled', 'Powerups', 'Coins']
+        x_pos = range(len(categories))
+
+        # Stack Cleared (bottom, green) and Failed (top, red) for first bar
+        ax2.bar(0, cleared, color='#27ae60', alpha=0.8, width=0.6, label='Cleared')
+        ax2.bar(0, failed, bottom=cleared, color='#e74c3c', alpha=0.8, width=0.6, label='Failed')
+
+        # Other statistics
+        other_values = [enemies, powerups, coins]
+        other_colors = ['#f39c12', '#3498db', '#f1c40f']
+        for i, (value, color) in enumerate(zip(other_values, other_colors), start=1):
+            ax2.bar(i, value, color=color, alpha=0.8, width=0.6)
+
+        ax2.set_xticks(x_pos)
+        ax2.set_xticklabels(categories)
+        ax2.set_ylabel('Count', fontsize=13, fontweight='bold')
+        ax2.set_title('Session Statistics', fontsize=15, fontweight='bold')
+        ax2.grid(axis='y', alpha=0.3)
+
+        # Add value labels
+        # Levels Played: show total, cleared, and failed
+        ax2.text(0, levels_played, f'{levels_played}',
                 ha='center', va='bottom', fontsize=12, fontweight='bold')
+        ax2.text(0, cleared/2, f'{int(cleared)}',
+                ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+        ax2.text(0, cleared + failed/2, f'{int(failed)}',
+                ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+
+        # Other stats
+        for i, value in enumerate([enemies, powerups, coins], start=1):
+            ax2.text(i, value, f'{int(value)}',
+                    ha='center', va='bottom', fontsize=12, fontweight='bold')
+
+        # Add legend for the stacked bar
+        ax2.legend(loc='upper right', fontsize=10)
+    else:
+        ax2.text(0.5, 0.5, 'No replay metadata available',
+                ha='center', va='center', transform=ax2.transAxes,
+                fontsize=14, color='gray')
+        ax2.set_title('Session Statistics', fontsize=15, fontweight='bold')
 
     plt.suptitle(f'Session Event Summary - {subject} {session}',
                  fontsize=16, fontweight='bold', y=1.02)

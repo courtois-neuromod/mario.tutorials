@@ -529,24 +529,23 @@ def load_replay_metadata(sourcedata_path=None):
     return df
 
 
-def compute_dataset_statistics(sourcedata_path=None):
+def compute_dataset_statistics(replay_data=None, sourcedata_path=None):
     """
-    Compute global statistics across the entire Mario dataset.
+    Compute and display global statistics across the entire Mario dataset.
 
     Parameters
     ----------
+    replay_data : pd.DataFrame, optional
+        Replay metadata dataframe. If None, will load from sourcedata_path.
     sourcedata_path : str or Path, optional
         Path to sourcedata directory
-
-    Returns
-    -------
-    dict
-        Dictionary containing:
-        - per_subject: DataFrame with stats per subject
-        - unique_levels: List of all unique levels played
-        - total_stats: Overall dataset statistics
     """
-    df = load_replay_metadata(sourcedata_path)
+    print("Loading dataset statistics...\n")
+
+    if replay_data is None:
+        df = load_replay_metadata(sourcedata_path)
+    else:
+        df = replay_data
 
     # Compute per-subject statistics
     subject_stats = []
@@ -589,10 +588,34 @@ def compute_dataset_statistics(sourcedata_path=None):
         'Practice Phase Reps': int((df['Phase'] == 'practice').sum()),
     }
 
-    return {
-        'per_subject': per_subject,
-        'unique_levels': unique_levels,
-        'levels_by_world': dict(levels_by_world),
-        'total_stats': total_stats,
-        'raw_data': df
-    }
+    # Display per-subject statistics
+    print("=" * 80)
+    print("PER-SUBJECT STATISTICS")
+    print("=" * 80)
+    print(per_subject.to_string(index=False))
+
+    # Display total statistics
+    print("\n" + "=" * 80)
+    print("DATASET-WIDE STATISTICS")
+    print("=" * 80)
+    for key, value in total_stats.items():
+        print(f"  {key:.<45} {value}")
+
+    # Display phase breakdown
+    print("\n" + "=" * 80)
+    print("EXPERIMENTAL DESIGN")
+    print("=" * 80)
+    discovery_pct = 100 * total_stats['Discovery Phase Reps'] / total_stats['Total Repetitions']
+    practice_pct = 100 * total_stats['Practice Phase Reps'] / total_stats['Total Repetitions']
+    print(f"  Discovery Phase: {total_stats['Discovery Phase Reps']:>5} reps ({discovery_pct:.1f}%)")
+    print(f"  Practice Phase:  {total_stats['Practice Phase Reps']:>5} reps ({practice_pct:.1f}%)")
+
+    # Display levels
+    print("\n" + "=" * 80)
+    print("LEVELS PLAYED (22 total)")
+    print("=" * 80)
+    for world, levels in sorted(levels_by_world.items()):
+        levels_str = ", ".join(levels)
+        print(f"  World {world}: {levels_str}")
+
+    print("\n✓ Dataset statistics loaded successfully!")
