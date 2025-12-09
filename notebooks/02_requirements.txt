@@ -1,0 +1,10 @@
+numpy>=1.21.0,<2.0.0
+matplotlib>=3.5.0
+seaborn>=0.12.0
+torch>=2.0.0
+gym>=0.21.0
+stable-retro>=0.9.0
+tqdm>=4.60.0
+opencv-python>=4.5.0
+datalad>=0.15.0
+gdown
