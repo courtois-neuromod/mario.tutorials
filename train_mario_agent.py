@@ -193,14 +193,16 @@ def compute_shaped_reward(env_data, prev_data):
     """
     Compute shaped reward based on game state.
 
-    Reward function design:
-    - Heavily penalize losing a life (-50): Teaches agent to avoid dying
-    - Reward score increases: Incentivizes collecting coins and defeating enemies
-    - Reward forward movement: Encourages level progression
-    - Small time penalty: Promotes efficiency
+    Reward function inspired by gym-super-mario-bros with added score term:
+    - v (velocity): x_pos difference - rewards rightward movement
+    - c (clock): time difference - penalizes standing still
+    - d (death): constant penalty when losing a life
+    - s (score): scaled in-game score variations - rewards coins/enemies
 
-    The asymmetry between negative (life loss) and positive (score gain) rewards
-    creates a cautious but progress-oriented agent behavior.
+    Formula: r = v + c + d + s, clipped to (-15, 15)
+
+    Based on: https://github.com/Kautenja/gym-super-mario-bros
+    Score scaling inspired by: https://github.com/vietnh1009/Super-mario-bros-PPO-pytorch
 
     Parameters
     ----------
@@ -216,7 +218,7 @@ def compute_shaped_reward(env_data, prev_data):
     """
     reward = 0.0
 
-    # Movement reward: reward for moving right
+    # v: Velocity (x_pos difference)
     # x position is split across player_x_posHi (high byte) and player_x_posLo (low byte)
     curr_x = 256 * int(env_data.get("player_x_posHi", 0)) + int(
         env_data.get("player_x_posLo", 0)
@@ -224,30 +226,28 @@ def compute_shaped_reward(env_data, prev_data):
     prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
         prev_data.get("player_x_posLo", 0)
     )
-    diff_x = curr_x - prev_x
+    v = curr_x - prev_x
+    reward += v
 
-    # Reward forward movement (but cap to avoid exploits from warps/teleports)
-    if -5 <= diff_x <= 5:
-        reward += diff_x
+    # c: Clock penalty (time difference)
+    # Time decreases as game progresses, so time_diff will be negative
+    c = env_data.get("time", 0) - prev_data.get("time", 0)
+    reward += c
 
-    # Time penalty (encourages faster completion)
-    if prev_data.get("time") is not None:
-        time_diff = min(env_data.get("time", 0) - prev_data.get("time", 0), 0)
-        reward += time_diff
-
-    # Score reward (coins, enemy kills, etc.)
-    # Increased weight to make score gains more rewarding
-    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
-    reward += min(score_diff / 2.0, 50)  # Scale and cap score reward
-
-    # Life loss penalty - HEAVILY NEGATIVE to strongly discourage dying
-    # This is the dominant negative signal in the reward function
+    # d: Death penalty (constant value when losing a life)
+    d = 0
     if env_data.get("lives", 2) < prev_data.get("lives", 2):
-        reward -= 50
+        d = -15
+    reward += d
 
-    # Clip total reward to reasonable range
-    # Asymmetric bounds: larger negative range to emphasize life preservation
-    reward = max(min(reward, 15), -50)
+    # s: Score variations (scaled)
+    # Scale down the score since it can be large (100s-1000s for coins/enemies)
+    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
+    s = score_diff / 40.0  # Scaling factor similar to vietnh1009's implementation
+    reward += s
+
+    # Clip to range (-15, 15) as in gym-super-mario-bros
+    reward = max(min(reward, 15), -15)
 
     return reward
 
