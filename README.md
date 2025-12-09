@@ -23,6 +23,20 @@ A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod
 
 The CNeuromod Mario subdataset is part of the Courtois Neuromod databank. More information can be found [here](https://docs.cneuromod.ca/en/latest/DATASETS.html#mario). The dataset itself is openly available via datalad, and can be explored on [GitHub](https://github.com/courtois-neuromod/mario).
 
+### Notebooks
+
+The tutorial is organized into four main notebooks that can be run locally or directly in Google Colab:
+
+| Notebook | Colab Link | Description | Duration |
+|----------|------------|-------------|----------|
+| [`00_dataset_overview.ipynb`](notebooks/00_dataset_overview.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/00_dataset_overview.ipynb) | Dataset exploration and behavioral annotations | 15 min |
+| [`01_event_based_analysis.ipynb`](notebooks/01_event_based_analysis.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/01_event_based_analysis.ipynb) | GLM analysis for actions and game events | 20 min |
+| [`02_reinforcement_learning.ipynb`](notebooks/02_reinforcement_learning.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/02_reinforcement_learning.ipynb) | RL agent training and CNN activation extraction | 25 min |
+| [`03_brain_encoding.ipynb`](notebooks/03_brain_encoding.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/03_brain_encoding.ipynb) | Ridge regression encoding models and layer comparison | 20 min |
+
+**Total time**: ~80 minutes for complete pipeline
+
+
 ### Glossary
 
 - **Repetition**: An attempt (3 lives) on a given level. Corresponds to one *.bk2 file.
@@ -89,19 +103,6 @@ Simply open any notebook (`.ipynb` file) directly in Google Colab from the GitHu
 The datasets required for this tutorial (approximately 7-8 GB for the featured single session) are managed and downloaded automatically by the notebooks using **DataLad**. The first notebook, `00_dataset_overview.ipynb`, provides a detailed overview of this process. Subsequent notebooks will silently ensure data is available before proceeding.
 
 ## Tutorial Structure
-
-### Notebooks
-
-The tutorial is organized into four main notebooks:
-
-| Notebook | Description | Duration |
-|----------|-------------|----------|
-| [`00_dataset_overview.ipynb`](notebooks/00_dataset_overview.ipynb) | Dataset exploration and behavioral annotations | 15 min |
-| [`01_event_based_analysis.ipynb`](notebooks/01_event_based_analysis.ipynb) | GLM analysis for actions and game events | 20 min |
-| [`02_reinforcement_learning.ipynb`](notebooks/02_reinforcement_learning.ipynb) | RL agent training and CNN activation extraction | 25 min |
-| [`03_brain_encoding.ipynb`](notebooks/03_brain_encoding.ipynb) | Ridge regression encoding models and layer comparison | 20 min |
-
-**Total time**: ~80 minutes for complete pipeline
 
 ### What You'll Learn
 
