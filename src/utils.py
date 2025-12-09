@@ -116,9 +116,9 @@ def load_events(subject, session, run, sourcedata_path=None):
     return events
 
 
-def load_bold(subject, session, run, sourcedata_path=None, space='MNI152NLin2009cAsym'):
+def get_bold_path(subject, session, run, sourcedata_path=None, space='MNI152NLin2009cAsym'):
     """
-    Load preprocessed BOLD data from fMRIPrep.
+    Get path to preprocessed BOLD data from fMRIPrep.
 
     Parameters
     ----------
@@ -135,8 +135,8 @@ def load_bold(subject, session, run, sourcedata_path=None, space='MNI152NLin2009
 
     Returns
     -------
-    nibabel.Nifti1Image
-        BOLD image
+    Path
+        Path to BOLD NIfTI file
     """
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
@@ -164,6 +164,32 @@ def load_bold(subject, session, run, sourcedata_path=None, space='MNI152NLin2009
     if not bold_path.exists():
         raise FileNotFoundError(f"BOLD file not found: {bold_path}")
 
+    return bold_path
+
+
+def load_bold(subject, session, run, sourcedata_path=None, space='MNI152NLin2009cAsym'):
+    """
+    Load preprocessed BOLD data from fMRIPrep.
+
+    Parameters
+    ----------
+    subject : str
+        Subject ID
+    session : str
+        Session ID
+    run : str or int
+        Run number
+    sourcedata_path : str or Path, optional
+        Path to sourcedata directory
+    space : str, default='MNI152NLin2009cAsym'
+        Template space
+
+    Returns
+    -------
+    nibabel.Nifti1Image
+        BOLD image
+    """
+    bold_path = get_bold_path(subject, session, run, sourcedata_path, space)
     bold_img = nib.load(bold_path)
     return bold_img
 

@@ -10,7 +10,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import r2_score
 import nibabel as nib
 from nilearn.masking import apply_mask, unmask
+from nilearn.maskers import NiftiMasker
 from nilearn.image import clean_img
+from nilearn.interfaces.fmriprep import load_confounds
 import warnings
 
 
@@ -139,34 +141,64 @@ class RidgeEncodingModel:
 
 def load_and_prepare_bold(bold_imgs, mask_img, confounds_list=None,
                           detrend=True, standardize=True, low_pass=None,
-                          high_pass=None, t_r=1.49):
+                          high_pass=None, t_r=1.49, load_confounds_from_fmriprep=False):
     """
     Load and prepare BOLD data for encoding.
 
+    This function performs confound regression to remove nuisance signals from BOLD data:
+
+    **What is confound regression?**
+    - BOLD signal contains both neural activity AND noise (head motion, physiological artifacts, scanner drift)
+    - Confound regression removes these nuisance signals using linear regression:
+      BOLD_clean = BOLD_raw - β₁·motion - β₂·WM_signal - β₃·CSF_signal - β₄·global_signal - ...
+    - This is done voxel-by-voxel: for each voxel, we regress out the confound timeseries
+
+    **What the masker does:**
+    1. **Spatial masking**: Extract only brain voxels (exclude skull, air)
+    2. **Confound regression**: Remove nuisance signals from each voxel's timeseries
+    3. **Temporal filtering**: Apply high-pass/low-pass filters to remove slow drifts and high-freq noise
+    4. **Detrending**: Remove linear/polynomial trends within each run
+    5. **Standardization**: Z-score each voxel (mean=0, std=1) for comparable scales
+
+    **Result:** Clean BOLD signal that better reflects neural activity, not artifacts
+
     Parameters
     ----------
-    bold_imgs : nibabel.Nifti1Image or list of images
-        BOLD image(s)
+    bold_imgs : nibabel.Nifti1Image, list of images, str, or list of str
+        BOLD image(s) or path(s) to NIfTI files
     mask_img : nibabel.Nifti1Image
         Brain mask
     confounds_list : pd.DataFrame or list of DataFrames, optional
-        Confounds to regress out
+        Confounds to regress out (only used if load_confounds_from_fmriprep=False)
     detrend : bool, default=True
         Whether to detrend
     standardize : bool, default=True
-        Whether to standardize
+        Whether to standardize (z-score)
     low_pass : float, optional
         Low-pass filter cutoff in Hz
     high_pass : float, optional
         High-pass filter cutoff in Hz
     t_r : float, default=1.49
         Repetition time
+    load_confounds_from_fmriprep : bool, default=False
+        If True, automatically load confounds from fMRIPrep outputs using nilearn.
+        Requires bold_imgs to be file paths (not nibabel images).
 
     Returns
     -------
     np.ndarray
         Cleaned BOLD data (n_samples, n_voxels)
+        - Each row is a timepoint (TR)
+        - Each column is a voxel
+        - Values are z-scored BOLD signal after confound regression
     """
+    # Confound loading parameters for fMRIPrep
+    LOAD_CONFOUNDS_PARAMS = {
+        "strategy": ["motion", "high_pass", "wm_csf", "global_signal"],
+        "motion": "basic",
+        "wm_csf": "basic",
+    }
+
     # Ensure list
     if not isinstance(bold_imgs, list):
         bold_imgs = [bold_imgs]
@@ -174,25 +206,42 @@ def load_and_prepare_bold(bold_imgs, mask_img, confounds_list=None,
     if confounds_list is not None and not isinstance(confounds_list, list):
         confounds_list = [confounds_list]
 
+    # Create masker for cleaning and masking in one step
+    masker = NiftiMasker(
+        mask_img=mask_img,
+        detrend=detrend,
+        standardize=standardize,
+        low_pass=low_pass,
+        high_pass=high_pass,
+        t_r=t_r
+    )
+
     bold_data = []
 
     for idx, bold_img in enumerate(bold_imgs):
-        confounds = confounds_list[idx] if confounds_list is not None else None
+        # Load confounds from fMRIPrep if requested
+        if load_confounds_from_fmriprep:
+            # bold_img must be a file path (str or Path)
+            if isinstance(bold_img, str) or hasattr(bold_img, '__fspath__'):
+                confounds, _ = load_confounds(bold_img, **LOAD_CONFOUNDS_PARAMS)
+            else:
+                raise ValueError(
+                    "When load_confounds_from_fmriprep=True, bold_imgs must be file paths, "
+                    "not nibabel images. Pass paths to NIfTI files instead."
+                )
+        else:
+            # Use provided confounds
+            confounds = confounds_list[idx] if confounds_list is not None else None
 
-        # Clean image
-        cleaned_img = clean_img(
-            bold_img,
-            confounds=confounds,
-            detrend=detrend,
-            standardize=standardize,
-            low_pass=low_pass,
-            high_pass=high_pass,
-            t_r=t_r,
-            mask_img=mask_img
-        )
-
-        # Mask to get 2D array
-        masked_data = apply_mask(cleaned_img, mask_img)
+        # Transform: clean + mask in one step
+        # This does:
+        # 1. Load BOLD data (if path provided)
+        # 2. Apply spatial mask (keep only brain voxels)
+        # 3. Regress out confounds from each voxel's timeseries
+        # 4. Apply temporal filtering (high-pass, low-pass)
+        # 5. Detrend (remove linear drift)
+        # 6. Standardize (z-score each voxel)
+        masked_data = masker.fit_transform(bold_img, confounds=confounds)
         bold_data.append(masked_data)
 
     # Concatenate if multiple runs
