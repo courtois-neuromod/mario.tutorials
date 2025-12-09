@@ -9,7 +9,7 @@ pandas>=1.3.0
 # Neuroimaging
 nibabel>=4.0.0
 nilearn>=0.10.0
-nistats>=0.0.1rc  # For GLM compatibility
+nistats>=0.0.1rc
 
 # Machine learning
 scikit-learn>=1.0.0
