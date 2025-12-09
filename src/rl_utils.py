@@ -957,7 +957,7 @@ def extract_activations_from_replay(model, replay_path, sourcedata_path, level_n
 
 
 def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
-                               tr=1.49, device='cpu', apply_hrf=True):
+                               tr=1.49, device='cpu', apply_hrf=True, bold_imgs=None):
     """
     Align RL activations to BOLD data using replay files and annotations.
 
@@ -986,6 +986,9 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
         Device for computation
     apply_hrf : bool, default=True
         Whether to apply HRF convolution
+    bold_imgs : list of nibabel.Nifti1Image, optional
+        List of BOLD images (one per run) to get actual TR count.
+        If None, TR count will be estimated from event timing.
 
     Returns
     -------
@@ -1012,7 +1015,7 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
     all_run_masks = []
     run_info = []
 
-    for run in runs:
+    for run_idx, run in enumerate(runs):
         print(f"\nProcessing {run}:")
         print("-" * 50)
 
@@ -1060,11 +1063,16 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
 
         game_trials['duration'] = durations
 
-        # Get run duration
-        run_duration = events_df['onset'].max() + 10.0  # Add buffer
-        n_trs = int(np.ceil(run_duration / tr))
-
-        print(f"  Run duration: {run_duration:.2f}s → {n_trs} TRs")
+        # Get actual number of TRs from BOLD if available, otherwise estimate
+        if bold_imgs is not None and run_idx < len(bold_imgs):
+            n_trs = bold_imgs[run_idx].shape[3]  # 4th dimension is time
+            print(f"  Using actual BOLD length: {n_trs} TRs")
+        else:
+            # Estimate from events (fallback)
+            run_duration = events_df['onset'].max() + 10.0  # Add buffer
+            n_trs = int(np.ceil(run_duration / tr))
+            print(f"  Estimated from events: {n_trs} TRs (duration: {run_duration:.2f}s)")
+            print(f"  ⚠ Warning: Using estimated TR count. Pass bold_imgs for exact alignment.")
 
         # Initialize activations for this run (will be NaN for non-game periods)
         # Determine feature dimensions from first segment
@@ -1151,7 +1159,7 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
                 'run': run,
                 'n_trs': n_trs,
                 'n_valid_trs': run_mask.sum(),
-                'n_segments': len(game_segments)
+                'n_segments': len(game_trials)
             })
 
             print(f"\n  ✓ {run}: {run_mask.sum()}/{n_trs} TRs with gameplay")

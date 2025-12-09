@@ -193,19 +193,32 @@ def compute_shaped_reward(env_data, prev_data):
     """
     Compute shaped reward based on game state.
 
-    Reward function design:
-    - EXTREMELY heavily penalize losing a life (-200): Forces agent to prioritize survival
-    - Reward score increases: Incentivizes collecting coins and defeating enemies
-    - Reward forward movement: Base reward for any forward progress
-    - Position bonus: Small additional reward for being further in the level
-    - Small time penalty: Promotes efficiency
+    Reward function inspired by gym-super-mario-bros with added score term:
+    - v (velocity): x_pos difference - rewards rightward movement
+    - c (clock): time difference - penalizes standing still
+    - d (death): constant penalty when losing a life
+    - s (score): scaled in-game score variations - rewards coins/enemies
 
-    The very large negative reward for death creates extremely cautious behavior.
-    Final reward is scaled by 0.1 to normalize magnitude for stable training.
+    Formula: r = v + c + d + s, clipped to (-15, 15)
+
+    Based on: https://github.com/Kautenja/gym-super-mario-bros
+    Score scaling inspired by: https://github.com/vietnh1009/Super-mario-bros-PPO-pytorch
+
+    Parameters
+    ----------
+    env_data : dict
+        Current step data from env.data.lookup_all()
+    prev_data : dict
+        Previous step data
+
+    Returns
+    -------
+    float
+        Shaped reward
     """
     reward = 0.0
 
-    # Movement reward: reward for moving right
+    # v: Velocity (x_pos difference)
     # x position is split across player_x_posHi (high byte) and player_x_posLo (low byte)
     curr_x = 256 * int(env_data.get("player_x_posHi", 0)) + int(
         env_data.get("player_x_posLo", 0)
@@ -213,38 +226,28 @@ def compute_shaped_reward(env_data, prev_data):
     prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
         prev_data.get("player_x_posLo", 0)
     )
-    diff_x = curr_x - prev_x
+    v = curr_x - prev_x
+    reward += v
 
-    # Reward forward movement (but cap to avoid exploits from warps/teleports)
-    if -5 <= diff_x <= 5:
-        # Base movement reward (always same regardless of position)
-        reward += diff_x
+    # c: Clock penalty (time difference)
+    # Time decreases as game progresses, so time_diff will be negative
+    c = env_data.get("time", 0) - prev_data.get("time", 0)
+    reward += c
 
-        # Position bonus: small additional reward based on current X
-        # This encourages being further in the level without affecting movement incentive
-        # Bonus ranges from 0 at start to ~0.05 per step at X=3000
-        if diff_x > 0:  # Only bonus for forward movement
-            position_bonus = (curr_x / 60000.0) * diff_x  # Very small scaling
-            reward += position_bonus
-
-    # Time penalty (encourages faster completion)
-    if prev_data.get("time") is not None:
-        time_diff = min(env_data.get("time", 0) - prev_data.get("time", 0), 0)
-        reward += time_diff
-
-    # Score reward (coins, enemy kills, etc.)
-    # Increased weight to make score gains more rewarding
-    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
-    reward += min(score_diff / 2.0, 50)  # Scale and cap score reward
-
-    # Life loss penalty - EXTREMELY NEGATIVE to strongly discourage dying
-    # Increased from -50 to -200 for much stronger death avoidance
+    # d: Death penalty (constant value when losing a life)
+    d = 0
     if env_data.get("lives", 2) < prev_data.get("lives", 2):
-        reward -= 200
+        d = -15
+    reward += d
 
-    # Clip total reward to reasonable range
-    # Back to original range since position bonus is minimal
-    reward = max(min(reward, 15), -200)
+    # s: Score variations (scaled)
+    # Scale down the score since it can be large (100s-1000s for coins/enemies)
+    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
+    s = score_diff / 40.0  # Scaling factor similar to vietnh1009's implementation
+    reward += s
+
+    # Clip to range (-15, 15) as in gym-super-mario-bros
+    reward = max(min(reward, 15), -15)
 
     # Scale reward by 0.1 to normalize magnitude for stable training
     # This keeps relative importance but makes values more NN-friendly
