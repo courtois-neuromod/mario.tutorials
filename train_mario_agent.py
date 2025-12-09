@@ -194,25 +194,14 @@ def compute_shaped_reward(env_data, prev_data):
     Compute shaped reward based on game state.
 
     Reward function design:
-    - Heavily penalize losing a life (-50): Teaches agent to avoid dying
+    - EXTREMELY heavily penalize losing a life (-200): Forces agent to prioritize survival
     - Reward score increases: Incentivizes collecting coins and defeating enemies
-    - Reward forward movement: Encourages level progression
+    - Reward forward movement: Base reward for any forward progress
+    - Position bonus: Small additional reward for being further in the level
     - Small time penalty: Promotes efficiency
 
-    The asymmetry between negative (life loss) and positive (score gain) rewards
-    creates a cautious but progress-oriented agent behavior.
-
-    Parameters
-    ----------
-    env_data : dict
-        Current step data from env.data.lookup_all()
-    prev_data : dict
-        Previous step data
-
-    Returns
-    -------
-    float
-        Shaped reward
+    The very large negative reward for death creates extremely cautious behavior.
+    Final reward is scaled by 0.1 to normalize magnitude for stable training.
     """
     reward = 0.0
 
@@ -228,7 +217,15 @@ def compute_shaped_reward(env_data, prev_data):
 
     # Reward forward movement (but cap to avoid exploits from warps/teleports)
     if -5 <= diff_x <= 5:
+        # Base movement reward (always same regardless of position)
         reward += diff_x
+
+        # Position bonus: small additional reward based on current X
+        # This encourages being further in the level without affecting movement incentive
+        # Bonus ranges from 0 at start to ~0.05 per step at X=3000
+        if diff_x > 0:  # Only bonus for forward movement
+            position_bonus = (curr_x / 60000.0) * diff_x  # Very small scaling
+            reward += position_bonus
 
     # Time penalty (encourages faster completion)
     if prev_data.get("time") is not None:
@@ -240,16 +237,18 @@ def compute_shaped_reward(env_data, prev_data):
     score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
     reward += min(score_diff / 2.0, 50)  # Scale and cap score reward
 
-    # Life loss penalty - HEAVILY NEGATIVE to strongly discourage dying
-    # This is the dominant negative signal in the reward function
+    # Life loss penalty - EXTREMELY NEGATIVE to strongly discourage dying
+    # Increased from -50 to -200 for much stronger death avoidance
     if env_data.get("lives", 2) < prev_data.get("lives", 2):
-        reward -= 50
+        reward -= 200
 
     # Clip total reward to reasonable range
-    # Asymmetric bounds: larger negative range to emphasize life preservation
-    reward = max(min(reward, 15), -50)
+    # Back to original range since position bonus is minimal
+    reward = max(min(reward, 15), -200)
 
-    return reward
+    # Scale reward by 0.1 to normalize magnitude for stable training
+    # This keeps relative importance but makes values more NN-friendly
+    return reward * 0.1
 
 
 def train_ppo(
@@ -275,30 +274,6 @@ def train_ppo(
             "Level1-3",
             # World 2
             "Level2-1",
-            "Level2-3",
-            # World 3
-            "Level3-1",
-            "Level3-2",
-            "Level3-3",
-            # World 4
-            "Level4-1",
-            "Level4-2",
-            "Level4-3",
-            # World 5
-            "Level5-1",
-            "Level5-2",
-            "Level5-3",
-            # World 6
-            "Level6-1",
-            "Level6-2",
-            "Level6-3",
-            # World 7
-            "Level7-1",
-            "Level7-3",
-            # World 8
-            "Level8-1",
-            "Level8-2",
-            "Level8-3",
         ]
 
     print("=" * 80)
