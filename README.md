@@ -34,8 +34,6 @@ The tutorial is organized into four main notebooks that can be run locally or di
 | [`02_reinforcement_learning.ipynb`](notebooks/02_reinforcement_learning.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/02_reinforcement_learning.ipynb) | RL agent training and CNN activation extraction | 25 min |
 | [`03_brain_encoding.ipynb`](notebooks/03_brain_encoding.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/courtois-neuromod/mario.tutorials/blob/main/notebooks/03_brain_encoding.ipynb) | Ridge regression encoding models and layer comparison | 20 min |
 
-**Total time**: ~80 minutes for complete pipeline
-
 
 ### Analysis Pipeline Overview
 
