@@ -273,10 +273,10 @@ def train_ppo(
         levels = [
             # World 1
             "Level1-1",
-            "Level1-2",
-            "Level1-3",
+            # "Level1-2",
+            # "Level1-3",
             # World 2
-            "Level2-1",
+            # "Level2-1",
         ]
 
     print("=" * 80)
