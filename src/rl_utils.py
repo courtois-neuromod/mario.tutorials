@@ -411,6 +411,74 @@ def apply_pca_with_nan_handling(activations_dict, mask, n_components=50, varianc
     }
 
 
+def apply_random_projection_with_nan_handling(activations_dict, mask, n_components=50, random_state=42):
+    """
+    Apply random projection to layer activations with proper NaN handling.
+
+    Random projection is a computationally efficient alternative to PCA that preserves
+    distances approximately while reducing dimensionality (Johnson-Lindenstrauss lemma).
+
+    Parameters
+    ----------
+    activations_dict : dict
+        Dictionary mapping layer names to activation arrays (n_trs, n_features)
+        Arrays may contain NaN values for non-gameplay periods
+    mask : np.ndarray
+        Boolean mask indicating valid (non-NaN) TRs (n_trs,)
+    n_components : int, default=50
+        Number of random projection components to keep
+    random_state : int, default=42
+        Random seed for reproducibility
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'reduced_activations': dict mapping layer names to projected arrays (n_trs, n_components)
+        - 'projection_models': dict mapping layer names to fitted projection objects
+    """
+    from sklearn.random_projection import GaussianRandomProjection
+    from sklearn.preprocessing import StandardScaler
+
+    print(f"\nApplying Random Projection to layer activations (n_components={n_components})...")
+
+    reduced_activations = {}
+    projection_models = {}
+
+    for layer_name, acts in activations_dict.items():
+        print(f"\n  {layer_name}:")
+
+        # Extract valid (non-NaN) samples for fitting
+        valid_acts = acts[mask]
+
+        print(f"    Original features: {valid_acts.shape[1]}")
+
+        # Standardize first
+        scaler = StandardScaler()
+        valid_acts_scaled = scaler.fit_transform(valid_acts)
+
+        # Apply random projection
+        n_comp = min(n_components, valid_acts.shape[1])
+        rp = GaussianRandomProjection(n_components=n_comp, random_state=random_state)
+        valid_acts_projected = rp.fit_transform(valid_acts_scaled)
+
+        print(f"    Random projection: {valid_acts.shape[1]} → {n_comp} components")
+
+        # Create output array with NaN for invalid TRs
+        reduced = np.full((acts.shape[0], n_comp), np.nan)
+        reduced[mask] = valid_acts_projected
+
+        reduced_activations[layer_name] = reduced
+        projection_models[layer_name] = {'projection': rp, 'scaler': scaler}
+
+    print("\n✓ Random projection complete")
+
+    return {
+        'reduced_activations': reduced_activations,
+        'projection_models': projection_models
+    }
+
+
 def create_simple_proxy_features(events_df, n_trs, tr):
     """
     Create simplified proxy features from behavioral events (for quick demo).

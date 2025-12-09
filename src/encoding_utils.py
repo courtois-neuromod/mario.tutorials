@@ -193,8 +193,9 @@ def load_and_prepare_bold(bold_imgs, mask_img, confounds_list=None,
         - Values are z-scored BOLD signal after confound regression
     """
     # Confound loading parameters for fMRIPrep
+    # Note: Removed global_signal as it was too aggressive and destroyed temporal structure
     LOAD_CONFOUNDS_PARAMS = {
-        "strategy": ["motion", "high_pass", "wm_csf", "global_signal"],
+        "strategy": ["motion", "high_pass", "wm_csf"],
         "motion": "basic",
         "wm_csf": "basic",
     }
