@@ -37,6 +37,39 @@ The tutorial is organized into four main notebooks that can be run locally or di
 **Total time**: ~80 minutes for complete pipeline
 
 
+### Analysis Pipeline Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         fMRI Data                               │
+│                    (BOLD time series)                           │
+└────────────┬──────────────────────────────────────────┬─────────┘
+             │                                          │
+    ┌────────▼─────────┐         ┌──────────────────┐   │
+    │   GLM Analysis   │         │   RL Agent       │   │
+    └────────┬─────────┘         └────────┬─────────┘   │
+             │                            │             │
+    ┌────────▼─────────┐         ┌────────▼──────────┐  │
+    │ Hypothesis-driven│         │ Learned features  │  │
+    │ contrasts        │         │ (CNN activations) │  │
+    │ - LEFT vs RIGHT  │         └────────┬──────────┘  │
+    └────────┬─────────┘                  │             │
+             │                   ┌────────▼─────────────▼┐
+             │                   │   Ridge Encoding      │
+             │                   │   (Predict BOLD)      │
+             │                   └────────┬──────────────┘
+             │                            │
+    ┌────────▼────────────────────────────▼──────────┐
+    │         Brain Activity Maps                    │
+    │    Which regions? What representations?        │
+    └────────────────────────────────────────────────┘
+```
+
+**GLM:** Hand-crafted regressors → Interpretable contrasts
+
+**Encoding:** Learned representations → Predictive power
+
+
 ### Glossary
 
 - **Repetition**: An attempt (3 lives) on a given level. Corresponds to one *.bk2 file.
