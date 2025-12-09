@@ -43,83 +43,50 @@ This tutorial demonstrates a complete fMRI analysis pipeline from data explorati
 
 ## Installation
 
-### Prerequisites
+This tutorial is designed to run seamlessly both **locally** and on **Google Colab**. The notebooks themselves handle the environment setup and data installation automatically, ensuring you have the correct dependencies and datasets for each environment.
 
-- **Operating System**: Linux, macOS, or Windows (via WSL)
-- **Python**: 3.8 or higher
-- **DataLad**: Required for dataset management
-- **Storage**: ~8 GB for single session analysis
+### 1. Initial Setup (Local Only)
 
-### Platform-Specific Setup
-
-#### Linux (or Windows via WSL)
-**Note**: To run this tutorial on Windows we recommend Windows Subsystem for Linux (WSL). If you don't have WSL installed, follow the [official WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install).
+If running locally, ensure you have `git` installed and clone this repository:
 
 ```bash
-# Install DataLad (Ubuntu/Debian)
-sudo apt-get update
-sudo apt-get install datalad
-
-# Or using pip
-pip install datalad
-
-# Navigate to tutorial directory
-git clone git@github.com:courtois-neuromod/mario.tutorials
+git clone https://github.com/courtois-neuromod/mario.tutorials
 cd mario.tutorials
-
-# Run setup script
-bash setup_environment.sh
-
-# Install mario datasets
-bash install_mario_datasets.sh
-
-# Activate environment
-source venv/bin/activate
 ```
 
-#### macOS
+For Colab users, the environment setup (including cloning) is handled automatically by the first cell in each notebook.
+
+### 2. Running the Tutorials
+
+Once you have the repository, launch Jupyter Notebook or open directly in Google Colab:
+
+#### Local Execution
 
 ```bash
-# Install DataLad using Homebrew
-brew install datalad
+# (Optional: Create and activate a Python virtual environment if you don't use conda)
+# python3 -m venv env
+# source env/bin/activate
 
-# Or using pip
-pip install datalad
+# Install core dependencies (datalad will be installed by the notebooks)
+pip install -r requirements.txt
 
-# Navigate to tutorial directory
-cd mario.tutorials
-
-# Run setup script
-bash setup_environment.sh
-
-# Install mario datasets
-bash install_mario_datasets.sh
-
-# Activate environment
-source venv/bin/activate
-```
-
-
-### 2. Ensure Data Availability
-
-Required data (should be in `../sourcedata/`):
-- `mario/sub-01/ses-010/` - Raw BIDS data
-- `mario.fmriprep/sub-01/ses-010/` - Preprocessed fMRI
-- `mario.annotations/sub-01/ses-010/` - Behavioral annotations
-- `mario.replays/sub-01/ses-010/` - Replay files, including game metadata, videos, variables and RAM dumps
-- `cneuromod.processed/smriprep/sub-01/anat/` - Anatomical data
-
-Total: ~7-8 GB for single session
-
-### 3. Run Tutorial
-
-Launch Jupyter and work through the notebooks sequentially:
-
-```bash
+# Launch Jupyter
 jupyter notebook
 ```
 
-Navigate to the `notebooks/` directory and open the tutorials in order.
+Then, navigate to the `notebooks/` directory and open any notebook. The initial cells will guide you through installing DataLad, fetching necessary data, and setting up the Python environment.
+
+#### Google Colab Execution
+
+Simply open any notebook (`.ipynb` file) directly in Google Colab from the GitHub repository. The first code cell in each notebook will detect the Colab environment and automatically:
+- Install system dependencies (e.g., `git-annex`).
+- Install Python packages (e.g., `datalad`).
+- Clone the repository (if accessed directly).
+- Download relevant datasets using DataLad (`mario`, `mario.fmriprep`, `cneuromod.processed`).
+
+### 3. Data Availability
+
+The datasets required for this tutorial (approximately 7-8 GB for the featured single session) are managed and downloaded automatically by the notebooks using **DataLad**. The first notebook, `00_dataset_overview.ipynb`, provides a detailed overview of this process. Subsequent notebooks will silently ensure data is available before proceeding.
 
 ## Tutorial Structure
 
@@ -129,10 +96,10 @@ The tutorial is organized into four main notebooks:
 
 | Notebook | Description | Duration |
 |----------|-------------|----------|
-| `00_dataset_overview.ipynb` | Dataset exploration and behavioral annotations | 15 min |
-| `01_event_based_analysis.ipynb` | GLM analysis for actions and game events | 20 min |
-| `02_reinforcement_learning.ipynb` | RL agent training and CNN activation extraction | 25 min |
-| `03_brain_encoding.ipynb` | Ridge regression encoding models and layer comparison | 20 min |
+| [`00_dataset_overview.ipynb`](notebooks/00_dataset_overview.ipynb) | Dataset exploration and behavioral annotations | 15 min |
+| [`01_event_based_analysis.ipynb`](notebooks/01_event_based_analysis.ipynb) | GLM analysis for actions and game events | 20 min |
+| [`02_reinforcement_learning.ipynb`](notebooks/02_reinforcement_learning.ipynb) | RL agent training and CNN activation extraction | 25 min |
+| [`03_brain_encoding.ipynb`](notebooks/03_brain_encoding.ipynb) | Ridge regression encoding models and layer comparison | 20 min |
 
 **Total time**: ~80 minutes for complete pipeline
 
