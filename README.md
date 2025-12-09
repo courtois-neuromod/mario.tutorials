@@ -5,10 +5,10 @@ A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod
 
 <div align="center">
 
-<img src="images/logo_neuromod_black.png" width="300">
-<img src="images/Universite_de_Montreal_logo.png" width="100">
+<img src="images/logos/logo_neuromod_black.png" width="300">
+<img src="images/logos/Universite_de_Montreal_logo.png" width="100">
 &nbsp;&nbsp;&nbsp;&nbsp;
-<img src="images/IUGM_logo_noir.png" width="100">
+<img src="images/logos/IUGM_logo_noir.png" width="100">
 
 <br><br>
 
