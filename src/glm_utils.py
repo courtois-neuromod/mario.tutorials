@@ -471,7 +471,7 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     from matplotlib.patches import Patch
     legend_elements = [Patch(facecolor='#3498db', label='Player Actions'),
                       Patch(facecolor='#e74c3c', label='Game Events')]
-    ax1.legend(handles=legend_elements, loc='lower right', fontsize=10)
+    ax1.legend(handles=legend_elements, loc='upper right', fontsize=10)
 
     # Replay statistics
     if replay_metadata:
@@ -520,7 +520,7 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
                     ha='center', va='bottom', fontsize=12, fontweight='bold')
 
         # Add legend for the stacked bar
-        ax2.legend(loc='upper right', fontsize=10)
+        ax2.legend(loc='upper left', fontsize=10)
     else:
         ax2.text(0.5, 0.5, 'No replay metadata available',
                 ha='center', va='center', transform=ax2.transAxes,
@@ -534,9 +534,9 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     return fig
 
 
-def plot_event_timeline(events_df, run_label, button_events_list, figsize=(16, 8)):
+def plot_event_timeline(events_df, run_label, button_events_list, run_replays=None, figsize=(16, 8)):
     """
-    Plot event timeline for a single run.
+    Plot event timeline for a single run with replay boundaries.
 
     Parameters
     ----------
@@ -546,6 +546,8 @@ def plot_event_timeline(events_df, run_label, button_events_list, figsize=(16, 8
         Run identifier
     button_events_list : list of str
         List of button event types
+    run_replays : list of dict, optional
+        Replay metadata for this run (level, cleared, duration, etc.)
     figsize : tuple
         Figure size
 
@@ -555,22 +557,54 @@ def plot_event_timeline(events_df, run_label, button_events_list, figsize=(16, 8
     """
     fig, axes = plt.subplots(2, 1, figsize=figsize, sharex=True)
 
-    # Button timeline
+    # Define all event types (buttons + game events)
+    game_events = ['Kill/stomp', 'Kill/kick', 'Kill/impact', 'Hit/life_lost',
+                   'Powerup_collected', 'Coin_collected', 'Flag_reached', 'brick_smashes']
+    all_events_list = button_events_list + game_events
+
+    # Filter out events that don't exist in this run
+    all_events_list = [e for e in all_events_list if e in events_df['trial_type'].values]
+
+    # Event timeline with replay backgrounds
     ax1 = axes[0]
-    for idx, button in enumerate(button_events_list):
-        button_data = events_df[events_df['trial_type'] == button]
-        if len(button_data) > 0:
-            ax1.scatter(button_data['onset'], [idx] * len(button_data),
-                       label=button, alpha=0.6, s=30)
 
-    ax1.set_ylabel('Button', fontsize=13, fontweight='bold')
-    ax1.set_yticks(range(len(button_events_list)))
-    ax1.set_yticklabels(button_events_list)
-    ax1.set_title(f'Button Press Timeline - {run_label}', fontsize=15, fontweight='bold')
-    ax1.legend(loc='upper right', ncol=6)
-    ax1.grid(alpha=0.3)
+    # Draw replay backgrounds using gym-retro_game events
+    game_markers = events_df[events_df['trial_type'] == 'gym-retro_game']
 
-    # Event density
+    if len(game_markers) > 0:
+        colors = plt.cm.Set3(np.linspace(0, 1, len(game_markers)))
+        for i, (idx, game_event) in enumerate(game_markers.iterrows()):
+            onset = game_event['onset']
+            duration = game_event['duration']
+
+            # Draw semi-transparent rectangle for this replay
+            ax1.axvspan(onset, onset + duration, alpha=0.15, color=colors[i], zorder=0)
+
+            # Add level text if metadata available
+            if run_replays and i < len(run_replays):
+                # Get the full level name (e.g., w1l1, w3l2)
+                level = run_replays[i].get('LevelFullName', 'unknown')
+                # Position text just outside the top of the plot
+                ax1.text(onset + duration/2, len(all_events_list) + 0.3,
+                        level, ha='center', va='bottom', fontsize=9,
+                        fontweight='bold', bbox=dict(boxstyle='round,pad=0.3',
+                                                      facecolor=colors[i], alpha=0.3))
+
+    # Plot all events (buttons + game events)
+    for idx, event_type in enumerate(all_events_list):
+        event_data = events_df[events_df['trial_type'] == event_type]
+        if len(event_data) > 0:
+            ax1.scatter(event_data['onset'], [idx] * len(event_data),
+                       alpha=0.6, s=30, zorder=2)
+
+    ax1.set_ylabel('Events', fontsize=13, fontweight='bold')
+    ax1.set_yticks(range(len(all_events_list)))
+    ax1.set_yticklabels(all_events_list, fontsize=9)
+    ax1.set_ylim(-0.5, len(all_events_list) + 1.2)  # Extend y-axis to show level labels
+    ax1.set_title(f'Event Timeline - {run_label}', fontsize=15, fontweight='bold', pad=20)
+    ax1.grid(alpha=0.3, zorder=1)
+
+    # Button press density (bottom plot - only buttons, not game events)
     ax2 = axes[1]
     bin_size = 10  # seconds
     max_time = events_df['onset'].max()
@@ -581,8 +615,8 @@ def plot_event_timeline(events_df, run_label, button_events_list, figsize=(16, 8
 
     ax2.bar(bins[:-1], hist, width=bin_size*0.9, alpha=0.7, color='steelblue')
     ax2.set_xlabel('Time (seconds)', fontsize=13, fontweight='bold')
-    ax2.set_ylabel('Events per 10s', fontsize=13, fontweight='bold')
-    ax2.set_title('Event Density', fontsize=15, fontweight='bold')
+    ax2.set_ylabel('Count', fontsize=13, fontweight='bold')
+    ax2.set_title('Button Presses per 10s', fontsize=15, fontweight='bold')
     ax2.grid(axis='y', alpha=0.3)
 
     plt.tight_layout()
