@@ -645,3 +645,309 @@ def compute_dataset_statistics(replay_data=None, sourcedata_path=None):
         print(f"  World {world}: {levels_str}")
 
     print("\n✓ Dataset statistics loaded successfully!")
+
+
+# ==============================================================================
+# ENVIRONMENT SETUP FUNCTIONS
+# ==============================================================================
+
+def setup_environment():
+    """
+    Detect Colab vs local environment and setup paths.
+
+    Returns
+    -------
+    tuple
+        (PROJECT_PATH, IN_COLAB) where PROJECT_PATH is Path object and IN_COLAB is bool
+    """
+    import sys
+    from pathlib import Path
+
+    # Detect Colab
+    try:
+        import google.colab
+        IN_COLAB = True
+    except ImportError:
+        IN_COLAB = False
+
+    if IN_COLAB:
+        print("🚀 Detected Google Colab")
+        PROJECT_PATH = Path("/content/mario.tutorials")
+
+        # Clone or update repo
+        REPO_URL = "https://github.com/courtois-neuromod/mario.tutorials.git"
+        if not PROJECT_PATH.exists():
+            print(f"  Cloning repository...")
+            import subprocess
+            subprocess.run(f"git clone {REPO_URL} {PROJECT_PATH}", shell=True, check=True)
+        else:
+            print(f"  Updating repository...")
+            import subprocess
+            subprocess.run(f"cd {PROJECT_PATH} && git pull", shell=True, check=False)
+
+        # Change to project directory
+        import os
+        os.chdir(PROJECT_PATH)
+        sys.path.insert(0, str(PROJECT_PATH / "src"))
+
+    else:
+        print("💻 Detected Local Environment")
+        # Navigate to project root
+        current = Path.cwd()
+        if current.name == 'notebooks':
+            PROJECT_PATH = current.parent
+        else:
+            PROJECT_PATH = current
+
+        sys.path.insert(0, str(PROJECT_PATH / "src"))
+
+    print(f"  Working directory: {PROJECT_PATH}")
+    return PROJECT_PATH, IN_COLAB
+
+
+def install_dependencies(requirements_file, project_path=None):
+    """
+    Install Python dependencies from requirements file.
+
+    Parameters
+    ----------
+    requirements_file : str or Path
+        Path to requirements file (relative to project root)
+    project_path : Path, optional
+        Project root path
+    """
+    import subprocess
+    from pathlib import Path
+
+    if project_path is None:
+        project_path = get_project_root()
+    else:
+        project_path = Path(project_path)
+
+    req_path = project_path / requirements_file
+
+    if not req_path.exists():
+        print(f"⚠️  Requirements file not found: {req_path}")
+        print("  Installing default packages...")
+        subprocess.run("pip install -q nilearn pandas numpy matplotlib seaborn scipy", shell=True)
+        return
+
+    print(f"📦 Installing dependencies from {requirements_file}...")
+    subprocess.run(f"pip install -q -r {req_path}", shell=True, check=True)
+    print("  ✓ Dependencies installed")
+
+
+def setup_datalad_datasets(sourcedata_path, install_only=False):
+    """
+    Setup DataLad datasets with fallback instructions.
+
+    Parameters
+    ----------
+    sourcedata_path : Path
+        Path to sourcedata directory
+    install_only : bool, default=False
+        If True, only install dataset structure without fetching data
+
+    Returns
+    -------
+    bool
+        True if successful, False if DataLad failed
+    """
+    from pathlib import Path
+    import subprocess
+
+    sourcedata_path = Path(sourcedata_path)
+    sourcedata_path.mkdir(parents=True, exist_ok=True)
+
+    # Configure git for DataLad
+    print("📥 Setting up DataLad datasets...")
+    subprocess.run("git config --global user.email 'notebook@example.com'", shell=True, check=False)
+    subprocess.run("git config --global user.name 'Notebook User'", shell=True, check=False)
+
+    # Dataset URLs
+    datasets = {
+        "mario": "https://github.com/courtois-neuromod/mario.git",
+        "mario.fmriprep": "https://github.com/courtois-neuromod/mario.fmriprep.git",
+        "mario.annotations": "https://github.com/courtois-neuromod/mario.annotations.git",
+        "mario.replays": "https://github.com/courtois-neuromod/mario.replays.git",
+    }
+
+    success = True
+    for name, url in datasets.items():
+        ds_path = sourcedata_path / name
+
+        if ds_path.exists():
+            print(f"  ✓ {name} already installed")
+            continue
+
+        print(f"  Installing {name}...")
+        try:
+            # Try datalad install first
+            result = subprocess.run(
+                f"datalad install -s {url} {ds_path}",
+                shell=True,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode != 0:
+                # Fallback to git clone
+                print(f"    DataLad install failed, trying git clone...")
+                result = subprocess.run(
+                    f"git clone {url} {ds_path}",
+                    shell=True,
+                    capture_output=True,
+                    text=True
+                )
+
+                if result.returncode != 0:
+                    print(f"    ⚠️  Failed to install {name}")
+                    success = False
+                else:
+                    print(f"    ✓ Cloned with git")
+            else:
+                print(f"    ✓ Installed with DataLad")
+
+        except Exception as e:
+            print(f"    ⚠️  Error installing {name}: {e}")
+            success = False
+
+    if not success:
+        print("\n⚠️  Some datasets failed to install via DataLad")
+        print("\nAlternative download options:")
+        print("1. Manual download: Visit https://docs.cneuromod.ca/")
+        print("2. Direct git clone for each dataset")
+        print("3. Contact cneuromod team for access")
+        return False
+
+    print("  ✓ All datasets installed")
+    return True
+
+
+def download_stimuli(target_path=None):
+    """
+    Download Mario stimuli from Google Drive.
+
+    This downloads the stimuli folder needed for RL agent training.
+
+    Parameters
+    ----------
+    target_path : Path, optional
+        Target path for stimuli folder. If None, uses sourcedata/mario/stimuli
+    """
+    from pathlib import Path
+    import subprocess
+
+    if target_path is None:
+        target_path = get_sourcedata_path() / "mario" / "stimuli"
+    else:
+        target_path = Path(target_path)
+
+    if target_path.exists() and len(list(target_path.glob("*"))) > 0:
+        print("✓ Stimuli already present")
+        return True
+
+    print("📥 Downloading stimuli from Google Drive...")
+
+    # Ensure gdown is installed
+    subprocess.run("pip install -q gdown", shell=True, check=False)
+
+    # Google Drive file ID
+    file_id = '17zaL1-6OOd3xxj4EIzCI6-o6sghwx7Qi'
+    url = f'https://drive.google.com/uc?id={file_id}'
+
+    # Create parent directory
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Download zip file
+    output_zip = target_path.parent / "stimuli.zip"
+
+    try:
+        import gdown
+        print(f"  Downloading to {output_zip}...")
+        gdown.download(url, str(output_zip), quiet=False)
+
+        print("  Extracting...")
+        import zipfile
+        with zipfile.ZipFile(output_zip, 'r') as zip_ref:
+            zip_ref.extractall(target_path.parent)
+
+        # Cleanup
+        import os
+        os.remove(output_zip)
+
+        print("  ✓ Stimuli downloaded and extracted")
+        return True
+
+    except Exception as e:
+        print(f"  ⚠️  Failed to download stimuli: {e}")
+        print(f"\nManual download:")
+        print(f"1. Visit: https://drive.google.com/file/d/{file_id}/view")
+        print(f"2. Download and extract to: {target_path}")
+        return False
+
+
+def verify_data(subject, session, sourcedata_path=None, check_bold=False):
+    """
+    Verify that required data exists for a subject/session.
+
+    Parameters
+    ----------
+    subject : str
+        Subject ID (e.g., 'sub-01')
+    session : str
+        Session ID (e.g., 'ses-010')
+    sourcedata_path : Path, optional
+        Path to sourcedata directory
+    check_bold : bool, default=False
+        If True, also check for BOLD data (requires full download)
+
+    Returns
+    -------
+    bool
+        True if data exists, False otherwise
+    """
+    from pathlib import Path
+
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    else:
+        sourcedata_path = Path(sourcedata_path)
+
+    # Ensure proper formatting
+    if not subject.startswith('sub-'):
+        subject = f'sub-{subject}'
+    if not session.startswith('ses-'):
+        session = f'ses-{session}'
+
+    print(f"📊 Verifying data for {subject} {session}...")
+
+    # Check for annotations
+    annot_dir = sourcedata_path / "mario.annotations" / subject / session / "func"
+    if not annot_dir.exists():
+        print(f"  ⚠️  Annotations not found: {annot_dir}")
+        return False
+
+    annot_files = list(annot_dir.glob("*_events.tsv"))
+    if len(annot_files) == 0:
+        print(f"  ⚠️  No event files found in {annot_dir}")
+        return False
+
+    print(f"  ✓ Found {len(annot_files)} event files")
+
+    # Check for BOLD if requested
+    if check_bold:
+        bold_dir = sourcedata_path / "mario.fmriprep" / subject / session / "func"
+        if not bold_dir.exists():
+            print(f"  ⚠️  BOLD data not found: {bold_dir}")
+            return False
+
+        bold_files = list(bold_dir.glob("*_bold.nii.gz"))
+        if len(bold_files) == 0:
+            print(f"  ⚠️  No BOLD files found in {bold_dir}")
+            return False
+
+        print(f"  ✓ Found {len(bold_files)} BOLD files")
+
+    print(f"  ✓ Data verified for {subject} {session}")
+    return True

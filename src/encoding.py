@@ -545,3 +545,225 @@ def create_encoding_summary_figure(encoding_results, layer_order=None):
     plt.tight_layout()
 
     return fig
+
+
+# ==============================================================================
+# ATLAS-BASED ENCODING FUNCTIONS
+# ==============================================================================
+
+def fit_atlas_encoding_per_layer(layer_activations, parcel_bold, atlas,
+                                  train_indices, test_indices, alphas=None,
+                                  valid_mask=None):
+    """
+    Fit encoding models using atlas parcels with constant signal check.
+
+    Parameters
+    ----------
+    layer_activations : dict
+        Dictionary of layer activations (layer_name -> activations array)
+    parcel_bold : ndarray
+        Parcel-averaged BOLD timeseries (timepoints × parcels)
+    atlas : dict
+        Atlas with 'labels' key
+    train_indices : ndarray
+        Training indices
+    test_indices : ndarray
+        Test indices
+    alphas : list, optional
+        Ridge regression alpha values
+    valid_mask : ndarray, optional
+        Valid samples mask
+
+    Returns
+    -------
+    dict
+        Encoding results for each layer
+    """
+    if alphas is None:
+        alphas = [0.1, 1, 10, 100, 1000, 10000, 100000]
+
+    results = {}
+    parcel_labels = atlas['labels']
+
+    # Identify valid parcels (non-constant signal)
+    print("Checking for constant/zero signals in parcels...")
+    parcel_std = np.std(parcel_bold, axis=0)
+    valid_parcel_mask = parcel_std > 1e-6  # Threshold for "constant"
+    n_valid_parcels = np.sum(valid_parcel_mask)
+    n_total_parcels = len(parcel_labels)
+
+    print(f"  Valid parcels: {n_valid_parcels}/{n_total_parcels}")
+    if n_valid_parcels < n_total_parcels:
+        print(f"  Dropped {n_total_parcels - n_valid_parcels} constant parcels.")
+
+    for layer_name, activations in layer_activations.items():
+        print(f"Fitting encoding model for layer: {layer_name}")
+
+        # Split data
+        X_train = activations[train_indices]
+        X_test = activations[test_indices]
+        y_train = parcel_bold[train_indices]
+        y_test = parcel_bold[test_indices]
+
+        # Handle NaN masking if provided
+        if valid_mask is not None:
+            train_valid = valid_mask[train_indices]
+            test_valid = valid_mask[test_indices]
+            has_nan = np.isnan(X_train).any()
+
+            if has_nan or not train_valid.all():
+                X_train = X_train[train_valid]
+                y_train = y_train[train_valid]
+                X_test = X_test[test_valid]
+                y_test = y_test[test_valid]
+                print(f"  Using {train_valid.sum()}/{len(train_valid)} train, "
+                      f"{test_valid.sum()}/{len(test_valid)} test")
+
+        if len(X_train) == 0 or len(X_test) == 0:
+            print(f"  ⚠ No valid samples, skipping...")
+            continue
+
+        # Standardize features
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Fit each parcel independently
+        n_parcels = y_train.shape[1]
+        r2_train_list = []
+        r2_test_list = []
+        alpha_list = []
+
+        print(f"  Fitting {n_parcels} parcels...")
+
+        for p_idx in range(n_parcels):
+            # Check if this parcel is valid
+            if not valid_parcel_mask[p_idx]:
+                # Constant signal, skip fit, return 0 R2
+                r2_train_list.append(0.0)
+                r2_test_list.append(0.0)
+                alpha_list.append(np.nan)
+                continue
+
+            if p_idx % 100 == 0 and p_idx > 0:
+                print(f"    {p_idx}/{n_parcels} parcels...")
+
+            # Fit ridge for this parcel
+            ridge = RidgeCV(alphas=alphas, cv=3)
+            ridge.fit(X_train_scaled, y_train[:, p_idx])
+
+            # Evaluate
+            y_pred_train = ridge.predict(X_train_scaled)
+            y_pred_test = ridge.predict(X_test_scaled)
+
+            r2_train_list.append(r2_score(y_train[:, p_idx], y_pred_train))
+            r2_test_list.append(r2_score(y_test[:, p_idx], y_pred_test))
+            alpha_list.append(ridge.alpha_)
+
+        r2_train = np.array(r2_train_list)
+        r2_test = np.array(r2_test_list)
+
+        # Calculate median alpha ignoring NaNs
+        valid_alphas = [a for a in alpha_list if not np.isnan(a)]
+        median_alpha = np.median(valid_alphas) if valid_alphas else 0
+
+        results[layer_name] = {
+            'r2_train': r2_train,
+            'r2_test': r2_test,
+            'mean_r2_train': r2_train.mean(),
+            'mean_r2_test': r2_test.mean(),
+            'median_r2_test': np.median(r2_test),
+            'best_alpha': median_alpha,
+            'parcel_labels': parcel_labels,
+            'n_positive': (r2_test > 0).sum(),
+            'n_significant': (r2_test > 0.01).sum()
+        }
+
+        print(f"  Median alpha: {median_alpha:.1f}")
+        print(f"  Mean R² (test): {r2_test.mean():.4f}")
+        print(f"  Positive parcels: {(r2_test > 0).sum()}/{n_parcels} "
+              f"({(r2_test > 0).sum()/n_parcels*100:.1f}%)")
+        print()
+
+    return results
+
+
+def compare_atlas_layer_performance(encoding_results):
+    """
+    Compare encoding performance across layers.
+
+    Parameters
+    ----------
+    encoding_results : dict
+        Encoding results from fit_atlas_encoding_per_layer
+
+    Returns
+    -------
+    pd.DataFrame
+        Comparison table with performance metrics per layer
+    """
+    import pandas as pd
+
+    comparison = []
+
+    for layer_name, result in encoding_results.items():
+        row = {
+            'layer': layer_name,
+            'mean_r2': result['mean_r2_test'],
+            'median_r2': result['median_r2_test'],
+            'max_r2': result['r2_test'].max(),
+            'n_positive': result['n_positive'],
+            'pct_positive': result['n_positive'] / len(result['r2_test']) * 100,
+            'n_significant': result['n_significant']
+        }
+        comparison.append(row)
+
+    df = pd.DataFrame(comparison)
+    df = df.sort_values('mean_r2', ascending=False)
+
+    return df
+
+
+def get_top_parcels(encoding_results, layer_name, n_top=20):
+    """
+    Get top N parcels for a given layer.
+
+    Parameters
+    ----------
+    encoding_results : dict
+        Encoding results from fit_atlas_encoding_per_layer
+    layer_name : str
+        Layer name to get top parcels for
+    n_top : int, default=20
+        Number of top parcels to return
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with top parcels ranked by R²
+    """
+    import pandas as pd
+
+    result = encoding_results[layer_name]
+    r2 = result['r2_test']
+    labels = result['parcel_labels']
+
+    # Handle label array length mismatch
+    # Schaefer atlas labels include "Background" at index 0, but r2_test doesn't
+    if len(labels) > len(r2):
+        # Skip first label (Background)
+        labels = labels[1:]
+
+    # Get top indices
+    top_indices = np.argsort(r2)[::-1][:n_top]
+
+    # Create dataframe
+    top_parcels = pd.DataFrame({
+        'rank': np.arange(1, n_top + 1),
+        'parcel_idx': top_indices,
+        'r2': r2[top_indices],
+        'label': [labels[i].decode('utf-8') if isinstance(labels[i], bytes)
+                  else labels[i] for i in top_indices]
+    })
+
+    return top_parcels
