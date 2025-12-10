@@ -651,58 +651,40 @@ def compute_dataset_statistics(replay_data=None, sourcedata_path=None):
 # ENVIRONMENT SETUP FUNCTIONS
 # ==============================================================================
 
-def setup_environment():
+def setup_colab_environment(IN_COLAB=False):
     """
-    Detect Colab vs local environment and setup paths.
-
-    Returns
-    -------
-    tuple
-        (PROJECT_PATH, IN_COLAB) where PROJECT_PATH is Path object and IN_COLAB is bool
+    Make sure repo and paths are properly setup.
     """
     import sys
     from pathlib import Path
+    import subprocess
+    import os
 
-    # Detect Colab
-    try:
-        import google.colab
-        IN_COLAB = True
-    except ImportError:
-        IN_COLAB = False
 
-    if IN_COLAB:
-        print("🚀 Detected Google Colab")
-        PROJECT_PATH = Path("/content/mario.tutorials")
+    print("🚀 Detected Google Colab")
+    PROJECT_PATH = Path("/content/mario.tutorials")
 
-        # Clone or update repo
-        REPO_URL = "https://github.com/courtois-neuromod/mario.tutorials.git"
-        if not PROJECT_PATH.exists():
-            print(f"  Cloning repository...")
-            import subprocess
-            subprocess.run(f"git clone {REPO_URL} {PROJECT_PATH}", shell=True, check=True)
-        else:
-            print(f"  Updating repository...")
-            import subprocess
-            subprocess.run(f"cd {PROJECT_PATH} && git pull", shell=True, check=False)
+    # Install git-annex using datalad-installer (required for DataLad to work)
+    print("📦 Installing git-annex for DataLad support...")
+    
+    # Install the missing 'netbase' dependency
+    subprocess.run(["sudo", "apt-get", "update"], check=True, capture_output=True)
+    subprocess.run(["sudo", "apt-get", "install", "-y", "netbase"], check=True)
+    
+    # Install git-annex
+    subprocess.run(["pip", "install", "-q", "datalad", "datalad-installer"], check=True)
+    subprocess.run(["datalad-installer", "--sudo", "ok", "git-annex", "-m", "datalad/git-annex:release"], check=True)
+    
+    # Configure git user (DataLad requires this)
+    subprocess.run(["git", "config", "--global", "user.email", "colab@example.com"], check=True)
+    subprocess.run(["git", "config", "--global", "user.name", "Colab User"], check=True)
+    
+    print("✓ git-annex installed and configured")
 
-        # Change to project directory
-        import os
-        os.chdir(PROJECT_PATH)
-        sys.path.insert(0, str(PROJECT_PATH / "src"))
-
-    else:
-        print("💻 Detected Local Environment")
-        # Navigate to project root
-        current = Path.cwd()
-        if current.name == 'notebooks':
-            PROJECT_PATH = current.parent
-        else:
-            PROJECT_PATH = current
-
-        sys.path.insert(0, str(PROJECT_PATH / "src"))
-
-    print(f"  Working directory: {PROJECT_PATH}")
-    return PROJECT_PATH, IN_COLAB
+    # Change to project directory
+    os.chdir(PROJECT_PATH)
+    sys.path.insert(0, str(PROJECT_PATH / "src"))
+    return
 
 
 def install_dependencies(requirements_file, project_path=None):
@@ -884,6 +866,189 @@ def download_stimuli(target_path=None):
         print(f"\nManual download:")
         print(f"1. Visit: https://drive.google.com/file/d/{file_id}/view")
         print(f"2. Download and extract to: {target_path}")
+        return False
+
+
+def download_mario_replays(sourcedata_path=None):
+    """
+    Download replay metadata JSON files from mario.replays dataset.
+
+    Parameters
+    ----------
+    sourcedata_path : Path, optional
+        Path to sourcedata directory
+
+    Returns
+    -------
+    bool
+        True if successful, False otherwise
+    """
+    from pathlib import Path
+    import subprocess
+    import os
+
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    else:
+        sourcedata_path = Path(sourcedata_path)
+
+    # Use absolute paths
+    sourcedata_path = sourcedata_path.resolve()
+    replays_path = sourcedata_path / "mario.replays"
+
+    # Check if data already exists
+    replays_exists = replays_path.exists() and len(list(replays_path.glob("sub-*/ses-*/beh/infos/*.json"))) > 0
+
+    if replays_exists:
+        print("✓ mario.replays data already downloaded!")
+        return True
+
+    print("📥 Downloading mario.replays metadata...")
+
+    # Ensure dataset is installed
+    if not replays_path.exists():
+        print("  Installing mario.replays dataset...")
+        result = subprocess.run(
+            ["datalad", "install", "-s", "https://github.com/courtois-neuromod/mario.replays", str(replays_path)],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"  ⚠️  DataLad install failed: {result.stderr}")
+            return False
+
+    # Find all JSON metadata files
+    json_files = list(replays_path.glob("sub-*/ses-*/beh/infos/*.json"))
+
+    if not json_files:
+        print("  ⚠️  No JSON files found in dataset structure")
+        return False
+
+    print(f"  Found {len(json_files)} JSON files to download...")
+
+    # Get relative paths for datalad
+    file_paths = [str(f.relative_to(replays_path)) for f in json_files]
+
+    # Change to dataset directory
+    original_dir = os.getcwd()
+    os.chdir(replays_path)
+
+    try:
+        # Download in batches to avoid command line length limits
+        batch_size = 100
+        for i in range(0, len(file_paths), batch_size):
+            batch = file_paths[i:i+batch_size]
+            result = subprocess.run(
+                ["datalad", "get"] + batch,
+                capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                print(f"  ⚠️  Batch download failed: {result.stderr}")
+                os.chdir(original_dir)
+                return False
+            print(f"  Downloaded {min(i+batch_size, len(file_paths))}/{len(file_paths)} files...")
+
+        os.chdir(original_dir)
+        print("  ✓ All replay metadata downloaded!")
+        return True
+
+    except Exception as e:
+        os.chdir(original_dir)
+        print(f"  ⚠️  Error downloading replays: {e}")
+        return False
+
+
+def download_mario_annotations(subject, session, sourcedata_path=None):
+    """
+    Download annotated events TSV files for a specific subject/session.
+
+    Parameters
+    ----------
+    subject : str
+        Subject ID (e.g., 'sub-01')
+    session : str
+        Session ID (e.g., 'ses-010')
+    sourcedata_path : Path, optional
+        Path to sourcedata directory
+
+    Returns
+    -------
+    bool
+        True if successful, False otherwise
+    """
+    from pathlib import Path
+    import subprocess
+    import os
+
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    else:
+        sourcedata_path = Path(sourcedata_path)
+
+    # Ensure proper formatting
+    if not subject.startswith('sub-'):
+        subject = f'sub-{subject}'
+    if not session.startswith('ses-'):
+        session = f'ses-{session}'
+
+    # Use absolute paths
+    sourcedata_path = sourcedata_path.resolve()
+    annotations_path = sourcedata_path / "mario.annotations"
+
+    # Check if data already exists for this subject/session
+    session_path = annotations_path / subject / session / "func"
+    annotations_exist = session_path.exists() and len(list(session_path.glob(f"{subject}_{session}_*_desc-annotated_events.tsv"))) > 0
+
+    if annotations_exist:
+        print(f"✓ mario.annotations data already downloaded for {subject} {session}!")
+        return True
+
+    print(f"📥 Downloading mario.annotations for {subject} {session}...")
+
+    # Ensure dataset is installed
+    if not annotations_path.exists():
+        print("  Installing mario.annotations dataset...")
+        result = subprocess.run(
+            ["datalad", "install", "-s", "https://github.com/courtois-neuromod/mario.annotations", str(annotations_path)],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"  ⚠️  DataLad install failed: {result.stderr}")
+            return False
+
+    # Find all TSV files for this subject/session
+    tsv_files = list(annotations_path.glob(f"{subject}/{session}/func/{subject}_{session}_task-mario_run-*_desc-annotated_events.tsv"))
+
+    if not tsv_files:
+        print(f"  ⚠️  No annotated event files found for {subject} {session}")
+        return False
+
+    print(f"  Found {len(tsv_files)} annotated event files to download...")
+
+    # Get relative paths for datalad
+    file_paths = [str(f.relative_to(annotations_path)) for f in tsv_files]
+
+    # Change to dataset directory
+    original_dir = os.getcwd()
+    os.chdir(annotations_path)
+
+    try:
+        # Download all TSV files
+        result = subprocess.run(
+            ["datalad", "get"] + file_paths,
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"  ⚠️  Download failed: {result.stderr}")
+            os.chdir(original_dir)
+            return False
+
+        os.chdir(original_dir)
+        print(f"  ✓ Downloaded {len(file_paths)} files!")
+        return True
+
+    except Exception as e:
+        os.chdir(original_dir)
+        print(f"  ⚠️  Error downloading annotations: {e}")
         return False
 
 
