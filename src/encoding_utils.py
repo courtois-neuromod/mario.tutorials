@@ -258,36 +258,14 @@ def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
                                  train_indices, test_indices, alphas=None,
                                  valid_mask=None):
     """
-    Fit encoding models for each layer separately.
+    Fit encoding models for each layer, fitting each voxel independently.
 
-    Parameters
-    ----------
-    layer_activations : dict
-        Dictionary mapping layer names to activation arrays
-    bold_data : np.ndarray
-        BOLD data (n_samples, n_voxels)
-    mask_img : nibabel.Nifti1Image
-        Brain mask (for creating result images)
-    train_indices : np.ndarray
-        Indices for training
-    test_indices : np.ndarray
-        Indices for testing
-    alphas : array-like, optional
-        Alpha values for ridge regression
-    valid_mask : np.ndarray, optional
-        Boolean mask indicating valid (non-NaN) samples (n_samples,)
-        If provided, only valid samples will be used for training/testing
-
-    Returns
-    -------
-    dict
-        Results for each layer with keys:
-        - 'model': Fitted RidgeEncodingModel
-        - 'r2_train': R² on training set
-        - 'r2_test': R² on test set
-        - 'r2_map': R² map as Nifti1Image
-        - 'best_alpha': Selected alpha value
+    This matches the diagnostic approach: each voxel gets its own optimal alpha,
+    avoiding the issue where multivariate ridge picks one alpha for all voxels.
     """
+    if alphas is None:
+        alphas = [0.1, 1, 10, 100, 1000, 10000, 100000]
+
     results = {}
 
     for layer_name, activations in layer_activations.items():
@@ -301,50 +279,68 @@ def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
 
         # Handle NaN masking if provided
         if valid_mask is not None:
-            # Get valid samples in train/test sets
             train_valid = valid_mask[train_indices]
             test_valid = valid_mask[test_indices]
-
-            # Check if activations contain NaNs
             has_nan = np.isnan(X_train).any()
 
             if has_nan or not train_valid.all():
-                # Filter to valid samples only
                 X_train = X_train[train_valid]
                 y_train = y_train[train_valid]
                 X_test = X_test[test_valid]
                 y_test = y_test[test_valid]
+                print(f"  Using {train_valid.sum()}/{len(train_valid)} train, {test_valid.sum()}/{len(test_valid)} test")
 
-                print(f"  Using {train_valid.sum()}/{len(train_valid)} train samples")
-                print(f"  Using {test_valid.sum()}/{len(test_valid)} test samples")
-
-        # Check if we have any valid samples
         if len(X_train) == 0 or len(X_test) == 0:
-            print(f"  ⚠ No valid samples for {layer_name}, skipping...")
+            print(f"  ⚠ No valid samples, skipping...")
             continue
 
-        # Create and fit model
-        model = RidgeEncodingModel(alphas=alphas, cv=3, standardize=True)
-        model.fit(X_train, y_train)
+        # Standardize features (matching diagnostics)
+        from sklearn.preprocessing import StandardScaler
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
 
-        # Evaluate
-        r2_train = model.score(X_train, y_train)
-        r2_test = model.score(X_test, y_test)
+        # Fit each voxel independently
+        n_voxels = y_train.shape[1]
+        r2_train_list = []
+        r2_test_list = []
+        alpha_list = []
+
+        print(f"  Fitting {n_voxels:,} voxels...")
+
+        for v_idx in range(n_voxels):
+            if v_idx % 50000 == 0 and v_idx > 0:
+                print(f"    {v_idx:,}/{n_voxels:,} voxels...")
+
+            # Fit ridge for this voxel
+            ridge = RidgeCV(alphas=alphas, cv=3)
+            ridge.fit(X_train_scaled, y_train[:, v_idx])
+
+            # Evaluate
+            y_pred_train = ridge.predict(X_train_scaled)
+            y_pred_test = ridge.predict(X_test_scaled)
+
+            r2_train_list.append(r2_score(y_train[:, v_idx], y_pred_train))
+            r2_test_list.append(r2_score(y_test[:, v_idx], y_pred_test))
+            alpha_list.append(ridge.alpha_)
+
+        r2_train = np.array(r2_train_list)
+        r2_test = np.array(r2_test_list)
 
         # Create R² map
         r2_map = unmask(r2_test, mask_img)
 
         results[layer_name] = {
-            'model': model,
             'r2_train': r2_train,
             'r2_test': r2_test,
             'r2_map': r2_map,
-            'best_alpha': model.get_best_alpha(),
+            'best_alpha': np.median(alpha_list),
             'mean_r2_train': r2_train.mean(),
-            'mean_r2_test': r2_test.mean()
+            'mean_r2_test': r2_test.mean(),
+            'median_alpha': np.median(alpha_list)
         }
 
-        print(f"  Best alpha: {model.get_best_alpha():.1f}")
+        print(f"  Median alpha: {np.median(alpha_list):.1f}")
         print(f"  Mean R² (train): {r2_train.mean():.4f}")
         print(f"  Mean R² (test): {r2_test.mean():.4f}")
         print()
