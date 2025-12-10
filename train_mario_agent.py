@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-Train PPO agent for Super Mario Bros (NES).
+Integrated PPO Trainer for Super Mario Bros (NES).
 
-Based on mario_generalization PPO implementation.
-Training takes ~2 hours on CPU, ~30min on GPU.
-
-Usage:
-    python train_mario_agent.py --steps 5000000 --gpu
-
-Saves model to: models/mario_ppo_agent.pth
+Features:
+- Custom PPO implementation (from Code B)
+- Robust CLI and Level Parsing (from Code A)
+- Dynamic file naming and logging
+- Frame Skipping & Shaping
+- Replay GIF generation
 """
 
 import argparse
-from pathlib import Path
+import os
+import sys
+import json
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,16 +22,115 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 import retro
 from tqdm import tqdm
-import json
+from datetime import datetime
+from pathlib import Path
 
-# Import from src
-import sys
+try:
+    import imageio
+except ImportError:
+    imageio = None
+    print(
+        "Warning: imageio not installed. Install with 'pip install imageio' for GIF replay support."
+    )
 
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
+# Import from src (assuming existing project structure)
+# If running standalone, ensure these imports work or paste utils here
+try:
+    src_path = Path(__file__).parent / "src"
+    sys.path.insert(0, str(src_path))
+    from rl_utils import SimpleCNN
+    from utils import get_sourcedata_path
+except ImportError:
+    print(
+        "Warning: Could not import 'src' modules. Ensure project structure is correct."
+    )
 
-from rl_utils import SimpleCNN
-from utils import get_sourcedata_path
+    # Fallback/Placeholder if modules missing (for standalone testing)
+    def get_sourcedata_path():
+        return Path("data")
+
+    class SimpleCNN(nn.Module):  # Placeholder SimpleCNN if import fails
+        def __init__(self, input_shape=(4, 84, 84), n_actions=12):
+            super().__init__()
+            self.conv1 = nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4)
+            self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+            self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+            self.fc1 = nn.Linear(3136, 512)
+            self.actor = nn.Linear(512, n_actions)
+            self.critic = nn.Linear(512, 1)
+
+        def forward(self, x):
+            x = F.relu(self.conv1(x))
+            x = F.relu(self.conv2(x))
+            x = F.relu(self.conv3(x))
+            x = x.reshape(x.size(0), -1)
+            x = F.relu(self.fc1(x))
+            return self.actor(x), self.critic(x)
+
+
+ALL_LEVELS = [
+    "w1l1",
+    "w1l2",
+    "w1l3",
+    "w2l1",
+    "w2l3",
+    "w3l1",
+    "w3l2",
+    "w3l3",
+    "w4l1",
+    "w4l2",
+    "w4l3",
+    "w5l1",
+    "w5l2",
+    "w5l3",
+    "w6l1",
+    "w6l2",
+    "w6l3",
+    "w7l1",
+    "w7l3",
+    "w8l1",
+    "w8l2",
+    "w8l3",
+]
+
+
+def parse_levels(levels_arg):
+    """Parse levels argument into list of level names."""
+    if levels_arg.lower() == "all":
+        return ALL_LEVELS
+    return [level.strip() for level in levels_arg.split(",")]
+
+
+def convert_level_name(lvl):
+    """
+    Convert shorthand 'w1l1' to Retro format 'Level1-1'.
+    """
+    if lvl.startswith("Level"):
+        return lvl  # Already correct
+    try:
+        # Assumes format wXlY -> LevelX-Y
+        world = lvl[1]
+        level = lvl[3]
+        return f"Level{world}-{level}"
+    except IndexError:
+        return lvl  # Return as is if format doesn't match
+
+
+def create_model_filename(levels, total_timesteps):
+    """Create unique filename based on training parameters."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    if len(levels) == 1:
+        level_str = levels[0]
+    elif len(levels) == len(ALL_LEVELS):
+        level_str = "all_levels"
+    else:
+        level_str = f"{len(levels)}_levels"
+
+    timesteps_str = f"{total_timesteps//1000}k"
+    filename = f"ppo_mario_{level_str}_{timesteps_str}_{timestamp}"
+
+    return filename
 
 
 class PPOAgent:
@@ -38,12 +139,12 @@ class PPOAgent:
     def __init__(
         self,
         n_actions=12,
-        lr=1e-4,
-        gamma=0.9,
+        lr=2.5e-4,
+        gamma=0.99,
         gae_lambda=0.95,
         clip_range=0.2,
         value_coef=0.5,
-        entropy_coef=0.01,
+        entropy_coef=0.02,
         device="cpu",
     ):
         self.device = device
@@ -52,538 +153,452 @@ class PPOAgent:
         self.clip_range = clip_range
         self.value_coef = value_coef
         self.entropy_coef = entropy_coef
+        self.lr = lr
 
-        # Model
         self.model = SimpleCNN(n_actions=n_actions).to(device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, eps=1e-5)
 
     def select_action(self, state):
-        """Select action using current policy."""
         state_tensor = torch.from_numpy(state).unsqueeze(0).float().to(self.device)
-
         with torch.no_grad():
             action_logits, value = self.model(state_tensor)
             dist = Categorical(logits=action_logits)
             action = dist.sample()
             log_prob = dist.log_prob(action)
-
         return action.item(), log_prob.item(), value.item()
 
     def compute_gae(self, rewards, values, dones):
-        """Compute Generalized Advantage Estimation."""
         advantages = []
         gae = 0
-
+        next_val = 0
         for t in reversed(range(len(rewards))):
-            if t == len(rewards) - 1:
-                next_value = 0
-            else:
-                next_value = values[t + 1]
-
-            delta = rewards[t] + self.gamma * next_value * (1 - dones[t]) - values[t]
+            delta = rewards[t] + self.gamma * next_val * (1 - dones[t]) - values[t]
             gae = delta + self.gamma * self.gae_lambda * (1 - dones[t]) * gae
             advantages.insert(0, gae)
-
+            next_val = values[t]
         return advantages
 
     def update(self, states, actions, old_log_probs, returns, advantages):
-        """PPO update step."""
         states = torch.from_numpy(np.array(states)).float().to(self.device)
         actions = torch.tensor(actions).long().to(self.device)
         old_log_probs = torch.tensor(old_log_probs).float().to(self.device)
         returns = torch.tensor(returns).float().to(self.device)
         advantages = torch.tensor(advantages).float().to(self.device)
 
-        # Normalize advantages
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
-        # Forward pass
         action_logits, values = self.model(states)
         dist = Categorical(logits=action_logits)
         log_probs = dist.log_prob(actions)
         entropy = dist.entropy().mean()
 
-        # PPO loss
         ratio = torch.exp(log_probs - old_log_probs)
         surr1 = ratio * advantages
         surr2 = (
             torch.clamp(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages
         )
         policy_loss = -torch.min(surr1, surr2).mean()
-
-        # Value loss
         value_loss = F.mse_loss(values.squeeze(), returns)
 
-        # Total loss
         loss = policy_loss + self.value_coef * value_loss - self.entropy_coef * entropy
 
-        # Optimize
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
         self.optimizer.step()
+        return loss.item()
 
-        return {
-            "policy_loss": policy_loss.item(),
-            "value_loss": value_loss.item(),
-            "entropy": entropy.item(),
-            "total_loss": loss.item(),
-        }
+    def update_learning_rate(self, current_step, total_steps):
+        frac = 1.0 - (current_step / total_steps)
+        new_lr = self.lr * frac
+        for param_group in self.optimizer.param_groups:
+            param_group["lr"] = new_lr
 
 
 def action_to_buttons(action):
-    """
-    Convert action index to button array.
-
-    COMPLEX_MOVEMENT action space (12 actions):
-    0: NOOP
-    1: right
-    2: right + A (jump)
-    3: right + B (run)
-    4: right + A + B (run + jump)
-    5: A (jump)
-    6: left
-    7: left + A
-    8: left + B
-    9: left + A + B
-    10: down
-    11: up
-
-    Based on mario_generalization:
-    - Intermediate format: [run, up, down, left, right, jump]
-    - Final NES format: [B/run, unused, unused, unused, up, down, left, right, A/jump]
-    """
-    # First create 6-button format: [run, up, down, left, right, jump]
     buttons_6 = [0] * 6
-
-    if action in (1, 2, 3, 4):  # right actions
+    if action in (1, 2, 3, 4):
         buttons_6[4] = 1  # right
-    if action in (6, 7, 8, 9):  # left actions
+    if action in (6, 7, 8, 9):
         buttons_6[3] = 1  # left
-    if action in (2, 4, 5, 7, 9):  # jump actions (A button)
+    if action in (2, 4, 5, 7, 9):
         buttons_6[5] = 1  # jump
-    if action in (3, 4, 8, 9):  # run actions (B button)
+    if action in (3, 4, 8, 9):
         buttons_6[0] = 1  # run
-    if action == 10:  # down
-        buttons_6[2] = 1
-    if action == 11:  # up
-        buttons_6[1] = 1
-
-    # Convert to 9-button NES format: [run, 0, 0, 0, up, down, left, right, jump]
-    buttons_9 = [buttons_6[0], 0, 0, 0] + buttons_6[1:]
-
-    return buttons_9
+    if action == 10:
+        buttons_6[2] = 1  # down
+    if action == 11:
+        buttons_6[1] = 1  # up
+    return [buttons_6[0], 0, 0, 0] + buttons_6[1:]
 
 
 def preprocess_frame(frame):
-    """Preprocess frame: grayscale + resize to 84x84."""
-    import cv2
-
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     resized = cv2.resize(gray, (84, 84), interpolation=cv2.INTER_AREA)
     return resized.astype(np.float32) / 255.0
 
 
 def create_frame_stack(frames):
-    """Create 4-frame stack."""
     return np.stack(frames, axis=0)
 
 
 def compute_shaped_reward(env_data, prev_data):
-    """
-    Compute shaped reward based on game state.
-
-    Reward function inspired by gym-super-mario-bros with added score term:
-    - v (velocity): x_pos difference - rewards rightward movement
-    - c (clock): time difference - penalizes standing still
-    - d (death): constant penalty when losing a life
-    - s (score): scaled in-game score variations - rewards coins/enemies
-
-    Formula: r = v + c + d + s, clipped to (-15, 15)
-
-    Based on: https://github.com/Kautenja/gym-super-mario-bros
-    Score scaling inspired by: https://github.com/vietnh1009/Super-mario-bros-PPO-pytorch
-
-    Parameters
-    ----------
-    env_data : dict
-        Current step data from env.data.lookup_all()
-    prev_data : dict
-        Previous step data
-
-    Returns
-    -------
-    float
-        Shaped reward
-    """
     reward = 0.0
-
-    # v: Velocity (x_pos difference)
-    # x position is split across player_x_posHi (high byte) and player_x_posLo (low byte)
     curr_x = 256 * int(env_data.get("player_x_posHi", 0)) + int(
         env_data.get("player_x_posLo", 0)
     )
     prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
         prev_data.get("player_x_posLo", 0)
     )
-    v = curr_x - prev_x
-    reward += v
-
-    # c: Clock penalty (time difference)
-    # Time decreases as game progresses, so time_diff will be negative
-    c = env_data.get("time", 0) - prev_data.get("time", 0)
-    reward += c
-
-    # d: Death penalty (constant value when losing a life)
-    d = 0
+    reward += curr_x - prev_x
+    reward += env_data.get("time", 0) - prev_data.get("time", 0)
     if env_data.get("lives", 2) < prev_data.get("lives", 2):
-        d = -15
-    reward += d
+        reward += -15
+    reward += (env_data.get("score", 0) - prev_data.get("score", 0)) / 40.0
+    return max(min(reward * 0.1, 15), -15)
 
-    # s: Score variations (scaled)
-    # Scale down the score since it can be large (100s-1000s for coins/enemies)
-    score_diff = env_data.get("score", 0) - prev_data.get("score", 0)
-    s = score_diff / 40.0  # Scaling factor similar to vietnh1009's implementation
-    reward += s
 
-    # Clip to range (-15, 15) as in gym-super-mario-bros
-    reward = max(min(reward, 15), -15)
+def save_replay_gif(agent, level, gif_path, device="cpu", max_steps=2000):
+    """
+    Record a replay of the trained agent and save as GIF.
 
-    # Scale reward by 0.1 to normalize magnitude for stable training
-    # This keeps relative importance but makes values more NN-friendly
-    return reward * 0.1
+    Args:
+        agent: Trained PPOAgent
+        level: Level code (e.g., 'w1l1')
+        gif_path: Path to save GIF file
+        device: Device for inference
+        max_steps: Maximum steps to record
+    """
+    if imageio is None:
+        print("Cannot save replay: imageio not installed")
+        return
+
+    print(f"\nRecording replay for {level}...")
+
+    # Convert level name
+    state = convert_level_name(level)
+
+    # Create environment
+    try:
+        env = retro.make(
+            game="SuperMarioBros-Nes",
+            state=state,
+            inttype=retro.data.Integrations.ALL,
+            render_mode=None,
+        )
+    except FileNotFoundError:
+        print(f"Error: Could not load state '{state}' for replay")
+        return
+
+    obs, info = env.reset()
+    frame_stack = [preprocess_frame(obs)] * 4
+
+    frames = []
+    done = False
+    step = 0
+
+    agent.model.eval()
+
+    with torch.no_grad():
+        while not done and step < max_steps:
+            # Record original frame (before preprocessing)
+            frames.append(obs)
+
+            # Get action
+            state = create_frame_stack(frame_stack)
+            state_tensor = torch.from_numpy(state).unsqueeze(0).float().to(device)
+            action_logits, _ = agent.model(state_tensor)
+            dist = Categorical(logits=action_logits)
+            action = dist.sample().item()
+
+            button_array = action_to_buttons(action)
+
+            # Step with frame skip
+            for _ in range(4):
+                next_obs, _, terminated, truncated, _ = env.step(button_array)
+                done = terminated or truncated
+                frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
+                if done:
+                    break
+
+            obs = next_obs
+            step += 1
+
+    env.close()
+
+    # Save GIF
+    print(f"Saving replay GIF with {len(frames)} frames to {gif_path}")
+    imageio.mimsave(gif_path, frames, fps=15)
+    print(f"Replay saved successfully!")
 
 
 def train_ppo(
-    n_steps=5_000_000,
-    rollout_length=128,
-    n_epochs=4,
-    batch_size=32,
-    eval_interval=10000,
-    save_path="models/mario_ppo_agent.pth",
+    levels,  # Now accepts list of levels
+    model_path,  # Exact path to save model
+    log_path,  # Exact path to save logs
+    n_steps=1_000_000,
+    rollout_length=2048,
+    n_epochs=10,
+    batch_size=64,
     device="cpu",
-    levels=None,
     render=False,
-    log_path="models/training_log.json",
+    save_checkpoints=False,
+    checkpoint_freq=100000,
+    save_replay=False,  # New parameter
 ):
-    """Train PPO agent on multiple levels."""
-
-    # Default levels (comprehensive training set across multiple worlds)
-    if levels is None:
-        levels = [
-            # World 1
-            "Level1-1",
-            # "Level1-2",
-            # "Level1-3",
-            # World 2
-            # "Level2-1",
-        ]
-
     print("=" * 80)
-    print("PPO Training for Super Mario Bros")
-    print("=" * 80)
-    print(f"Device: {device}")
-    print(f"Total steps: {n_steps:,}")
-    print(f"Rollout length: {rollout_length}")
-    print(f"Levels: {', '.join(levels)}")
-    print(f"Save path: {save_path}")
-    print(f"Render: {render}")
+    print(f"PPO Training | Device: {device} | Steps: {n_steps:,}")
+    print(f"Levels ({len(levels)}): {', '.join(levels)}")
+    print(f"Model Path: {model_path}")
     print("=" * 80 + "\n")
 
-    # Import ROM from custom path
+    # Load ROM
     sourcedata_path = get_sourcedata_path()
     rom_path = sourcedata_path / "mario" / "stimuli"
-
     if rom_path.exists():
-        print(f"Importing ROM from: {rom_path}")
         retro.data.Integrations.add_custom_path(str(rom_path))
-        print("✓ ROM path added to retro integrations\n")
-    else:
-        print(f"⚠️  ROM path not found: {rom_path}")
-        print("   Falling back to default retro ROM location\n")
 
-    # Create agent
     agent = PPOAgent(n_actions=12, device=device)
 
-    # Environment will be recreated for each episode with random level
+    # Init Environment
     render_mode = "human" if render else None
-    current_level = np.random.choice(levels)
 
-    env = retro.make(
-        game="SuperMarioBros-Nes",
-        state=current_level,
-        inttype=retro.data.Integrations.ALL,
-        render_mode=render_mode,
-    )
+    # Select random initial level and convert to Retro format
+    current_lvl_code = np.random.choice(levels)
+    current_state = convert_level_name(current_lvl_code)
 
-    # Training loop
-    obs, info = env.reset()  # stable-retro returns (obs, info)
+    print(f"Initializing Environment with state: {current_state}")
+
+    try:
+        env = retro.make(
+            game="SuperMarioBros-Nes",
+            state=current_state,
+            inttype=retro.data.Integrations.ALL,
+            render_mode=render_mode,
+        )
+    except FileNotFoundError:
+        print(
+            f"Error: State '{current_state}' not found. Check your retro integrations."
+        )
+        return
+
+    obs, info = env.reset()
     frame_stack = [preprocess_frame(obs)] * 4
-    prev_data = env.data.lookup_all()  # Track previous game data for reward shaping
+    prev_data = env.data.lookup_all()
 
     episode_rewards = []
     episode_reward = 0
     step = 0
     episode = 0
-    level_episodes = {level: 0 for level in levels}
 
-    # Rollout buffers
-    states, actions, log_probs, rewards, values, dones = [], [], [], [], [], []
-
-    # Training log
+    # Initialize Log
     training_log = {
         "config": {
             "n_steps": n_steps,
             "rollout_length": rollout_length,
-            "n_epochs": n_epochs,
-            "batch_size": batch_size,
-            "eval_interval": eval_interval,
             "levels": levels,
-            "device": device,
+            "timestamp": datetime.now().isoformat(),
         },
         "progress": [],
     }
 
-    # Progress bar
-    pbar = tqdm(total=n_steps, desc="Training", unit="steps")
+    # Buffers
+    states, actions, log_probs, rewards, values, dones = [], [], [], [], [], []
+    pbar = tqdm(total=n_steps, desc="Training")
 
     while step < n_steps:
-        # Collect rollout
+        agent.update_learning_rate(step, n_steps)
+
+        # --- ROLLOUT ---
         for _ in range(rollout_length):
-            # Get state
             state = create_frame_stack(frame_stack)
-
-            # Select action
             action, log_prob, value = agent.select_action(state)
-
-            # Convert action to button array
             button_array = action_to_buttons(action)
 
-            # Step environment
-            next_obs, reward, terminated, truncated, info = env.step(button_array)
-            done = terminated or truncated
+            accumulated_reward = 0
+            for _ in range(4):  # Frame skip
+                next_obs, r, terminated, truncated, info = env.step(button_array)
+                done = terminated or truncated
 
-            # Get game data and compute shaped reward (CRITICAL FIX!)
-            curr_data = env.data.lookup_all()
-            shaped_reward = compute_shaped_reward(curr_data, prev_data)
-            prev_data = curr_data
+                curr_data = env.data.lookup_all()
+                shaped_r = compute_shaped_reward(curr_data, prev_data)
+                prev_data = curr_data
+                accumulated_reward += shaped_r
 
-            # Store transition
+                frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
+                if done:
+                    break
+
             states.append(state)
             actions.append(action)
             log_probs.append(log_prob)
-            rewards.append(shaped_reward)  # Use shaped reward instead of raw reward
+            rewards.append(accumulated_reward)
             values.append(value)
             dones.append(done)
 
-            # Update state
-            frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
-            episode_reward += shaped_reward  # Track shaped reward
+            episode_reward += accumulated_reward
             step += 1
             pbar.update(1)
 
             if done:
                 episode_rewards.append(episode_reward)
                 episode += 1
-                level_episodes[current_level] += 1
 
-                # Switch to random level for next episode
                 env.close()
-                current_level = np.random.choice(levels)
+                # Pick new random level
+                current_lvl_code = np.random.choice(levels)
+                current_state = convert_level_name(current_lvl_code)
+
                 env = retro.make(
                     game="SuperMarioBros-Nes",
-                    state=current_level,
+                    state=current_state,
                     inttype=retro.data.Integrations.ALL,
                     render_mode=render_mode,
                 )
-
-                # Reset
-                obs, info = env.reset()  # stable-retro returns (obs, info)
+                obs, info = env.reset()
                 frame_stack = [preprocess_frame(obs)] * 4
-                prev_data = env.data.lookup_all()  # Reset prev_data for new episode
+                prev_data = env.data.lookup_all()
                 episode_reward = 0
 
-            # Evaluation
-            if step % eval_interval == 0:
-                mean_reward = np.mean(episode_rewards[-100:]) if episode_rewards else 0
-                median_reward = (
-                    np.median(episode_rewards[-100:]) if episode_rewards else 0
-                )
-                max_reward = np.max(episode_rewards[-100:]) if episode_rewards else 0
+            # Logging
+            if step % 10000 == 0:
+                mean_r = np.mean(episode_rewards[-100:]) if episode_rewards else 0.0
+                max_r = np.max(episode_rewards[-100:]) if episode_rewards else 0.0
+                current_lr = agent.optimizer.param_groups[0]["lr"]
+                pbar.set_postfix({"Mean R": f"{mean_r:.1f}", "LR": f"{current_lr:.6f}"})
 
-                # Log progress
-                log_entry = {
-                    "step": step,
-                    "episode": episode,
-                    "mean_reward": float(mean_reward),
-                    "median_reward": float(median_reward),
-                    "max_reward": float(max_reward),
-                    "n_episodes": len(episode_rewards),
-                    "current_level": current_level,
-                }
-                training_log["progress"].append(log_entry)
-
-                pbar.set_postfix(
+                training_log["progress"].append(
                     {
-                        "episode": episode,
-                        "mean_reward": f"{mean_reward:.2f}",
-                        "level": current_level,
+                        "step": step,
+                        "mean_reward": float(mean_r),
+                        "max_reward": float(max_r),
+                        "lr": float(current_lr),
                     }
                 )
 
-        # Compute returns and advantages
+            # Checkpoint
+            if save_checkpoints and step % checkpoint_freq == 0:
+                ckpt_dir = Path(model_path).parent / "checkpoints"
+                ckpt_dir.mkdir(parents=True, exist_ok=True)
+                ckpt_path = ckpt_dir / f"{Path(model_path).stem}_{step // 1000}k.pth"
+                torch.save(agent.model.state_dict(), ckpt_path)
+
+        # --- UPDATE ---
         advantages = agent.compute_gae(rewards, values, dones)
         returns = [adv + val for adv, val in zip(advantages, values)]
 
-        # Update policy (multiple epochs)
         n_samples = len(states)
         indices = np.arange(n_samples)
 
         for epoch in range(n_epochs):
             np.random.shuffle(indices)
-
             for start in range(0, n_samples, batch_size):
                 end = start + batch_size
-                batch_indices = indices[start:end]
-
-                batch_states = [states[i] for i in batch_indices]
-                batch_actions = [actions[i] for i in batch_indices]
-                batch_log_probs = [log_probs[i] for i in batch_indices]
-                batch_returns = [returns[i] for i in batch_indices]
-                batch_advantages = [advantages[i] for i in batch_indices]
-
-                losses = agent.update(
-                    batch_states,
-                    batch_actions,
-                    batch_log_probs,
-                    batch_returns,
-                    batch_advantages,
+                batch_idx = indices[start:end]
+                agent.update(
+                    [states[i] for i in batch_idx],
+                    [actions[i] for i in batch_idx],
+                    [log_probs[i] for i in batch_idx],
+                    [returns[i] for i in batch_idx],
+                    [advantages[i] for i in batch_idx],
                 )
 
-        # Clear buffers
         states, actions, log_probs, rewards, values, dones = [], [], [], [], [], []
 
-    # Close progress bar
+        # Periodic Save (Model & Log)
+        if step % (n_steps // 10) == 0:
+            Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+            torch.save(agent.model.state_dict(), model_path)
+            with open(log_path, "w") as f:
+                json.dump(training_log, f, indent=2)
+
     pbar.close()
+    env.close()
 
-    # Final evaluation
-    print("\n" + "=" * 80)
-    print("Training complete!")
-    print(f"Total episodes: {episode}")
-    print(f"Final mean reward (last 100): {np.mean(episode_rewards[-100:]):.2f}")
-    print("\nEpisodes per level:")
-    for level in sorted(level_episodes.keys()):
-        print(f"  {level}: {level_episodes[level]} episodes")
-    print("=" * 80 + "\n")
-
-    # Save model
-    save_path = Path(save_path)
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-
-    torch.save(
-        {
-            "model_state_dict": agent.model.state_dict(),
-            "optimizer_state_dict": agent.optimizer.state_dict(),
-            "step": step,
-            "episode": episode,
-            "mean_reward": np.mean(episode_rewards[-100:]),
-        },
-        save_path,
-    )
-
-    print(f"✓ Model saved to: {save_path}\n")
-
-    # Save training log
-    log_path = Path(log_path)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    training_log["final_stats"] = {
-        "total_episodes": episode,
-        "final_mean_reward": float(np.mean(episode_rewards[-100:])),
-        "level_episodes": level_episodes,
-    }
-
+    # Final Save
+    torch.save(agent.model.state_dict(), model_path)
     with open(log_path, "w") as f:
         json.dump(training_log, f, indent=2)
 
-    print(f"✓ Training log saved to: {log_path}\n")
+    print(f"Training Complete. Saved to {model_path}")
 
-    env.close()
-
-    return agent
+    # Save replay GIF if requested
+    if save_replay:
+        gif_filename = f"{Path(model_path).stem}_replay.gif"
+        gif_path = Path(model_path).parent / gif_filename
+        # Use first level for replay
+        replay_level = levels[0]
+        save_replay_gif(agent, replay_level, gif_path, device=device)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train PPO agent for Mario")
+    parser = argparse.ArgumentParser(
+        description="Train PPO agent on Super Mario Bros (Custom Implementation)"
+    )
+
+    # Code A Arguments
     parser.add_argument(
-        "--steps",
+        "--timesteps",
         type=int,
-        default=5_000_000,
-        help="Total training steps (default: 5M)",
-    )
-    parser.add_argument(
-        "--rollout", type=int, default=128, help="Rollout length (default: 128)"
-    )
-    parser.add_argument(
-        "--eval-interval",
-        type=int,
-        default=10000,
-        help="Evaluation interval (default: 10k)",
-    )
-    parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
-    parser.add_argument(
-        "--render", action="store_true", help="Render gameplay during training"
+        default=1000000,
+        help="Total training timesteps (default: 1000000)",
     )
     parser.add_argument(
         "--levels",
         type=str,
-        nargs="+",
-        default=None,
-        help="Mario levels to train on (default: 1-1, 1-2, 4-1, 4-2, 5-1, 5-2)",
+        default="w1l1",
+        help='Levels to train on: comma-separated (e.g., "w1l1,w1l2") or "all"',
     )
     parser.add_argument(
-        "--save-path",
-        type=str,
-        default="models/mario_ppo_agent.pth",
-        help="Where to save model",
+        "--save_checkpoints",
+        action="store_true",
+        help="Save model checkpoints during training",
     )
     parser.add_argument(
-        "--log-path",
-        type=str,
-        default="models/training_log.json",
-        help="Where to save training log",
+        "--checkpoint_freq",
+        type=int,
+        default=100000,
+        help="Checkpoint frequency in timesteps",
+    )
+
+    # Code B Arguments (merged)
+    parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
+    parser.add_argument(
+        "--render", action="store_true", help="Render gameplay during training"
+    )
+
+    # Replay GIF argument
+    parser.add_argument(
+        "--save_replay",
+        action="store_true",
+        help="Save a GIF replay of the trained agent after training completes",
     )
 
     args = parser.parse_args()
 
-    # Device
-    if args.gpu and torch.cuda.is_available():
-        device = "cuda"
-    else:
-        device = "cpu"
+    # Logic from Code A
+    levels = parse_levels(args.levels)
+    print(f"Training Configured for {len(levels)} level(s): {', '.join(levels)}")
 
-    # Convert level format if provided (e.g., "1-1" -> "Level1-1")
-    if args.levels is not None:
-        levels = []
-        for level in args.levels:
-            if not level.startswith("Level"):
-                # Convert "1-1" to "Level1-1"
-                levels.append(f"Level{level}")
-            else:
-                levels.append(level)
-    else:
-        levels = None  # Use default
+    model_filename = create_model_filename(levels, args.timesteps)
+    output_dir = "models"
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Train
+    model_path = os.path.join(output_dir, f"{model_filename}.pth")
+    log_path = os.path.join(output_dir, f"{model_filename}.json")
+
+    device = "cuda" if args.gpu and torch.cuda.is_available() else "cpu"
+
     train_ppo(
-        n_steps=args.steps,
-        rollout_length=args.rollout,
-        eval_interval=args.eval_interval,
-        save_path=args.save_path,
-        log_path=args.log_path,
-        device=device,
         levels=levels,
+        model_path=model_path,
+        log_path=log_path,
+        n_steps=args.timesteps,
+        device=device,
         render=args.render,
+        save_checkpoints=args.save_checkpoints,
+        checkpoint_freq=args.checkpoint_freq,
+        save_replay=args.save_replay,  # Pass new argument
     )
 
 
