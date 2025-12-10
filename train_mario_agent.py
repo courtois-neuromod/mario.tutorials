@@ -24,6 +24,7 @@ import retro
 from tqdm import tqdm
 from datetime import datetime
 from pathlib import Path
+import time
 
 try:
     import imageio
@@ -296,14 +297,12 @@ def save_replay_gif(agent, level, gif_path, device="cpu", max_steps=2000):
     frames = []
     done = False
     step = 0
+    frame_counter = 0  # Track frames to skip every other one
 
     agent.model.eval()
 
     with torch.no_grad():
         while not done and step < max_steps:
-            # Record original frame (before preprocessing)
-            frames.append(obs)
-
             # Get action
             state = create_frame_stack(frame_stack)
             state_tensor = torch.from_numpy(state).unsqueeze(0).float().to(device)
@@ -313,22 +312,25 @@ def save_replay_gif(agent, level, gif_path, device="cpu", max_steps=2000):
 
             button_array = action_to_buttons(action)
 
-            # Step with frame skip
+            # Step with frame skip - record every other frame only
             for _ in range(4):
                 next_obs, _, terminated, truncated, _ = env.step(button_array)
                 done = terminated or truncated
+                # Record only every other frame (skip odd frames)
+                if frame_counter % 2 == 0:
+                    frames.append(next_obs)
+                frame_counter += 1
                 frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
                 if done:
                     break
 
-            obs = next_obs
             step += 1
 
     env.close()
 
-    # Save GIF
+    # Save GIF at 60 FPS - since we skip every other frame, this gives 2x speedup
     print(f"Saving replay GIF with {len(frames)} frames to {gif_path}")
-    imageio.mimsave(gif_path, frames, fps=15)
+    imageio.mimsave(gif_path, frames, duration=1000 / 60)
     print(f"Replay saved successfully!")
 
 
@@ -341,15 +343,21 @@ def train_ppo(
     n_epochs=10,
     batch_size=64,
     device="cpu",
-    render=False,
+    render_freq=0,  # Render every N episodes (0 = disabled)
+    gif_freq=0,  # Save GIF every N episodes (0 = disabled, except final)
     save_checkpoints=False,
     checkpoint_freq=100000,
-    save_replay=False,  # New parameter
 ):
     print("=" * 80)
     print(f"PPO Training | Device: {device} | Steps: {n_steps:,}")
     print(f"Levels ({len(levels)}): {', '.join(levels)}")
     print(f"Model Path: {model_path}")
+    if render_freq > 0:
+        print(f"Visual Rendering: Every {render_freq} episodes")
+    if gif_freq > 0:
+        print(f"Saving GIF replays: Every {gif_freq} episodes")
+    else:
+        print(f"Saving final GIF replay only")
     print("=" * 80 + "\n")
 
     # Load ROM
@@ -361,7 +369,8 @@ def train_ppo(
     agent = PPOAgent(n_actions=12, device=device)
 
     # Init Environment
-    render_mode = "human" if render else None
+    # Start without rendering for performance
+    render_mode = None
 
     # Select random initial level and convert to Retro format
     current_lvl_code = np.random.choice(levels)
@@ -406,6 +415,12 @@ def train_ppo(
     states, actions, log_probs, rewards, values, dones = [], [], [], [], [], []
     pbar = tqdm(total=n_steps, desc="Training")
 
+    # For recording episodes as GIFs
+    episode_frames = []
+    is_recording = False
+    should_display = False  # Separate flag for visual rendering
+    frame_counter = 0  # Track frames to skip every other one
+
     while step < n_steps:
         agent.update_learning_rate(step, n_steps)
 
@@ -416,7 +431,7 @@ def train_ppo(
             button_array = action_to_buttons(action)
 
             accumulated_reward = 0
-            for _ in range(4):  # Frame skip
+            for skip_idx in range(4):  # Frame skip
                 next_obs, r, terminated, truncated, info = env.step(button_array)
                 done = terminated or truncated
 
@@ -426,6 +441,13 @@ def train_ppo(
                 accumulated_reward += shaped_r
 
                 frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
+
+                # Record only every other frame if we're recording (for 2x speedup)
+                if is_recording:
+                    if frame_counter % 2 == 0:
+                        episode_frames.append(next_obs)
+                    frame_counter += 1
+
                 if done:
                     break
 
@@ -444,16 +466,49 @@ def train_ppo(
                 episode_rewards.append(episode_reward)
                 episode += 1
 
+                # Save GIF if we were recording this episode
+                if is_recording and len(episode_frames) > 0:
+                    replay_dir = Path(model_path).parent / "replays"
+                    replay_dir.mkdir(parents=True, exist_ok=True)
+                    gif_filename = (
+                        f"episode_{episode}_step_{step}_{current_lvl_code}.gif"
+                    )
+                    gif_path = replay_dir / gif_filename
+
+                    if imageio is not None:
+                        print(
+                            f"\nSaving GIF for episode {episode} ({len(episode_frames)} frames)"
+                        )
+                        # 60 FPS with half the frames = 2x speedup
+                        imageio.mimsave(gif_path, episode_frames, duration=1000 / 60)
+
+                    episode_frames = []
+                    frame_counter = 0  # Reset frame counter for next episode
+
+                # Properly close the environment
                 env.close()
+                del env
+
+                # If we were rendering, give the window time to close
+                if should_display:
+                    time.sleep(0.1)
+
                 # Pick new random level
                 current_lvl_code = np.random.choice(levels)
                 current_state = convert_level_name(current_lvl_code)
+
+                # Determine if we should render (visual display) this episode
+                should_display = render_freq > 0 and episode % render_freq == 0
+                # Determine if we should record (save GIF) this episode
+                is_recording = gif_freq > 0 and episode % gif_freq == 0
+
+                current_render_mode = "human" if should_display else None
 
                 env = retro.make(
                     game="SuperMarioBros-Nes",
                     state=current_state,
                     inttype=retro.data.Integrations.ALL,
-                    render_mode=render_mode,
+                    render_mode=current_render_mode,
                 )
                 obs, info = env.reset()
                 frame_stack = [preprocess_frame(obs)] * 4
@@ -514,6 +569,10 @@ def train_ppo(
 
     pbar.close()
     env.close()
+    del env
+
+    # Allow final window to close if it was open
+    time.sleep(0.2)
 
     # Final Save
     torch.save(agent.model.state_dict(), model_path)
@@ -522,13 +581,12 @@ def train_ppo(
 
     print(f"Training Complete. Saved to {model_path}")
 
-    # Save replay GIF if requested
-    if save_replay:
-        gif_filename = f"{Path(model_path).stem}_replay.gif"
-        gif_path = Path(model_path).parent / gif_filename
-        # Use first level for replay
-        replay_level = levels[0]
-        save_replay_gif(agent, replay_level, gif_path, device=device)
+    # Always save a final replay GIF
+    gif_filename = f"{Path(model_path).stem}_final_replay.gif"
+    gif_path = Path(model_path).parent / gif_filename
+    # Use first level for replay
+    replay_level = levels[0]
+    save_replay_gif(agent, replay_level, gif_path, device=device)
 
 
 def main():
@@ -564,19 +622,20 @@ def main():
     # Code B Arguments (merged)
     parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
     parser.add_argument(
-        "--render", action="store_true", help="Render gameplay during training"
+        "--render_freq",
+        type=int,
+        default=0,
+        help="Display gameplay every N episodes (0 = no visual rendering). Example: --render_freq 10",
     )
-
-    # Replay GIF argument
     parser.add_argument(
-        "--save_replay",
-        action="store_true",
-        help="Save a GIF replay of the trained agent after training completes",
+        "--gif_freq",
+        type=int,
+        default=0,
+        help="Save GIF replay every N episodes (0 = final replay only). Example: --gif_freq 50",
     )
 
     args = parser.parse_args()
 
-    # Logic from Code A
     levels = parse_levels(args.levels)
     print(f"Training Configured for {len(levels)} level(s): {', '.join(levels)}")
 
@@ -595,10 +654,10 @@ def main():
         log_path=log_path,
         n_steps=args.timesteps,
         device=device,
-        render=args.render,
+        render_freq=args.render_freq,
+        gif_freq=args.gif_freq,
         save_checkpoints=args.save_checkpoints,
         checkpoint_freq=args.checkpoint_freq,
-        save_replay=args.save_replay,  # Pass new argument
     )
 
 
