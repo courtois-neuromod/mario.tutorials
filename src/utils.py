@@ -19,6 +19,7 @@ import numpy as np
 import nibabel as nib
 import json
 from collections import defaultdict
+import subprocess
 
 
 def get_project_root():
@@ -687,7 +688,7 @@ def setup_colab_environment(IN_COLAB=False):
     return
 
 
-def install_dependencies(requirements_file, project_path=None):
+def install_dependencies(requirements_file):
     """
     Install Python dependencies from requirements file.
 
@@ -695,27 +696,10 @@ def install_dependencies(requirements_file, project_path=None):
     ----------
     requirements_file : str or Path
         Path to requirements file (relative to project root)
-    project_path : Path, optional
-        Project root path
     """
-    import subprocess
-    from pathlib import Path
-
-    if project_path is None:
-        project_path = get_project_root()
-    else:
-        project_path = Path(project_path)
-
-    req_path = project_path / requirements_file
-
-    if not req_path.exists():
-        print(f"⚠️  Requirements file not found: {req_path}")
-        print("  Installing default packages...")
-        subprocess.run("pip install -q nilearn pandas numpy matplotlib seaborn scipy", shell=True)
-        return
 
     print(f"📦 Installing dependencies from {requirements_file}...")
-    subprocess.run(f"pip install -q -r {req_path}", shell=True, check=True)
+    subprocess.run(f"pip install -q -r {requirements_file}", shell=True, check=True)
     print("  ✓ Dependencies installed")
 
 
