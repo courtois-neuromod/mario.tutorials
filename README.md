@@ -23,6 +23,11 @@ A comprehensive tutorial for analyzing naturalistic fMRI data from the CNeuromod
 
 The CNeuromod Mario subdataset is part of the Courtois Neuromod databank. More information can be found [here](https://docs.cneuromod.ca/en/latest/DATASETS.html#mario). The dataset itself is openly available via datalad, and can be explored on [GitHub](https://github.com/courtois-neuromod/mario).
 
+<img src="images/episode_28_step_47398_w2l1.gif" width="400" style="animation-duration: 5s;">
+
+
+---
+
 ### Notebooks
 
 The tutorial is organized into four main notebooks that can be run locally or directly in Google Colab:
