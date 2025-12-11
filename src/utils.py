@@ -1102,7 +1102,7 @@ def verify_data(subject, session, sourcedata_path=None, check_bold=False):
     return True
 
 
-def download_datalad_data(
+def download_cneuromod_data(
     dataset_name,
     subject=None,
     session=None,
@@ -1110,7 +1110,7 @@ def download_datalad_data(
     sourcedata_path=None
 ):
     """
-    Download data from a datalad repository with flexible filtering.
+    Download data from the CNeuromod datalad repositories with flexible filtering.
     
     Parameters
     ----------
