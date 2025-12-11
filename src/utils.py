@@ -1156,14 +1156,13 @@ def download_cneuromod_data(
     
     dataset_path = sourcedata_path / dataset_name
     
-    # Install dataset if not present
-    if not dataset_path.exists():
-        print(f"📥 Installing {dataset_name}...")
-        dl.install(
-            source=f"https://github.com/courtois-neuromod/{dataset_name}",
-            path=str(dataset_path)
-        )
-        print(f"✓ Installed to {dataset_path}")
+    # Install dataset
+    print(f"📥 Installing {dataset_name}...")
+    dl.install(
+        source=f"https://github.com/courtois-neuromod/{dataset_name}",
+        path=str(dataset_path)
+    )
+    print(f"✓ Installed to {dataset_path}")
     
     # Build search path based on subject/session
     search_paths = []
