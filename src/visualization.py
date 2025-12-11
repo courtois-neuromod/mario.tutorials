@@ -1958,3 +1958,195 @@ def plot_r2_distribution_and_top_parcels(r2_test, best_layer, top_parcels,
 
     plt.tight_layout()
     return fig
+
+
+# ==============================================================================
+# DATASET STATISTICS VISUALIZATIONS
+# ==============================================================================
+
+def plot_dataset_statistics(replay_data, figsize=(16, 12)):
+    """
+    Create comprehensive dataset statistics visualizations.
+
+    Parameters
+    ----------
+    replay_data : pd.DataFrame
+        Replay metadata dataframe from load_replay_metadata()
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with 4 subplots showing dataset statistics
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import pandas as pd
+
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+
+    # Color palette - using Set2 ONLY for subjects
+    subject_colors = sns.color_palette('Set2', n_colors=len(replay_data['Subject'].unique()))
+
+    # 1. Success rate by subject
+    ax = axes[0, 0]
+    subject_stats = replay_data.groupby('Subject').agg({
+        'Cleared': ['sum', 'count', 'mean']
+    }).reset_index()
+    subject_stats.columns = ['Subject', 'Cleared', 'Total', 'Success_Rate']
+    subject_stats['Success_Rate'] = subject_stats['Success_Rate'] * 100
+
+    bars = ax.bar(subject_stats['Subject'], subject_stats['Success_Rate'],
+                  color=subject_colors)
+    ax.set_xlabel('Subject', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
+    ax.set_title('Level Completion Success Rate by Subject', fontsize=14, fontweight='bold')
+    ax.set_ylim(0, 100)
+    ax.axhline(y=50, color='gray', linestyle='--', alpha=0.5, label='50% threshold')
+    ax.legend()
+    ax.grid(axis='y', alpha=0.3)
+
+    # Add value labels on bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}%',
+                ha='center', va='bottom', fontweight='bold')
+
+    # 2. Playtime distribution by subject
+    ax = axes[0, 1]
+    playtime_by_subject = replay_data.groupby('Subject')['Duration'].sum() / 3600  # Convert to hours
+    bars = ax.bar(playtime_by_subject.index, playtime_by_subject.values,
+                  color=subject_colors)
+    ax.set_xlabel('Subject', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Total Playtime (hours)', fontsize=12, fontweight='bold')
+    ax.set_title('Total Playtime by Subject', fontsize=14, fontweight='bold')
+    ax.grid(axis='y', alpha=0.3)
+
+    # Add value labels on bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}h',
+                ha='center', va='bottom', fontweight='bold')
+
+    # 3. Success rate per level, grouped by world - USE FIRST HALF OF VIRIDIS (BLUE)
+    ax = axes[1, 0]
+    level_success = replay_data.groupby('LevelFullName')['Cleared'].agg(['mean', 'count']).reset_index()
+    level_success['mean'] = level_success['mean'] * 100
+    level_success['World'] = level_success['LevelFullName'].str[1].astype(int)
+    level_success['Level'] = level_success['LevelFullName'].str[3].astype(int)
+    level_success = level_success.sort_values(['World', 'Level'])
+
+    # Create x positions grouped by world
+    x_pos = []
+    x_labels = []
+    x_tick_pos = []
+    current_x = 0
+    for world in sorted(level_success['World'].unique()):
+        world_levels = level_success[level_success['World'] == world]
+        world_start = current_x
+        for _, level_data in world_levels.iterrows():
+            x_pos.append(current_x)
+            x_labels.append(level_data['LevelFullName'])
+            current_x += 1
+        # Add tick at middle of world group
+        x_tick_pos.append((world_start + current_x - 1) / 2)
+        current_x += 0.5  # Gap between worlds
+
+    # Plot bars with first half of viridis (blue half) for each world
+    import matplotlib.cm as cm
+    viridis = cm.get_cmap('viridis')
+    # Use only first half (0.0 to 0.5) which is the blue part
+    bar_colors = [viridis((int(w)-1) / 16.0) for w in level_success['World']]  # Divide by 16 to map 0-7 to 0-0.5
+
+    bars = ax.bar(x_pos, level_success['mean'], color=bar_colors, width=0.8, alpha=0.9)
+    ax.set_xlabel('Level (grouped by World)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
+    ax.set_title('Level Completion Success Rate per Level', fontsize=14, fontweight='bold')
+    ax.set_ylim(0, 100)
+    ax.set_xticks(x_tick_pos)
+    ax.set_xticklabels([f'W{w}' for w in sorted(level_success['World'].unique())], fontsize=11)
+    ax.axhline(y=50, color='gray', linestyle='--', alpha=0.5)
+    ax.grid(axis='y', alpha=0.3)
+
+    # Add vertical lines to separate worlds
+    for i, world in enumerate(sorted(level_success['World'].unique())[:-1]):
+        world_end = x_pos[level_success[level_success['World'] == world].index[-1]] + 0.75
+        ax.axvline(x=world_end, color='gray', linestyle='-', alpha=0.3, linewidth=1)
+
+    # 4. Discovery vs Practice phase comparison per subject
+    ax = axes[1, 1]
+
+    # Compute stats per subject and phase
+    phase_stats = replay_data.groupby(['Subject', 'Phase']).agg({
+        'Cleared': 'mean'
+    }).reset_index()
+    phase_stats['Cleared'] = phase_stats['Cleared'] * 100  # Convert to percentage
+
+    # Pivot to get discovery and practice side by side
+    subjects = sorted(replay_data['Subject'].unique())
+    x = np.arange(len(subjects))
+    width = 0.35
+
+    # Get values for each phase
+    discovery_success = []
+    practice_success = []
+
+    for subject in subjects:
+        subj_data = phase_stats[phase_stats['Subject'] == subject]
+
+        disc_data = subj_data[subj_data['Phase'] == 'discovery']
+        prac_data = subj_data[subj_data['Phase'] == 'practice']
+
+        discovery_success.append(disc_data['Cleared'].values[0] if len(disc_data) > 0 else 0)
+        practice_success.append(prac_data['Cleared'].values[0] if len(prac_data) > 0 else 0)
+
+    # Create shifted colors for discovery and practice
+    # Discovery = lighter (add to RGB), Practice = darker (subtract from RGB)
+    # Average of the two equals the original subject color
+    discovery_colors = []
+    practice_colors = []
+    shift = 0.15  # Shift amount
+
+    for i, color in enumerate(subject_colors):
+        # Convert to RGB array
+        r, g, b = color[0], color[1], color[2]
+
+        # Discovery: lighter (shift towards white)
+        disc_color = (min(r + shift, 1.0), min(g + shift, 1.0), min(b + shift, 1.0))
+        discovery_colors.append(disc_color)
+
+        # Practice: darker (shift towards black)
+        prac_color = (max(r - shift, 0.0), max(g - shift, 0.0), max(b - shift, 0.0))
+        practice_colors.append(prac_color)
+
+    # Plot success rate (bars only) with per-subject colors
+    for i in range(len(subjects)):
+        ax.bar(x[i] - width/2, discovery_success[i], width,
+               color=discovery_colors[i], alpha=0.9)
+        ax.bar(x[i] + width/2, practice_success[i], width,
+               color=practice_colors[i], alpha=0.9)
+
+    # Create legend with generic colors (using first subject's colors)
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor=discovery_colors[0], label='Discovery', alpha=0.9),
+        Patch(facecolor=practice_colors[0], label='Practice', alpha=0.9)
+    ]
+    ax.legend(handles=legend_elements, loc='upper left', fontsize=10)
+
+    # Labels and styling
+    ax.set_xlabel('Subject', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
+    ax.set_title('Discovery vs Practice Phase: Success Rate per Subject', fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(subjects)
+    ax.set_ylim(0, 100)
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+
+    return fig
