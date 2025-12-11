@@ -1100,3 +1100,115 @@ def verify_data(subject, session, sourcedata_path=None, check_bold=False):
 
     print(f"  ✓ Data verified for {subject} {session}")
     return True
+
+
+def download_datalad_data(
+    dataset_name,
+    subject=None,
+    session=None,
+    pattern=None,
+    sourcedata_path=None
+):
+    """
+    Download data from a datalad repository with flexible filtering.
+    
+    Parameters
+    ----------
+    dataset_name : str
+        Name of the dataset (e.g., 'mario.annotations', 'mario.fmriprep', 'mario.replays')
+    subject : str or None
+        Subject ID (e.g., 'sub-01'). If None, download for all subjects.
+    session : str or None
+        Session ID (e.g., 'ses-010'). If None, download for all sessions.
+    pattern : str or None
+        Filename pattern to match (e.g., '*events.tsv', '*.bk2', '*.json').
+        If None, download everything.
+    sourcedata_path : Path or None
+        Path to sourcedata directory. If None, uses get_sourcedata_path().
+        
+    Returns
+    -------
+    Path
+        Path to the installed dataset
+        
+    Examples
+    --------
+    # Download all event files for sub-01, ses-010
+    download_datalad_data('mario.annotations', 'sub-01', 'ses-010', '*events.tsv')
+    
+    # Download all replay files for sub-01 (all sessions)
+    download_datalad_data('mario.replays', 'sub-01', None, '*.bk2')
+    
+    # Download all confound info files for all subjects
+    download_datalad_data('mario.replays', None, None, '*.json')
+    
+    # Install entire dataset
+    download_datalad_data('mario.fmriprep')
+    """
+    import datalad.api as dl
+    from pathlib import Path
+    
+    if sourcedata_path is None:
+        sourcedata_path = get_sourcedata_path()
+    
+    sourcedata_path = Path(sourcedata_path)
+    sourcedata_path.mkdir(exist_ok=True, parents=True)
+    
+    dataset_path = sourcedata_path / dataset_name
+    
+    # Install dataset if not present
+    if not dataset_path.exists():
+        print(f"📥 Installing {dataset_name}...")
+        dl.install(
+            source=f"https://github.com/courtois-neuromod/{dataset_name}",
+            path=str(dataset_path)
+        )
+        print(f"✓ Installed to {dataset_path}")
+    
+    # Build search path based on subject/session
+    search_paths = []
+    
+    if subject is None and session is None:
+        # Search entire dataset
+        search_paths = [dataset_path]
+    elif subject is not None and session is None:
+        # Search all sessions for this subject
+        subject_path = dataset_path / subject
+        if subject_path.exists():
+            search_paths = [subject_path]
+        else:
+            print(f"⚠️  Subject {subject} not found in {dataset_name}")
+            return dataset_path
+    elif subject is not None and session is not None:
+        # Search specific subject/session
+        session_path = dataset_path / subject / session
+        if session_path.exists():
+            search_paths = [session_path]
+        else:
+            print(f"⚠️  {subject}/{session} not found in {dataset_name}")
+            return dataset_path
+    else:
+        # session provided but not subject - not supported
+        raise ValueError("Cannot specify session without subject")
+    
+    # Find matching files
+    files_to_get = []
+    for search_path in search_paths:
+        if pattern is None:
+            # Get everything recursively
+            files_to_get.extend(search_path.rglob('*'))
+        else:
+            # Find files matching pattern at any depth
+            files_to_get.extend(search_path.rglob(pattern))
+    
+    # Filter out directories, keep only files
+    files_to_get = [f for f in files_to_get if f.is_file() or f.is_symlink()]
+    
+    if files_to_get:
+        print(f"📥 Downloading {len(files_to_get)} files matching pattern '{pattern}'...")
+        dl.get(path=[str(f) for f in files_to_get])
+        print(f"✓ Downloaded {len(files_to_get)} files")
+    else:
+        print(f"ℹ️  No files found matching pattern '{pattern}'")
+    
+    return dataset_path
