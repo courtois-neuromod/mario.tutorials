@@ -1703,5 +1703,129 @@ def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas,
     plt.ylabel('BOLD Signal (z-score)')
     plt.legend()
     plt.grid(alpha=0.3)
-    
+
     return plt.gcf()
+
+
+# ==============================================================================
+# RL AGENT VISUALIZATIONS
+# ==============================================================================
+
+def show_reward_function_examples():
+    """
+    Print concrete examples of the reward function with different scenarios.
+
+    Shows how different gameplay events translate to rewards, highlighting
+    the asymmetric design that promotes cautious play.
+    """
+    print("Reward Function Examples:\n")
+    print("=" * 70)
+
+    # Example scenarios
+    scenarios = [
+        {
+            'name': 'Normal forward movement',
+            'x_diff': 3,
+            'score_diff': 0,
+            'lives_lost': False,
+            'time_diff': 0
+        },
+        {
+            'name': 'Collecting a coin',
+            'x_diff': 2,
+            'score_diff': 200,  # Coin value
+            'lives_lost': False,
+            'time_diff': 0
+        },
+        {
+            'name': 'Defeating an enemy',
+            'x_diff': 1,
+            'score_diff': 100,  # Goomba stomp
+            'lives_lost': False,
+            'time_diff': 0
+        },
+        {
+            'name': 'LOSING A LIFE (hit by enemy)',
+            'x_diff': 0,
+            'score_diff': 0,
+            'lives_lost': True,
+            'time_diff': 0
+        },
+        {
+            'name': 'Risky play: coin + enemy hit',
+            'x_diff': 2,
+            'score_diff': 200,
+            'lives_lost': True,
+            'time_diff': 0
+        }
+    ]
+
+    for scenario in scenarios:
+        reward = 0.0
+
+        # Movement
+        if -5 <= scenario['x_diff'] <= 5:
+            reward += scenario['x_diff']
+
+        # Score (increased weight from /4.0 to /2.0)
+        reward += min(scenario['score_diff'] / 2.0, 50)
+
+        # Life loss
+        if scenario['lives_lost']:
+            reward -= 50
+
+        # Time
+        reward += scenario['time_diff']
+
+        # Clip
+        reward = max(min(reward, 15), -50)
+
+        print(f"{scenario['name']:35s} → Reward: {reward:+6.1f}")
+        if scenario['lives_lost']:
+            print("  ⚠️  HEAVY PENALTY! Agent learns to avoid this!")
+
+    print("=" * 70)
+    print("\n💡 Key insight: The -50 life penalty dominates all positive rewards")
+    print("   This teaches the agent that survival > score gains")
+
+
+def plot_training_progress(training_log):
+    """
+    Plot agent training progress over time.
+
+    Parameters
+    ----------
+    training_log : dict
+        Training log dictionary with 'config' and 'progress' keys
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with training curve
+    """
+    print("Training Progress:\n")
+    print(f"Configuration:")
+    for key, val in training_log['config'].items():
+        if key != 'levels':
+            print(f"  {key}: {val}")
+    print(f"  levels: {', '.join(training_log['config']['levels'])}")
+
+    # Create plot if progress data exists
+    if len(training_log['progress']) > 0:
+        progress = training_log['progress']
+        steps = [p['step'] for p in progress]
+        mean_rewards = [p['mean_reward'] for p in progress]
+
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(steps, mean_rewards, linewidth=2)
+        ax.set_xlabel('Training Steps')
+        ax.set_ylabel('Mean Reward (last 100 episodes)')
+        ax.set_title('PPO Training Progress')
+        ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+
+        print(f"\n✓ Agent trained for {steps[-1]:,} steps")
+        return fig
+    else:
+        print("  No progress data available")
+        return None
