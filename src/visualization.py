@@ -15,6 +15,7 @@ from nilearn import plotting
 from pathlib import Path
 
 
+
 # ==============================================================================
 # GLM VISUALIZATIONS
 # ==============================================================================
@@ -1660,6 +1661,8 @@ def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas,
     Visualize time series prediction for the best parcel.
     """
     import matplotlib.pyplot as plt
+    from sklearn.linear_model import RidgeCV
+    from sklearn.preprocessing import StandardScaler
     
     if alphas is None:
         alphas = [0.1, 1, 10, 100, 1000, 10000, 100000]
