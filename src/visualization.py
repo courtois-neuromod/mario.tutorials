@@ -157,7 +157,7 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     return fig
 
 
-def plot_event_timeline(events_df, run_label, run_replays=None, figsize=(16, 8)):
+def plot_event_timeline(events_df, run_label, figsize=(16, 8)):
     """
     Plot event timeline for a single run with replay boundaries.
 
