@@ -39,7 +39,7 @@ except ImportError:
 try:
     src_path = Path(__file__).parent / "src"
     sys.path.insert(0, str(src_path))
-    from rl_utils import SimpleCNN
+    from rl import SimpleCNN
     from utils import get_sourcedata_path
 except ImportError:
     print(

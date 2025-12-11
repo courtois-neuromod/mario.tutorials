@@ -183,6 +183,7 @@ See `src/README.md` for detailed documentation of each module.
 
 📈 Brain Encoding
     ↓
+    Align CNN activations to brain activity
     Fit ridge regression models
     Compare layer performance
     Generate prediction maps

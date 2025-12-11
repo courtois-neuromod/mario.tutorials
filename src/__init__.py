@@ -169,7 +169,7 @@ __all__ = [
     'load_events', 'get_bold_path', 'load_bold', 'load_brain_mask',
     'load_confounds', 'get_session_runs', 'load_lowlevel_confounds',
     'load_replay_metadata', 'create_output_dir', 'save_stat_map',
-    'compute_dataset_statistics', 'setup_environment', 'install_dependencies',
+    'compute_dataset_statistics', 'setup_colab_environment', 'install_dependencies',
     'setup_datalad_datasets', 'download_stimuli', 'verify_data',
     # GLM
     'prepare_confounds', 'add_button_press_counts', 'downsample_lowlevel_confounds',
