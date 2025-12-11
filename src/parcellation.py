@@ -331,7 +331,7 @@ def load_basc_atlas(scale=444):
 
 def save_complete_results(parcel_bold, all_pca_results, all_encoding_results,
                           train_indices, test_indices, valid_mask, atlas,
-                          filepath, pca_dims=None, subject=None, session=None):
+                          filepath, pca_dims=None, subject=None, session=None, verbose=True):
     """
     Save ALL processing results to disk to avoid recomputation.
 
@@ -359,6 +359,8 @@ def save_complete_results(parcel_bold, all_pca_results, all_encoding_results,
         Subject ID
     session : str, optional
         Session ID
+    verbose : bool, default=True
+        Whether to print save information
     """
     import pickle
     from pathlib import Path
@@ -391,21 +393,23 @@ def save_complete_results(parcel_bold, all_pca_results, all_encoding_results,
     }
 
     # Save with pickle
-    print(f"\n{'='*80}")
-    print("SAVING COMPLETE RESULTS TO DISK")
-    print(f"{'='*80}")
-    print(f"Saving to: {filepath}")
+    if verbose:
+        print(f"\n{'='*80}")
+        print("SAVING COMPLETE RESULTS TO DISK")
+        print(f"{'='*80}")
+        print(f"Saving to: {filepath}")
 
     with open(filepath, 'wb') as f:
         pickle.dump(save_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    file_size_mb = filepath.stat().st_size / 1024 / 1024
-    print(f"\n✓ Complete results saved!")
-    print(f"  File size: {file_size_mb:.2f} MB")
-    print(f"{'='*80}\n")
+    if verbose:
+        file_size_mb = filepath.stat().st_size / 1024 / 1024
+        print(f"\n✓ Complete results saved!")
+        print(f"  File size: {file_size_mb:.2f} MB")
+        print(f"{'='*80}\n")
 
 
-def load_complete_results(filepath):
+def load_complete_results(filepath, verbose=True):
     """
     Load ALL processing results from disk.
 
@@ -413,6 +417,8 @@ def load_complete_results(filepath):
     ----------
     filepath : str or Path
         Path to saved results file
+    verbose : bool, default=True
+        Whether to print loading information
 
     Returns
     -------
@@ -427,21 +433,22 @@ def load_complete_results(filepath):
     if not filepath.exists():
         return None
 
-    print(f"\n{'='*80}")
-    print("LOADING COMPLETE RESULTS FROM CACHE")
-    print(f"{'='*80}")
-    print(f"Loading from: {filepath}")
+    if verbose:
+        print(f"\n{'='*80}")
+        print("LOADING COMPLETE RESULTS FROM CACHE")
+        print(f"{'='*80}")
+        print(f"Loading from: {filepath}")
 
     with open(filepath, 'rb') as f:
         results = pickle.load(f)
 
-    metadata = results.get('metadata', {})
-
-    print(f"\nLoaded cached results:")
-    print(f"  Subject: {metadata.get('subject')}, Session: {metadata.get('session')}")
-    print(f"  Parcels: {metadata.get('n_parcels')}")
-    print(f"\n✓ All processing steps skipped - using cached results!")
-    print(f"{'='*80}\n")
+    if verbose:
+        metadata = results.get('metadata', {})
+        print(f"\nLoaded cached results:")
+        print(f"  Subject: {metadata.get('subject')}, Session: {metadata.get('session')}")
+        print(f"  Parcels: {metadata.get('n_parcels')}")
+        print(f"\n✓ All processing steps skipped - using cached results!")
+        print(f"{'='*80}\n")
 
     return results
 

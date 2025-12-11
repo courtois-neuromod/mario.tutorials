@@ -1832,3 +1832,129 @@ def plot_training_progress(training_log):
     else:
         print("  No progress data available")
         return None
+
+
+def plot_layer_performance_comparison(all_comparisons, pca_dims, figsize=(18, 5)):
+    """
+    Plot layer performance comparison across multiple PCA dimensions.
+
+    Parameters
+    ----------
+    all_comparisons : dict
+        Dictionary mapping PCA dimensions to comparison DataFrames
+    pca_dims : list
+        List of PCA dimensions tested
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    fig, axes = plt.subplots(1, len(pca_dims), figsize=figsize)
+    layer_order = ['conv1', 'conv2', 'conv3', 'conv4', 'linear']
+
+    for idx, n_comp in enumerate(pca_dims):
+        ax = axes[idx] if len(pca_dims) > 1 else axes
+        comparison_df = all_comparisons[n_comp].copy()
+
+        # Reorder by layer_order
+        comparison_df['layer'] = pd.Categorical(
+            comparison_df['layer'],
+            categories=layer_order,
+            ordered=True
+        )
+        comparison_df = comparison_df.sort_values('layer')
+
+        # Bar plot
+        bars = ax.bar(
+            comparison_df['layer'],
+            comparison_df['mean_r2'],
+            color='steelblue',
+            alpha=0.8,
+            edgecolor='black'
+        )
+
+        # Highlight best layer
+        best_idx = comparison_df['mean_r2'].argmax()
+        bars[best_idx].set_color('darkorange')
+
+        ax.set_xlabel('Layer', fontsize=12)
+        ax.set_ylabel('Mean R²', fontsize=12)
+        ax.set_title(f'{n_comp} PCA Components', fontsize=14, fontweight='bold')
+        ax.grid(axis='y', alpha=0.3)
+        ax.set_ylim([0, max(0.05, comparison_df['mean_r2'].max() * 1.2)])
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_r2_distribution_and_top_parcels(r2_test, best_layer, top_parcels,
+                                          n_top=10, figsize=(14, 5)):
+    """
+    Plot R² distribution and top performing parcels.
+
+    Parameters
+    ----------
+    r2_test : np.ndarray
+        R² values for test set
+    best_layer : str
+        Name of the best performing layer
+    top_parcels : pd.DataFrame
+        DataFrame with top parcels (from get_top_parcels)
+    n_top : int
+        Number of top parcels to display
+    figsize : tuple
+        Figure size
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
+
+    # R² distribution histogram
+    axes[0].hist(
+        r2_test[r2_test > 0],
+        bins=50,
+        color='steelblue',
+        alpha=0.7,
+        edgecolor='black'
+    )
+    axes[0].axvline(
+        np.mean(r2_test),
+        color='red',
+        linestyle='--',
+        linewidth=2,
+        label=f'Mean = {np.mean(r2_test):.4f}'
+    )
+    axes[0].axvline(
+        np.median(r2_test),
+        color='orange',
+        linestyle='--',
+        linewidth=2,
+        label=f'Median = {np.median(r2_test):.4f}'
+    )
+    axes[0].set_xlabel('R²')
+    axes[0].set_ylabel('Number of parcels')
+    axes[0].set_title(f'{best_layer} - R² Distribution', fontweight='bold')
+    axes[0].legend()
+    axes[0].grid(alpha=0.3)
+
+    # Top parcels bar plot
+    top_n_for_plot = top_parcels.head(n_top)
+    axes[1].barh(
+        range(len(top_n_for_plot)),
+        top_n_for_plot['r2'][::-1],
+        color='steelblue',
+        alpha=0.8,
+        edgecolor='black'
+    )
+    axes[1].set_yticks(range(len(top_n_for_plot)))
+    axes[1].set_yticklabels(top_n_for_plot['label'].tolist()[::-1], fontsize=9)
+    axes[1].set_xlabel('R²')
+    axes[1].set_title(f'Top {n_top} Parcels', fontweight='bold')
+    axes[1].grid(axis='x', alpha=0.3)
+
+    plt.tight_layout()
+    return fig

@@ -631,7 +631,7 @@ def action_to_buttons(action):
 
 def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cpu', fps=60):
     """
-    Play one episode with trained agent.
+    Play one episode with trained agent, displaying rewards in real-time.
 
     Parameters
     ----------
@@ -657,6 +657,33 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
     import cv2
     import time
 
+    # Define compute_reward function (EXACT same as in train_mario_agent.py)
+    def compute_shaped_reward(env_data, prev_data):
+        """Compute shaped reward for a single step (same as training)."""
+        reward = 0.0
+
+        # X position change
+        curr_x = 256 * int(env_data.get("player_x_posHi", 0)) + int(
+            env_data.get("player_x_posLo", 0)
+        )
+        prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
+            prev_data.get("player_x_posLo", 0)
+        )
+        reward += curr_x - prev_x
+
+        # Time change
+        reward += env_data.get("time", 0) - prev_data.get("time", 0)
+
+        # Life loss penalty
+        if env_data.get("lives", 2) < prev_data.get("lives", 2):
+            reward += -15
+
+        # Score change
+        reward += (env_data.get("score", 0) - prev_data.get("score", 0)) / 40.0
+
+        # Scale and clip
+        return max(min(reward * 0.1, 1.5), -1.5)
+
     # Import ROM from custom path
     rom_path = sourcedata_path / 'mario' / 'stimuli'
     if rom_path.exists():
@@ -671,13 +698,13 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
     )
 
     # Window name for OpenCV
-    window_name = 'Mario Agent'
+    window_name = 'Mario Agent - Gameplay & Rewards'
     window_open = True
     user_quit = False
-    
-    # Create window
+
+    # Create window (larger to accommodate reward display)
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window_name, 512, 480)
+    cv2.resizeWindow(window_name, 800, 480)
 
     def check_window_closed():
         """Check if OpenCV window was closed."""
@@ -692,7 +719,11 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
         obs, info = env.reset()
         frame_stack = [preprocess_frame(obs)] * 4
 
+        # Get initial game state from environment data
+        prev_data = env.data.lookup_all()
+
         episode_reward = 0
+        current_step_reward = 0
         done = False
         step = 0
         terminated = False
@@ -703,7 +734,7 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
 
         while not done and step < max_steps and not user_quit:
             start_time = time.time()
-            
+
             # Check if window was closed
             if check_window_closed():
                 print("\nWindow closed by user.")
@@ -724,7 +755,7 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
 
             # Step environment
             try:
-                next_obs, reward, terminated, truncated, info = env.step(buttons)
+                next_obs, env_reward, terminated, truncated, info = env.step(buttons)
             except Exception as e:
                 print(f"\nEnvironment error: {e}")
                 user_quit = True
@@ -732,22 +763,132 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
 
             done = terminated or truncated
 
-            # Display frame using OpenCV
-            # Convert RGB to BGR for OpenCV
-            display_frame = cv2.cvtColor(next_obs, cv2.COLOR_RGB2BGR)
+            # Get current game state and compute reward
+            curr_data = env.data.lookup_all()
+            current_step_reward = compute_shaped_reward(curr_data, prev_data)
+
+            # Extract values for display
+            curr_x = 256 * int(curr_data.get("player_x_posHi", 0)) + int(
+                curr_data.get("player_x_posLo", 0)
+            )
+            prev_x = 256 * int(prev_data.get("player_x_posHi", 0)) + int(
+                prev_data.get("player_x_posLo", 0)
+            )
+            x_diff = curr_x - prev_x
+
+            current_score = curr_data.get('score', 0)
+            prev_score = prev_data.get('score', 0)
+            score_diff = current_score - prev_score
+
+            current_lives = curr_data.get('lives', 2)
+            prev_lives = prev_data.get('lives', 2)
+            lives_lost = current_lives < prev_lives
+
+            current_time = curr_data.get('time', 400)
+            prev_time = prev_data.get('time', 400)
+            time_diff = current_time - prev_time
+
+            # Create display with game + reward info
+            # Game frame on left (256x240 -> scale to 512x480)
+            game_frame = cv2.cvtColor(next_obs, cv2.COLOR_RGB2BGR)
+            game_frame_resized = cv2.resize(game_frame, (512, 480))
+
+            # Create reward info panel on right (288x480)
+            info_panel = np.zeros((480, 288, 3), dtype=np.uint8)
+
+            # Add text to info panel
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            y_offset = 40
+            line_height = 35
+
+            # Title
+            cv2.putText(info_panel, 'REWARD INFO', (10, y_offset), font, 0.7, (255, 255, 255), 2)
+            y_offset += line_height + 10
+
+            # Current step reward (highlighted)
+            reward_color = (0, 255, 0) if current_step_reward > 0 else (0, 0, 255) if current_step_reward < 0 else (200, 200, 200)
+            cv2.putText(info_panel, f'Step Reward: {current_step_reward:+.1f}', (10, y_offset), font, 0.6, reward_color, 2)
+            y_offset += line_height
+
+            # Total episode reward
+            cv2.putText(info_panel, f'Total: {episode_reward:.1f}', (10, y_offset), font, 0.6, (255, 255, 255), 1)
+            y_offset += line_height + 10
+
+            # Separator
+            cv2.line(info_panel, (10, y_offset), (278, y_offset), (100, 100, 100), 1)
+            y_offset += 20
+
+            # Game state
+            cv2.putText(info_panel, 'GAME STATE', (10, y_offset), font, 0.6, (200, 200, 200), 1)
+            y_offset += line_height
+
+            cv2.putText(info_panel, f'Position: {curr_x}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            cv2.putText(info_panel, f'Score: {current_score}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            cv2.putText(info_panel, f'Lives: {current_lives}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            cv2.putText(info_panel, f'Time: {current_time}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height + 10
+
+            # Separator
+            cv2.line(info_panel, (10, y_offset), (278, y_offset), (100, 100, 100), 1)
+            y_offset += 20
+
+            # Reward components (raw values before scaling)
+            cv2.putText(info_panel, 'REWARD BREAKDOWN', (10, y_offset), font, 0.6, (200, 200, 200), 1)
+            y_offset += line_height
+
+            # Show raw x_diff
+            cv2.putText(info_panel, f'X-pos: {x_diff:+.0f}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            # Show time diff
+            cv2.putText(info_panel, f'Time: {time_diff:+.0f}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            # Show life penalty (raw: -15 before scaling)
+            life_penalty = -15 if lives_lost else 0
+            if lives_lost:
+                cv2.putText(info_panel, f'Life: {life_penalty}', (10, y_offset), font, 0.5, (0, 0, 255), 2)
+            else:
+                cv2.putText(info_panel, f'Life: {life_penalty}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            # Show score reward (raw: score_diff / 40.0 before scaling)
+            score_reward = score_diff / 40.0
+            cv2.putText(info_panel, f'Score: {score_reward:+.1f}', (10, y_offset), font, 0.5, (150, 150, 150), 1)
+            y_offset += line_height - 5
+
+            # Scaling note
+            cv2.putText(info_panel, '(all x0.1, clip [-1.5,1.5])', (10, y_offset), font, 0.35, (100, 100, 100), 1)
+            y_offset += line_height - 5
+
+            # Instructions at bottom
+            cv2.putText(info_panel, 'Press Q or ESC to quit', (10, 460), font, 0.4, (100, 100, 100), 1)
+
+            # Combine game and info panel horizontally
+            display_frame = np.hstack([game_frame_resized, info_panel])
+
             cv2.imshow(window_name, display_frame)
 
             # Update state
             frame_stack = frame_stack[1:] + [preprocess_frame(next_obs)]
-            episode_reward += reward
+            episode_reward += current_step_reward
             step += 1
+
+            # Update previous state
+            prev_data = curr_data
 
             # Check for key press (q or ESC to quit)
             # waitKey also pumps the event loop which is necessary for window updates
             elapsed = time.time() - start_time
             wait_ms = max(1, int((frame_time - elapsed) * 1000))
             key = cv2.waitKey(wait_ms) & 0xFF
-            
+
             if key == ord('q') or key == 27:  # 'q' or ESC
                 print("\nUser pressed quit key.")
                 user_quit = True
@@ -763,7 +904,7 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
             env.close()
         except Exception:
             pass
-        
+
         # Destroy OpenCV window
         try:
             cv2.destroyWindow(window_name)
