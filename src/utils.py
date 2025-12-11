@@ -825,22 +825,22 @@ def download_stimuli(target_path=None):
     # Create parent directory
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Download zip file
-    output_zip = target_path.parent / "stimuli.zip"
+    # Download tar.gz file
+    output_tar = target_path.parent / "stimuli.tar.gz"
 
     try:
         import gdown
-        print(f"  Downloading to {output_zip}...")
-        gdown.download(url, str(output_zip), quiet=False)
+        print(f"  Downloading to {output_tar}...")
+        gdown.download(url, str(output_tar), quiet=False)
 
         print("  Extracting...")
-        import zipfile
-        with zipfile.ZipFile(output_zip, 'r') as zip_ref:
-            zip_ref.extractall(target_path.parent)
+        import tarfile
+        with tarfile.open(output_tar, 'r:gz') as tar_ref:
+            tar_ref.extractall(target_path.parent)
 
         # Cleanup
         import os
-        os.remove(output_zip)
+        os.remove(output_tar)
 
         print("  ✓ Stimuli downloaded and extracted")
         return True
