@@ -157,7 +157,7 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     return fig
 
 
-def plot_event_timeline(events_df, run_label, button_events_list, run_replays=None, figsize=(16, 8)):
+def plot_event_timeline(events_df, run_label, run_replays=None, figsize=(16, 8)):
     """
     Plot event timeline for a single run with replay boundaries.
 
@@ -167,8 +167,6 @@ def plot_event_timeline(events_df, run_label, button_events_list, run_replays=No
         Events for one run
     run_label : str
         Run identifier
-    button_events_list : list of str
-        List of button event types
     run_replays : list of dict, optional
         Replay metadata for this run (level, cleared, duration, etc.)
     figsize : tuple
@@ -178,12 +176,14 @@ def plot_event_timeline(events_df, run_label, button_events_list, run_replays=No
     -------
     matplotlib.figure.Figure
     """
+    
     fig, axes = plt.subplots(2, 1, figsize=figsize, sharex=True)
 
     # Define all event types (buttons + game events)
+    button_events = ['A', 'B', 'LEFT', 'RIGHT', 'UP', 'DOWN']
     game_events = ['Kill/stomp', 'Kill/kick', 'Kill/impact', 'Hit/life_lost',
                    'Powerup_collected', 'Coin_collected', 'Flag_reached', 'brick_smashes']
-    all_events_list = button_events_list + game_events
+    all_events_list = button_events + game_events
 
     # Filter out events that don't exist in this run
     all_events_list = [e for e in all_events_list if e in events_df['trial_type'].values]
@@ -232,7 +232,7 @@ def plot_event_timeline(events_df, run_label, button_events_list, run_replays=No
     max_time = events_df['onset'].max()
     bins = np.arange(0, max_time + bin_size, bin_size)
 
-    button_onsets = events_df[events_df['trial_type'].isin(button_events_list)]['onset']
+    button_onsets = events_df[events_df['trial_type'].isin(button_events)]['onset']
     hist, _ = np.histogram(button_onsets, bins=bins)
 
     ax2.bar(bins[:-1], hist, width=bin_size*0.9, alpha=0.7, color='steelblue')
