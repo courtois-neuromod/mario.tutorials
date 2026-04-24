@@ -32,7 +32,7 @@ from .utils import (
     save_stat_map,
     compute_dataset_statistics,
     # Setup functions
-    setup_environment,
+    setup_colab_environment,
     install_dependencies,
     setup_datalad_datasets,
     download_stimuli,
@@ -69,10 +69,7 @@ from .parcellation import (
     get_parcel_labels,
     load_schaefer_atlas,
     load_basc_atlas,
-    extract_parcel_bold,
-    save_complete_results,
-    load_complete_results,
-    check_complete_results_exist
+    extract_parcel_bold
 )
 
 # Reinforcement learning
@@ -103,7 +100,8 @@ from .encoding import (
     compute_noise_ceiling,
     fit_atlas_encoding_per_layer,
     compare_atlas_layer_performance,
-    get_top_parcels
+    get_top_parcels,
+    create_encoding_summary_figure
 )
 
 # Visualizations
@@ -125,7 +123,6 @@ from .visualization import (
     plot_encoding_comparison_table,
     plot_prediction_examples,
     plot_layer_comparison_bars,
-    create_encoding_summary_figure,
     # Atlas encoding viz
     plot_network_performance_grid,
     plot_glass_brain_r2,
@@ -181,7 +178,6 @@ __all__ = [
     'create_random_parcellation', 'create_kmeans_parcellation', 'create_ward_parcellation',
     'save_parcellation', 'load_parcellation', 'extract_parcel_bold_from_parcellation',
     'get_parcel_labels', 'load_schaefer_atlas', 'load_basc_atlas', 'extract_parcel_bold',
-    'save_complete_results', 'load_complete_results', 'check_complete_results_exist',
     # RL
     'SimpleCNN', 'load_pretrained_model', 'preprocess_frame', 'create_frame_stack',
     'extract_activations_from_frames', 'downsample_activations_to_tr', 'convolve_with_hrf',
@@ -192,11 +188,12 @@ __all__ = [
     'RidgeEncodingModel', 'load_and_prepare_bold', 'fit_encoding_model_per_layer',
     'cross_validated_encoding', 'compare_layer_performance', 'compute_noise_ceiling',
     'fit_atlas_encoding_per_layer', 'compare_atlas_layer_performance', 'get_top_parcels',
+    'create_encoding_summary_figure',
     # Visualization
     'plot_event_frequencies', 'plot_event_timeline', 'plot_confounds_structure',
     'get_design_matrix_figure', 'plot_contrast_surfaces', 'plot_contrast_glass_brain',
     'plot_contrast_stat_map', 'plot_pca_variance_per_layer', 'plot_layer_activations_sample',
     'plot_agent_gameplay', 'plot_r2_brainmap', 'plot_encoding_comparison_table',
-    'plot_prediction_examples', 'plot_layer_comparison_bars', 'create_encoding_summary_figure',
+    'plot_prediction_examples', 'plot_layer_comparison_bars',
     'plot_network_performance_grid', 'plot_glass_brain_r2', 'visualize_best_parcel_prediction',
 ]

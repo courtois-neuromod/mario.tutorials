@@ -152,9 +152,13 @@ The datasets required for this tutorial (approximately 7-8 GB for the featured s
 Analysis modules are organized in the `src/` directory:
 
 - `src/utils.py` - General utilities (data loading, BIDS helpers, path management)
-- `src/glm_utils.py` - GLM analysis functions (confounds, design matrices, fitting, contrasts)
-- `src/rl_utils.py` - RL agent utilities (CNN architecture, activations, HRF, PCA)
-- `src/encoding_utils.py` - Brain encoding models (ridge regression, evaluation, visualization)
+- `src/glm.py` - GLM analysis functions (confounds, design matrices, fitting, contrasts)
+- `src/parcellation.py` - Parcellation and atlas utilities
+- `src/rl.py` - RL agent utilities (CNN architecture, activations, HRF, PCA)
+- `src/encoding.py` - Brain encoding models (ridge regression, evaluation)
+- `src/visualization.py` - Plotting utilities (GLM, RL, and encoding figures)
+
+Legacy module names (`glm_utils`, `rl_utils`, `encoding_utils`) remain importable via deprecation aliases in `src/__init__.py`.
 
 See `src/README.md` for detailed documentation of each module.
 
