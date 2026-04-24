@@ -6,11 +6,11 @@ This module contains only analysis functions.
 Visualization functions are in visualization.py.
 """
 
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from nilearn.glm.first_level import FirstLevelModel, make_first_level_design_matrix
 from nilearn.glm import compute_fixed_effects
+from nilearn.glm.first_level import FirstLevelModel
 
 
 def downsample_lowlevel_confounds(lowlevel_df, n_scans, tr, game_fps=60):
@@ -33,7 +33,6 @@ def downsample_lowlevel_confounds(lowlevel_df, n_scans, tr, game_fps=60):
     pd.DataFrame
         Downsampled confounds matching fMRI timepoints
     """
-    from scipy.ndimage import uniform_filter1d
 
     # Calculate number of game frames per TR
     frames_per_tr = int(game_fps * tr)

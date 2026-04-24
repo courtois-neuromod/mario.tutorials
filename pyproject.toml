@@ -80,7 +80,17 @@ select = [
 ignore = [
     "E501",  # line-too-long (soft cap via line-length, don't hard-fail)
     "E402",  # module-level-import-not-at-top (notebook cells often have mid-file imports)
+    "E701",  # multiple-statements-on-one-line-colon — tutorial code sometimes uses one-liners
+    "E741",  # ambiguous-variable-name (l/I/O) — acceptable in scientific code
+    "W293",  # blank-line-with-whitespace — cosmetic
+    "B007",  # unused-loop-control-variable — common in scientific loops
+    "B028",  # no-explicit-stacklevel — warnings calls without stacklevel are fine for library code
+    "F841",  # unused-variable (local) — tutorial code often keeps intermediate variables
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# generate_architecture_diagram.py pulls its API from PlotNeuralNet's pycore via star-import
+"scripts/generate_architecture_diagram.py" = ["F403", "F405"]
 
 [tool.nbstripout]
 # Keep cell metadata (including RISE slideshow tags) but drop outputs

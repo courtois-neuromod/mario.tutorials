@@ -1,0 +1,41 @@
+# Pre-commit hooks for mario.tutorials
+#
+# Install once:
+#   pip install -e .[dev]
+#   pre-commit install
+#
+# Hooks then run automatically on `git commit`.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^notebooks/.*\.ipynb$
+      - id: end-of-file-fixer
+        exclude: ^notebooks/.*\.ipynb$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=2048']     # 2 MB soft cap (notebooks often exceed this — whitelist case-by-case)
+        exclude: ^notebooks/|^derivatives/|^models/|^images/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(src|scripts)/.*\.py$
+      - id: ruff-format
+        files: ^(src|scripts)/.*\.py$
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        files: ^notebooks/.*\.ipynb$
+        args:
+          # Preserve cell metadata (RISE slideshow tags live there) but drop outputs
+          - --extra-keys
+          - metadata.kernelspec metadata.language_info.version

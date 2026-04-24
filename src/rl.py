@@ -3,11 +3,11 @@ RL agent utilities for Mario fMRI tutorial.
 Adapted from mario_generalization approach.
 """
 
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn as nn
-from pathlib import Path
-from nilearn.glm.first_level import compute_regressor
 
 
 class SimpleCNN(nn.Module):
@@ -17,7 +17,7 @@ class SimpleCNN(nn.Module):
     """
 
     def __init__(self, n_actions=12, input_channels=4):
-        super(SimpleCNN, self).__init__()
+        super().__init__()
 
         # Convolutional layers (32 filters each, 3x3 kernel, stride 2)
         self.conv1 = nn.Conv2d(input_channels, 32, kernel_size=3, stride=2, padding=1)
@@ -264,8 +264,8 @@ def convolve_with_hrf(activations, tr, hrf_model='spm'):
     np.ndarray
         Convolved activations (n_trs, n_features)
     """
-    from scipy.signal import convolve
     from nilearn.glm.first_level import glover_hrf, spm_hrf
+    from scipy.signal import convolve
 
     n_trs, n_features = activations.shape
 
@@ -437,8 +437,8 @@ def apply_random_projection_with_nan_handling(activations_dict, mask, n_componen
         - 'reduced_activations': dict mapping layer names to projected arrays (n_trs, n_components)
         - 'projection_models': dict mapping layer names to fitted projection objects
     """
-    from sklearn.random_projection import GaussianRandomProjection
     from sklearn.preprocessing import StandardScaler
+    from sklearn.random_projection import GaussianRandomProjection
 
     print(f"\nApplying Random Projection to layer activations (n_components={n_components})...")
 
@@ -653,9 +653,10 @@ def play_agent_episode(model, level, sourcedata_path, max_steps=5000, device='cp
     dict
         Episode statistics (steps, reward, completed)
     """
-    import retro
-    import cv2
     import time
+
+    import cv2
+    import retro
 
     # Define compute_reward function (EXACT same as in train_mario_agent.py)
     def compute_shaped_reward(env_data, prev_data):
@@ -1026,8 +1027,8 @@ def load_replay_and_extract_frames(replay_path, sourcedata_path, level_name):
     list of np.ndarray
         List of RGB frames (H, W, 3)
     """
+
     import retro
-    import os
 
     # Resolve symlinks (git-annex uses symlinks)
     replay_path = Path(replay_path)
@@ -1207,8 +1208,8 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
         - 'mask': boolean array indicating valid (gameplay) TRs (n_trs_total,)
         - 'run_info': list of dicts with info per run
     """
+
     import pandas as pd
-    from pathlib import Path
 
     print(f"\n{'='*70}")
     print(f"Aligning RL activations to BOLD for {subject} {session}")
@@ -1281,7 +1282,7 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
             run_duration = events_df['onset'].max() + 10.0  # Add buffer
             n_trs = int(np.ceil(run_duration / tr))
             print(f"  Estimated from events: {n_trs} TRs (duration: {run_duration:.2f}s)")
-            print(f"  ⚠ Warning: Using estimated TR count. Pass bold_imgs for exact alignment.")
+            print("  ⚠ Warning: Using estimated TR count. Pass bold_imgs for exact alignment.")
 
         # Initialize activations for this run (will be NaN for non-game periods)
         # Determine feature dimensions from first segment

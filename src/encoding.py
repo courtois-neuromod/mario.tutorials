@@ -3,17 +3,16 @@ Brain encoding utilities for Mario fMRI tutorial.
 Adapted from mario_generalization encoding approach.
 """
 
+import warnings
+
 import numpy as np
+from nilearn.interfaces.fmriprep import load_confounds
+from nilearn.maskers import NiftiMasker
+from nilearn.masking import unmask
 from sklearn.linear_model import RidgeCV
+from sklearn.metrics import r2_score
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
-import nibabel as nib
-from nilearn.masking import apply_mask, unmask
-from nilearn.maskers import NiftiMasker
-from nilearn.image import clean_img
-from nilearn.interfaces.fmriprep import load_confounds
-import warnings
 
 
 class RidgeEncodingModel:
@@ -291,7 +290,7 @@ def fit_encoding_model_per_layer(layer_activations, bold_data, mask_img,
                 print(f"  Using {train_valid.sum()}/{len(train_valid)} train, {test_valid.sum()}/{len(test_valid)} test")
 
         if len(X_train) == 0 or len(X_test) == 0:
-            print(f"  ⚠ No valid samples, skipping...")
+            print("  ⚠ No valid samples, skipping...")
             continue
 
         # Standardize features (matching diagnostics)
@@ -620,7 +619,7 @@ def fit_atlas_encoding_per_layer(layer_activations, parcel_bold, atlas,
                       f"{test_valid.sum()}/{len(test_valid)} test")
 
         if len(X_train) == 0 or len(X_test) == 0:
-            print(f"  ⚠ No valid samples, skipping...")
+            print("  ⚠ No valid samples, skipping...")
             continue
 
         # Standardize features
@@ -848,7 +847,7 @@ def save_encoding_results(parcel_bold, all_pca_results, all_encoding_results,
 
     if verbose:
         file_size_mb = filepath.stat().st_size / 1024 / 1024
-        print(f"\n✓ Encoding results saved!")
+        print("\n✓ Encoding results saved!")
         print(f"  File size: {file_size_mb:.2f} MB")
         print(f"{'='*80}\n")
 
@@ -888,10 +887,10 @@ def load_encoding_results(filepath, verbose=True):
 
     if verbose:
         metadata = results.get('metadata', {})
-        print(f"\nLoaded cached results:")
+        print("\nLoaded cached results:")
         print(f"  Subject: {metadata.get('subject')}, Session: {metadata.get('session')}")
         print(f"  Parcels: {metadata.get('n_parcels')}")
-        print(f"\n✓ All processing steps skipped - using cached results!")
+        print("\n✓ All processing steps skipped - using cached results!")
         print(f"{'='*80}\n")
 
     return results

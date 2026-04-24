@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package (editable + dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          # stable-retro needs the Mario ROM which is not publicly redistributable;
+          # CI skips it. We still install everything else to validate imports.
+          pip install -e .[dev] \
+            --constraint <(grep -v '^stable-retro' requirements.lock) \
+            || pip install -e .[dev]
+
+      - name: Ruff lint
+        run: ruff check src scripts
+        # Note: `ruff format --check` is intentionally not part of CI — the
+        # pre-commit hook formats new code locally. Running format-check
+        # against the existing unformatted tree would fail indiscriminately.
+
+      - name: Smoke test — package imports
+        run: |
+          python -c "
+          import sys
+          from src import (
+              get_sourcedata_path, load_bold, load_confounds,
+              prepare_confounds, add_scrub_regressors,
+              load_schaefer_atlas, SimpleCNN, RidgeEncodingModel,
+              setup_colab_environment,
+          )
+          print('all canonical exports import cleanly')
+          "
+
+      - name: Verify no phantom imports in src/__init__.py
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          root = Path('src')
+          defs = {}
+          for mod in ['utils', 'glm', 'parcellation', 'rl', 'encoding', 'visualization']:
+              tree = ast.parse((root / f'{mod}.py').read_text())
+              defs[mod] = {n.name for n in ast.walk(tree)
+                            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
+          init = ast.parse((root / '__init__.py').read_text())
+          missing = []
+          for node in ast.walk(init):
+              if isinstance(node, ast.ImportFrom) and node.module in defs:
+                  for alias in node.names:
+                      if alias.name not in defs[node.module]:
+                          missing.append(f'{node.module}.{alias.name}')
+          if missing:
+              raise SystemExit(f'Phantom imports in src/__init__.py: {missing}')
+          print('src/__init__.py import graph is clean')
+          PY
+
+      - name: Verify notebook slide metadata
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for nb_path in sorted(Path('notebooks').glob('*.ipynb')):
+              with open(nb_path) as f:
+                  nb = json.load(f)
+              missing = [i for i, c in enumerate(nb['cells'])
+                         if c.get('metadata', {}).get('slideshow', {}).get('slide_type') is None]
+              rise = nb.get('metadata', {}).get('rise')
+              if missing or not rise:
+                  raise SystemExit(
+                      f'{nb_path}: missing cells={missing}, rise-config present={bool(rise)}'
+                  )
+              print(f'{nb_path.name}: {len(nb["cells"])} cells, all slide_type set, RISE config present')
+          PY

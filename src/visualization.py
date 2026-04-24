@@ -7,14 +7,14 @@ This module consolidates all visualization functions from:
 - Encoding models (from encoding_viz_utils.py and atlas_encoding_utils.py)
 """
 
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 from nilearn import plotting
-from pathlib import Path
 
-
+from .glm import create_events_for_glm
 
 # ==============================================================================
 # GLM VISUALIZATIONS
@@ -181,7 +181,7 @@ def plot_event_timeline(events_df, run_label, figsize=(16, 8)):
     -------
     matplotlib.figure.Figure
     """
-    
+
     fig, axes = plt.subplots(2, 1, figsize=figsize, sharex=True)
 
     # Define all event types (buttons + game events)
@@ -537,10 +537,10 @@ def plot_contrast_surfaces(z_map, contrast_name, stat_threshold=3.0,
     matplotlib.figure.Figure
         Figure with 4 surface plots
     """
-    from nilearn.image import threshold_img
     from nilearn import datasets
-    from nilearn.surface import vol_to_surf
+    from nilearn.image import threshold_img
     from nilearn.plotting import plot_surf_stat_map
+    from nilearn.surface import vol_to_surf
 
     # Threshold the map
     z_thresh = threshold_img(
@@ -552,7 +552,7 @@ def plot_contrast_surfaces(z_map, contrast_name, stat_threshold=3.0,
 
     print(f"✓ Contrast: {contrast_name}")
     print(f"  Threshold: |Z| > {stat_threshold}, cluster > {cluster_threshold} voxels")
-    print(f"  (uncorrected for multiple comparisons)")
+    print("  (uncorrected for multiple comparisons)")
 
     # Fetch fsaverage surface
     print("\nFetching fsaverage surface...")
@@ -749,9 +749,6 @@ def plot_contrast_stat_map(z_map, contrast_name, stat_threshold=3.0,
 Visualization utilities for RL section of Mario fMRI tutorial.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 def plot_pca_variance_per_layer(pca_results, layer_configs):
@@ -912,9 +909,6 @@ def plot_agent_gameplay(frames, actions, rewards, max_frames=300):
 Visualization utilities for brain encoding section of Mario fMRI tutorial.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from nilearn import plotting
 
 
 def plot_r2_brainmap(r2_map, layer_name, threshold=0.01, vmax=0.2):
@@ -1128,14 +1122,14 @@ def plot_atlas_r2_surfaces(encoding_results, layer_name, atlas, r2_threshold=0.0
     """
     Plot parcel R² values on brain surfaces.
     """
-    from nilearn import datasets
-    from nilearn.surface import vol_to_surf
-    from nilearn.plotting import plot_surf_stat_map
     import matplotlib.pyplot as plt
-    from matplotlib.gridspec import GridSpec
+    import nibabel as nib
     from matplotlib import cm
     from matplotlib.colors import Normalize
-    import nibabel as nib
+    from matplotlib.gridspec import GridSpec
+    from nilearn import datasets
+    from nilearn.plotting import plot_surf_stat_map
+    from nilearn.surface import vol_to_surf
 
     result = encoding_results[layer_name]
     r2_test = result['r2_test']
@@ -1305,9 +1299,8 @@ def plot_network_performance(encoding_results, layer_name, atlas, figsize=(12, 6
     """
     Plot encoding performance by Yeo network for a single layer.
     """
-    import pandas as pd
-    import seaborn as sns
     import matplotlib.pyplot as plt
+    import pandas as pd
 
     result = encoding_results[layer_name]
     r2_test = result['r2_test']
@@ -1386,9 +1379,8 @@ def plot_network_performance_grid(all_encoding_results, pca_dim, atlas,
     fig : Figure
         Matplotlib figure
     """
-    import pandas as pd
-    import seaborn as sns
     import matplotlib.pyplot as plt
+    import pandas as pd
 
     encoding_results = all_encoding_results[pca_dim]
     layers = list(encoding_results.keys())
@@ -1549,9 +1541,9 @@ def plot_glass_brain_r2(encoding_results, layer_name, atlas, r2_threshold=0.01,
     -------
     fig : Figure
     """
-    from nilearn import plotting
-    import nibabel as nib
     import matplotlib.pyplot as plt
+    import nibabel as nib
+    from nilearn import plotting
 
     compare_mode = encoding_results_untrained is not None
 
@@ -1611,7 +1603,7 @@ def plot_glass_brain_r2(encoding_results, layer_name, atlas, r2_threshold=0.01,
             axes=axes[1]
         )
 
-        fig.suptitle(f'Glass Brain Comparison: Trained vs Untrained',
+        fig.suptitle('Glass Brain Comparison: Trained vs Untrained',
                     fontsize=14, fontweight='bold', y=0.98)
         plt.tight_layout()
 
@@ -1635,8 +1627,8 @@ def plot_glass_brain_r2(encoding_results, layer_name, atlas, r2_threshold=0.01,
     return fig
 
 
-def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas, 
-                                     train_indices, test_indices, layer_name, 
+def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas,
+                                     train_indices, test_indices, layer_name,
                                      encoding_results, alphas=None):
     """
     Visualize time series prediction for the best parcel.
@@ -1644,7 +1636,7 @@ def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas,
     import matplotlib.pyplot as plt
     from sklearn.linear_model import RidgeCV
     from sklearn.preprocessing import StandardScaler
-    
+
     if alphas is None:
         alphas = [0.1, 1, 10, 100, 1000, 10000, 100000]
 
@@ -1653,31 +1645,31 @@ def visualize_best_parcel_prediction(layer_activations, parcel_bold, atlas,
     best_idx = np.argmax(result['r2_test'])
     best_r2 = result['r2_test'][best_idx]
     label = result['parcel_labels'][best_idx]
-    
+
     if isinstance(label, bytes):
         label = label.decode('utf-8')
-    
+
     print(f"Refitting best parcel: {label} (R² = {best_r2:.4f})")
-    
+
     # Get data
     X = layer_activations[layer_name]
     y = parcel_bold[:, best_idx]
-    
+
     X_train = X[train_indices]
     X_test = X[test_indices]
     y_train = y[train_indices]
     y_test = y[test_indices]
-    
+
     # Scale
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    
+
     # Refit
     ridge = RidgeCV(alphas=alphas, cv=3)
     ridge.fit(X_train_scaled, y_train)
     y_pred = ridge.predict(X_test_scaled)
-    
+
     # Plot
     plt.figure(figsize=(14, 4))
     plt.plot(y_test, label='Actual BOLD', alpha=0.7)
@@ -1788,7 +1780,7 @@ def plot_training_progress(training_log):
         Figure with training curve
     """
     print("Training Progress:\n")
-    print(f"Configuration:")
+    print("Configuration:")
     for key, val in training_log['config'].items():
         if key != 'levels':
             print(f"  {key}: {val}")
@@ -1962,9 +1954,7 @@ def plot_dataset_statistics(replay_data, figsize=(16, 12)):
         Figure with 4 subplots showing dataset statistics
     """
     import matplotlib.pyplot as plt
-    import seaborn as sns
     import numpy as np
-    import pandas as pd
 
     fig, axes = plt.subplots(2, 2, figsize=figsize)
 

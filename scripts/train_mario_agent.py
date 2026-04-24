@@ -11,20 +11,21 @@ Features:
 """
 
 import argparse
+import json
 import os
 import sys
-import json
+import time
+from datetime import datetime
+from pathlib import Path
+
 import cv2
 import numpy as np
+import retro
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-import retro
 from tqdm import tqdm
-from datetime import datetime
-from pathlib import Path
-import time
 
 try:
     import imageio
@@ -331,7 +332,7 @@ def save_replay_gif(agent, level, gif_path, device="cpu", max_steps=2000):
     # Save GIF at 60 FPS - since we skip every other frame, this gives 2x speedup
     print(f"Saving replay GIF with {len(frames)} frames to {gif_path}")
     imageio.mimsave(gif_path, frames, duration=1000 / 60)
-    print(f"Replay saved successfully!")
+    print("Replay saved successfully!")
 
 
 def train_ppo(
@@ -357,7 +358,7 @@ def train_ppo(
     if gif_freq > 0:
         print(f"Saving GIF replays: Every {gif_freq} episodes")
     else:
-        print(f"Saving final GIF replay only")
+        print("Saving final GIF replay only")
     print("=" * 80 + "\n")
 
     # Load ROM

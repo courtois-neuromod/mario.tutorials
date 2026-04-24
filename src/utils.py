@@ -12,14 +12,15 @@ Button Mappings (NES Super Mario Bros):
 - SELECT = (unused in SMB1)
 """
 
-import os
-from pathlib import Path
-import pandas as pd
-import numpy as np
-import nibabel as nib
 import json
-from collections import defaultdict
+import os
 import subprocess
+from collections import defaultdict
+from pathlib import Path
+
+import nibabel as nib
+import numpy as np
+import pandas as pd
 
 
 def get_project_root():
@@ -562,7 +563,7 @@ def load_replay_metadata(sourcedata_path=None):
     # Load all JSONs
     all_data = []
     for json_file in json_files:
-        with open(json_file, 'r') as f:
+        with open(json_file) as f:
             data = json.load(f)
             all_data.append(data)
 
@@ -678,10 +679,10 @@ def setup_colab_environment(IN_COLAB=False):
     """
     Make sure repo and paths are properly setup.
     """
+    import os
+    import subprocess
     import sys
     from pathlib import Path
-    import subprocess
-    import os
 
 
     print("🚀 Detected Google Colab")
@@ -689,19 +690,19 @@ def setup_colab_environment(IN_COLAB=False):
 
     # Install git-annex using datalad-installer (required for DataLad to work)
     print("📦 Installing git-annex for DataLad support...")
-    
+
     # Install the missing 'netbase' dependency
     subprocess.run(["sudo", "apt-get", "update"], check=True, capture_output=True)
     subprocess.run(["sudo", "apt-get", "install", "-y", "netbase"], check=True)
-    
+
     # Install git-annex
     subprocess.run(["pip", "install", "-q", "datalad", "datalad-installer"], check=True)
     subprocess.run(["datalad-installer", "--sudo", "ok", "git-annex", "-m", "datalad/git-annex:release"], check=True)
-    
+
     # Configure git user (DataLad requires this)
     subprocess.run(["git", "config", "--global", "user.email", "colab@example.com"], check=True)
     subprocess.run(["git", "config", "--global", "user.name", "Colab User"], check=True)
-    
+
     print("✓ git-annex installed and configured")
 
     # Change to project directory
@@ -741,8 +742,8 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
     bool
         True if successful, False if DataLad failed
     """
-    from pathlib import Path
     import subprocess
+    from pathlib import Path
 
     sourcedata_path = Path(sourcedata_path)
     sourcedata_path.mkdir(parents=True, exist_ok=True)
@@ -782,7 +783,7 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
 
             if result.returncode != 0:
                 # Fallback to git clone
-                print(f"    DataLad install failed, trying git clone...")
+                print("    DataLad install failed, trying git clone...")
                 result = subprocess.run(
                     ["git", "clone", url, str(ds_path)],
                     capture_output=True,
@@ -793,9 +794,9 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
                     print(f"    ⚠️  Failed to install {name}")
                     success = False
                 else:
-                    print(f"    ✓ Cloned with git")
+                    print("    ✓ Cloned with git")
             else:
-                print(f"    ✓ Installed with DataLad")
+                print("    ✓ Installed with DataLad")
 
             # Pin mario to the dev_replays branch (annotations + gamelogs live there)
             if name == "mario" and ds_path.exists():
@@ -829,8 +830,8 @@ def download_stimuli(target_path=None):
     target_path : Path, optional
         Target path for stimuli folder. If None, uses sourcedata/mario/stimuli
     """
-    from pathlib import Path
     import subprocess
+    from pathlib import Path
 
     if target_path is None:
         target_path = get_sourcedata_path() / "mario" / "stimuli"
@@ -892,7 +893,7 @@ def download_stimuli(target_path=None):
 
     except Exception as e:
         print(f"  ⚠️  Failed to download stimuli: {e}")
-        print(f"\nManual download:")
+        print("\nManual download:")
         print(f"1. Visit: https://drive.google.com/file/d/{file_id}/view")
         print(f"2. Download and extract to: {target_path}")
         return False
@@ -932,9 +933,9 @@ def download_mario_replays(sourcedata_path=None):
     bool
         True if successful, False otherwise
     """
-    from pathlib import Path
-    import subprocess
     import os
+    import subprocess
+    from pathlib import Path
 
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
@@ -1017,9 +1018,9 @@ def download_mario_annotations(subject, session, sourcedata_path=None):
     bool
         True if successful, False otherwise
     """
-    from pathlib import Path
-    import subprocess
     import os
+    import subprocess
+    from pathlib import Path
 
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
@@ -1198,9 +1199,10 @@ def download_cneuromod_data(
     # Install entire dataset
     download_cneuromod_data('mario.fmriprep')
     """
-    import datalad.api as dl
     import subprocess
     from pathlib import Path
+
+    import datalad.api as dl
 
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
@@ -1231,10 +1233,10 @@ def download_cneuromod_data(
             check=False,
             capture_output=True,
         )
-    
+
     # Build search path based on subject/session
     search_paths = []
-    
+
     if subject is None and session is None:
         # Search entire dataset
         search_paths = [dataset_path]
@@ -1257,7 +1259,7 @@ def download_cneuromod_data(
     else:
         # session provided but not subject - not supported
         raise ValueError("Cannot specify session without subject")
-    
+
     # Find matching files
     files_to_get = []
     for search_path in search_paths:
@@ -1267,10 +1269,10 @@ def download_cneuromod_data(
         else:
             # Find files matching pattern at any depth
             files_to_get.extend(search_path.rglob(pattern))
-    
+
     # Filter out directories, keep only files
     files_to_get = [f for f in files_to_get if f.is_file() or f.is_symlink()]
-    
+
     if files_to_get:
         print(f"📥 Downloading {len(files_to_get)} files matching pattern '{pattern}'...")
         # Tolerate per-file failures (e.g. annexed files whose content isn't on any
@@ -1293,5 +1295,5 @@ def download_cneuromod_data(
                     print(f"   - {r.get('path', '?')}")
     else:
         print(f"ℹ️  No files found matching pattern '{pattern}'")
-    
+
     return dataset_path

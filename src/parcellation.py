@@ -6,12 +6,12 @@ coverage and predefined regions, we create random parcellations that
 ensure uniform coverage across the whole brain.
 """
 
-import numpy as np
+from pathlib import Path
+
 import nibabel as nib
+import numpy as np
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.regions import Parcellations
-from sklearn.cluster import KMeans
-from pathlib import Path
 
 
 def create_random_parcellation(mask_img, n_parcels=400, random_state=42):
@@ -43,7 +43,7 @@ def create_random_parcellation(mask_img, n_parcels=400, random_state=42):
     voxel_coords = np.where(mask_bool)
     n_voxels = len(voxel_coords[0])
 
-    print(f"Creating random parcellation:")
+    print("Creating random parcellation:")
     print(f"  Total voxels: {n_voxels:,}")
     print(f"  Target parcels: {n_parcels}")
     print(f"  Voxels per parcel: ~{n_voxels // n_parcels}")
@@ -88,12 +88,11 @@ def create_kmeans_parcellation(bold_imgs, mask_img, n_parcels=400, random_state=
     parcellation_img : Nifti1Image
         Parcellation image
     """
-    from nilearn.regions import Parcellations
 
-    print(f"Creating K-Means parcellation:")
+    print("Creating K-Means parcellation:")
     print(f"  Using {len(bold_imgs)} BOLD runs")
     print(f"  Target parcels: {n_parcels}")
-    print(f"  This will take ~1-2 minutes...")
+    print("  This will take ~1-2 minutes...")
 
     # Use nilearn's Parcellations
     parcellator = Parcellations(
@@ -134,13 +133,12 @@ def create_ward_parcellation(bold_imgs, mask_img, n_parcels=400, connectivity='a
     parcellation_img : Nifti1Image
         Parcellation image
     """
-    from nilearn.regions import Parcellations
 
-    print(f"Creating Ward parcellation:")
+    print("Creating Ward parcellation:")
     print(f"  Using {len(bold_imgs)} BOLD runs")
     print(f"  Target parcels: {n_parcels}")
     print(f"  Connectivity: {connectivity}")
-    print(f"  This will take ~2-3 minutes...")
+    print("  This will take ~2-3 minutes...")
 
     parcellator = Parcellations(
         method='ward',
@@ -302,9 +300,9 @@ def load_basc_atlas(scale=444):
     dict
         Atlas with 'maps' (path) and 'labels' (generated names)
     """
-    from nilearn import datasets
     import nibabel as nib
     import numpy as np
+    from nilearn import datasets
 
     basc = datasets.fetch_atlas_basc_multiscale_2015(version='sym', resolution=scale)
 
@@ -352,10 +350,10 @@ def extract_parcel_bold(bold_imgs, atlas, confounds_list=None,
     ndarray
         Parcel-averaged BOLD timeseries (timepoints × parcels)
     """
-    from nilearn.image import resample_to_img
-    from nilearn.maskers import NiftiLabelsMasker
     import nibabel as nib
     import numpy as np
+    from nilearn.image import resample_to_img
+    from nilearn.maskers import NiftiLabelsMasker
 
     # Ensure list
     if not isinstance(bold_imgs, list):
