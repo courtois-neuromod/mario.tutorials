@@ -105,8 +105,8 @@ def load_events(subject, session, run, sourcedata_path=None):
     else:
         run = f'run-{int(run):02d}'
 
-    # Build path to annotated events
-    events_path = (sourcedata_path / "mario.annotations" /
+    # Build path to annotated events (pre-shipped on mario@dev_replays under sub-XX/ses-YYY/func/)
+    events_path = (sourcedata_path / "mario" /
                    subject / session / "func" /
                    f"{subject}_{session}_task-mario_{run}_desc-annotated_events.tsv")
 
@@ -114,6 +114,12 @@ def load_events(subject, session, run, sourcedata_path=None):
         raise FileNotFoundError(f"Events file not found: {events_path}")
 
     events = pd.read_csv(events_path, sep='\t')
+
+    # dev_replays labels the two action buttons as JUMP and RUN/THROW. The tutorial
+    # code + contrasts use the NES button names A (jump) and B (run/fireball), and
+    # the contrast parser requires valid Python identifiers (so 'RUN/THROW' breaks).
+    # Remap back to A / B for compatibility.
+    events['trial_type'] = events['trial_type'].replace({'JUMP': 'A', 'RUN/THROW': 'B'})
     return events
 
 
@@ -355,7 +361,7 @@ def get_session_runs(subject, session, sourcedata_path=None):
 
 def load_lowlevel_confounds(subject, session, run, sourcedata_path=None):
     """
-    Load low-level confounds (luminance, optical flow, audio) from mario.replays.
+    Load low-level confounds (luminance, optical flow, audio) from mario/sub-XX/ses-YYY/gamelogs/.
 
     Parameters
     ----------
@@ -392,15 +398,15 @@ def load_lowlevel_confounds(subject, session, run, sourcedata_path=None):
     else:
         run_num = int(run)
 
-    # Look for confounds files in mario.replays
-    confs_dir = sourcedata_path / "mario.replays" / subject / session / "beh" / "confs"
+    # Look for lowlevel files in mario/sub-XX/ses-YYY/gamelogs/ (branch: dev_replays)
+    confs_dir = sourcedata_path / "mario" / subject / session / "gamelogs"
 
     if not confs_dir.exists():
-        raise FileNotFoundError(f"Low-level confounds directory not found: {confs_dir}")
+        raise FileNotFoundError(f"Gamelogs directory not found: {confs_dir}")
 
-    # Find matching confounds file(s) for this run
-    # Files are named: sub-01_ses-010_task-mario_level-w1l1_rep-000_confs.npy
-    conf_files = sorted(confs_dir.glob(f"{subject}_{session}_task-mario_*.npy"))
+    # Find matching lowlevel file(s) for this run
+    # Files are named: sub-01_ses-010_task-mario_level-w1l1_rep-000_lowlevel.npy
+    conf_files = sorted(confs_dir.glob(f"{subject}_{session}_task-mario_*_lowlevel.npy"))
 
     if len(conf_files) == 0:
         raise FileNotFoundError(f"No confounds files found in {confs_dir}")
@@ -512,7 +518,7 @@ def save_stat_map(img, subject, session, model_name, contrast_name,
 
 def load_replay_metadata(sourcedata_path=None):
     """
-    Load all replay metadata from JSON sidecars in mario.replays dataset.
+    Load all replay metadata from *_summary.json sidecars in mario/sub-*/ses-*/gamelogs/.
 
     Parameters
     ----------
@@ -532,16 +538,16 @@ def load_replay_metadata(sourcedata_path=None):
     else:
         sourcedata_path = Path(sourcedata_path)
 
-    replays_path = sourcedata_path / "mario.replays"
+    mario_path = sourcedata_path / "mario"
 
-    if not replays_path.exists():
-        raise FileNotFoundError(f"Replays directory not found: {replays_path}")
+    if not mario_path.exists():
+        raise FileNotFoundError(f"Mario dataset directory not found: {mario_path}")
 
-    # Find all JSON files
-    json_files = sorted(replays_path.glob("*/*/beh/infos/*.json"))
+    # Find all summary JSON files in gamelogs/
+    json_files = sorted(mario_path.glob("sub-*/ses-*/gamelogs/*_summary.json"))
 
     if len(json_files) == 0:
-        raise FileNotFoundError(f"No JSON metadata files found in {replays_path}")
+        raise FileNotFoundError(f"No *_summary.json files found in {mario_path}/sub-*/ses-*/gamelogs/")
 
     # Load all JSONs
     all_data = []
@@ -552,6 +558,12 @@ def load_replay_metadata(sourcedata_path=None):
 
     # Create dataframe
     df = pd.DataFrame(all_data)
+
+    # Derive a boolean `Cleared` column from the `Outcome` string so that
+    # existing statistics / visualisation helpers keep working.
+    # Outcome values on dev_replays: 'cleared', 'failed/timeout', 'failed/fall', 'failed/killed'.
+    if 'Outcome' in df.columns and 'Cleared' not in df.columns:
+        df['Cleared'] = df['Outcome'] == 'cleared'
 
     return df
 
@@ -730,12 +742,13 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
     subprocess.run("git config --global user.email 'notebook@example.com'", shell=True, check=False)
     subprocess.run("git config --global user.name 'Notebook User'", shell=True, check=False)
 
-    # Dataset URLs
+    # Dataset URLs. `mario` on the `dev_replays` branch ships annotations
+    # (func/*_desc-annotated_events.tsv) and replay derivatives (gamelogs/*) in-tree,
+    # so we no longer install mario.annotations / mario.replays separately.
     datasets = {
         "mario": "https://github.com/courtois-neuromod/mario.git",
         "mario.fmriprep": "https://github.com/courtois-neuromod/mario.fmriprep.git",
-        "mario.annotations": "https://github.com/courtois-neuromod/mario.annotations.git",
-        "mario.replays": "https://github.com/courtois-neuromod/mario.replays.git",
+        "cneuromod.processed": "https://github.com/courtois-neuromod/cneuromod.processed.git",
     }
 
     success = True
@@ -744,6 +757,8 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
 
         if ds_path.exists():
             print(f"  ✓ {name} already installed")
+            if name == "mario":
+                subprocess.run(["git", "-C", str(ds_path), "checkout", "dev_replays"], check=False)
             continue
 
         print(f"  Installing {name}...")
@@ -774,6 +789,10 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
             else:
                 print(f"    ✓ Installed with DataLad")
 
+            # Pin mario to the dev_replays branch (annotations + gamelogs live there)
+            if name == "mario" and ds_path.exists():
+                subprocess.run(["git", "-C", str(ds_path), "checkout", "dev_replays"], check=False)
+
         except Exception as e:
             print(f"    ⚠️  Error installing {name}: {e}")
             success = False
@@ -792,9 +811,10 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
 
 def download_stimuli(target_path=None):
     """
-    Download Mario stimuli from Google Drive.
-
-    This downloads the stimuli folder needed for RL agent training.
+    Download Mario stimuli (ROM + save states). Prefers fetching via datalad
+    from the `mario` dataset's `stimuli` subdataset (public conp-ria remote),
+    and falls back to a Google Drive tarball if datalad isn't usable (e.g.
+    Colab without the mario dataset installed).
 
     Parameters
     ----------
@@ -809,9 +829,26 @@ def download_stimuli(target_path=None):
     else:
         target_path = Path(target_path)
 
-    if target_path.exists() and len(list(target_path.glob("*"))) > 0:
-        print("✓ Stimuli already present")
+    rom_file = target_path / "SuperMarioBros-Nes" / "rom.nes"
+    if rom_file.exists():
+        print("✓ Stimuli ROM already present")
         return True
+
+    # Preferred path: datalad get on the stimuli subdataset of the mario repo.
+    mario_path = target_path.parent  # sourcedata/mario
+    if (mario_path / ".datalad").exists() or (mario_path / ".git").exists():
+        print("📥 Fetching mario/stimuli via datalad get...")
+        try:
+            import datalad.api as dl
+            # Ensure the submodule is initialised before getting its content.
+            # `dl.get` on a path inside an un-initialised submodule will fetch both.
+            dl.get(path=str(target_path), dataset=str(mario_path))
+            if rom_file.exists():
+                print("  ✓ Stimuli downloaded via datalad")
+                return True
+            print("  ⚠️  datalad get completed but ROM still missing; trying Google Drive fallback...")
+        except Exception as e:
+            print(f"  ⚠️  datalad get failed ({e}); falling back to Google Drive...")
 
     print("📥 Downloading stimuli from Google Drive...")
 
@@ -853,9 +890,29 @@ def download_stimuli(target_path=None):
         return False
 
 
+def _ensure_mario_installed(mario_path):
+    """Install mario dataset (recursively, to initialise the stimuli submodule) and
+    pin to the dev_replays branch."""
+    import subprocess
+    if not mario_path.exists():
+        print("  Installing mario dataset (recursive — includes stimuli submodule)...")
+        result = subprocess.run(
+            ["datalad", "install", "--recursive",
+             "-s", "https://github.com/courtois-neuromod/mario", str(mario_path)],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"  ⚠️  DataLad install failed: {result.stderr}")
+            return False
+    # Pin to dev_replays (where annotations + gamelogs live)
+    subprocess.run(["git", "-C", str(mario_path), "checkout", "dev_replays"], check=False,
+                   capture_output=True)
+    return True
+
+
 def download_mario_replays(sourcedata_path=None):
     """
-    Download replay metadata JSON files from mario.replays dataset.
+    Download replay summary JSON files from mario/sub-*/ses-*/gamelogs/ (branch: dev_replays).
 
     Parameters
     ----------
@@ -878,43 +935,35 @@ def download_mario_replays(sourcedata_path=None):
 
     # Use absolute paths
     sourcedata_path = sourcedata_path.resolve()
-    replays_path = sourcedata_path / "mario.replays"
+    mario_path = sourcedata_path / "mario"
 
     # Check if data already exists
-    replays_exists = replays_path.exists() and len(list(replays_path.glob("sub-*/ses-*/beh/infos/*.json"))) > 0
+    replays_exists = mario_path.exists() and len(list(mario_path.glob("sub-*/ses-*/gamelogs/*_summary.json"))) > 0
 
     if replays_exists:
-        print("✓ mario.replays data already downloaded!")
+        print("✓ Replay summary metadata already downloaded!")
         return True
 
-    print("📥 Downloading mario.replays metadata...")
+    print("📥 Downloading replay summary metadata from mario@dev_replays...")
 
-    # Ensure dataset is installed
-    if not replays_path.exists():
-        print("  Installing mario.replays dataset...")
-        result = subprocess.run(
-            ["datalad", "install", "-s", "https://github.com/courtois-neuromod/mario.replays", str(replays_path)],
-            capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            print(f"  ⚠️  DataLad install failed: {result.stderr}")
-            return False
-
-    # Find all JSON metadata files
-    json_files = list(replays_path.glob("sub-*/ses-*/beh/infos/*.json"))
-
-    if not json_files:
-        print("  ⚠️  No JSON files found in dataset structure")
+    if not _ensure_mario_installed(mario_path):
         return False
 
-    print(f"  Found {len(json_files)} JSON files to download...")
+    # Find all summary JSON files
+    json_files = list(mario_path.glob("sub-*/ses-*/gamelogs/*_summary.json"))
+
+    if not json_files:
+        print("  ⚠️  No *_summary.json files found in dataset structure")
+        return False
+
+    print(f"  Found {len(json_files)} summary files to download...")
 
     # Get relative paths for datalad
-    file_paths = [str(f.relative_to(replays_path)) for f in json_files]
+    file_paths = [str(f.relative_to(mario_path)) for f in json_files]
 
     # Change to dataset directory
     original_dir = os.getcwd()
-    os.chdir(replays_path)
+    os.chdir(mario_path)
 
     try:
         # Download in batches to avoid command line length limits
@@ -932,7 +981,7 @@ def download_mario_replays(sourcedata_path=None):
             print(f"  Downloaded {min(i+batch_size, len(file_paths))}/{len(file_paths)} files...")
 
         os.chdir(original_dir)
-        print("  ✓ All replay metadata downloaded!")
+        print("  ✓ All replay summary metadata downloaded!")
         return True
 
     except Exception as e:
@@ -943,7 +992,8 @@ def download_mario_replays(sourcedata_path=None):
 
 def download_mario_annotations(subject, session, sourcedata_path=None):
     """
-    Download annotated events TSV files for a specific subject/session.
+    Download annotated events TSV files for a specific subject/session
+    from mario/sub-XX/ses-YYY/func/ (branch: dev_replays).
 
     Parameters
     ----------
@@ -976,31 +1026,23 @@ def download_mario_annotations(subject, session, sourcedata_path=None):
 
     # Use absolute paths
     sourcedata_path = sourcedata_path.resolve()
-    annotations_path = sourcedata_path / "mario.annotations"
+    mario_path = sourcedata_path / "mario"
 
     # Check if data already exists for this subject/session
-    session_path = annotations_path / subject / session / "func"
+    session_path = mario_path / subject / session / "func"
     annotations_exist = session_path.exists() and len(list(session_path.glob(f"{subject}_{session}_*_desc-annotated_events.tsv"))) > 0
 
     if annotations_exist:
-        print(f"✓ mario.annotations data already downloaded for {subject} {session}!")
+        print(f"✓ Annotated events already downloaded for {subject} {session}!")
         return True
 
-    print(f"📥 Downloading mario.annotations for {subject} {session}...")
+    print(f"📥 Downloading annotated events for {subject} {session}...")
 
-    # Ensure dataset is installed
-    if not annotations_path.exists():
-        print("  Installing mario.annotations dataset...")
-        result = subprocess.run(
-            ["datalad", "install", "-s", "https://github.com/courtois-neuromod/mario.annotations", str(annotations_path)],
-            capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            print(f"  ⚠️  DataLad install failed: {result.stderr}")
-            return False
+    if not _ensure_mario_installed(mario_path):
+        return False
 
     # Find all TSV files for this subject/session
-    tsv_files = list(annotations_path.glob(f"{subject}/{session}/func/{subject}_{session}_task-mario_run-*_desc-annotated_events.tsv"))
+    tsv_files = list(mario_path.glob(f"{subject}/{session}/func/{subject}_{session}_task-mario_run-*_desc-annotated_events.tsv"))
 
     if not tsv_files:
         print(f"  ⚠️  No annotated event files found for {subject} {session}")
@@ -1009,11 +1051,11 @@ def download_mario_annotations(subject, session, sourcedata_path=None):
     print(f"  Found {len(tsv_files)} annotated event files to download...")
 
     # Get relative paths for datalad
-    file_paths = [str(f.relative_to(annotations_path)) for f in tsv_files]
+    file_paths = [str(f.relative_to(mario_path)) for f in tsv_files]
 
     # Change to dataset directory
     original_dir = os.getcwd()
-    os.chdir(annotations_path)
+    os.chdir(mario_path)
 
     try:
         # Download all TSV files
@@ -1071,8 +1113,8 @@ def verify_data(subject, session, sourcedata_path=None, check_bold=False):
 
     print(f"📊 Verifying data for {subject} {session}...")
 
-    # Check for annotations
-    annot_dir = sourcedata_path / "mario.annotations" / subject / session / "func"
+    # Check for annotations (on mario@dev_replays, under sub-XX/ses-YYY/func/)
+    annot_dir = sourcedata_path / "mario" / subject / session / "func"
     if not annot_dir.exists():
         print(f"  ⚠️  Annotations not found: {annot_dir}")
         return False
@@ -1115,54 +1157,72 @@ def download_cneuromod_data(
     Parameters
     ----------
     dataset_name : str
-        Name of the dataset (e.g., 'mario.annotations', 'mario.fmriprep', 'mario.replays')
+        Name of the dataset (e.g., 'mario', 'mario.fmriprep', 'cneuromod.processed').
+        The 'mario' dataset is pinned to the `dev_replays` branch so that
+        *_desc-annotated_events.tsv (in func/) and gamelogs/*  (summary / variables /
+        lowlevel / recording) are available.
     subject : str or None
         Subject ID (e.g., 'sub-01'). If None, download for all subjects.
     session : str or None
         Session ID (e.g., 'ses-010'). If None, download for all sessions.
     pattern : str or None
-        Filename pattern to match (e.g., '*events.tsv', '*.bk2', '*.json').
+        Filename pattern to match (e.g., '*events.tsv', '*.bk2', '*_summary.json').
         If None, download everything.
     sourcedata_path : Path or None
         Path to sourcedata directory. If None, uses get_sourcedata_path().
-        
+
     Returns
     -------
     Path
         Path to the installed dataset
-        
+
     Examples
     --------
-    # Download all event files for sub-01, ses-010
-    download_datalad_data('mario.annotations', 'sub-01', 'ses-010', '*events.tsv')
-    
-    # Download all replay files for sub-01 (all sessions)
-    download_datalad_data('mario.replays', 'sub-01', None, '*.bk2')
-    
-    # Download all confound info files for all subjects
-    download_datalad_data('mario.replays', None, None, '*.json')
-    
+    # Download all annotated events for sub-01, ses-010
+    download_cneuromod_data('mario', 'sub-01', 'ses-010', '*_desc-annotated_events.tsv')
+
+    # Download all replay .bk2 files for sub-01 (all sessions)
+    download_cneuromod_data('mario', 'sub-01', None, '*.bk2')
+
+    # Download all replay summary files for all subjects
+    download_cneuromod_data('mario', None, None, '*_summary.json')
+
     # Install entire dataset
-    download_datalad_data('mario.fmriprep')
+    download_cneuromod_data('mario.fmriprep')
     """
     import datalad.api as dl
+    import subprocess
     from pathlib import Path
-    
+
     if sourcedata_path is None:
         sourcedata_path = get_sourcedata_path()
-    
+
     sourcedata_path = Path(sourcedata_path)
     sourcedata_path.mkdir(exist_ok=True, parents=True)
-    
+
     dataset_path = sourcedata_path / dataset_name
-    
-    # Install dataset
-    print(f"📥 Installing {dataset_name}...")
-    dl.install(
-        source=f"https://github.com/courtois-neuromod/{dataset_name}",
-        path=str(dataset_path)
-    )
-    print(f"✓ Installed to {dataset_path}")
+
+    # Install dataset (idempotent: dl.install raises if path already has a dataset,
+    # so we guard on existence). For mario, install recursively so the stimuli
+    # submodule is initialised (its content is fetched separately by download_stimuli()).
+    if not dataset_path.exists():
+        print(f"📥 Installing {dataset_name}...")
+        dl.install(
+            source=f"https://github.com/courtois-neuromod/{dataset_name}",
+            path=str(dataset_path),
+            recursive=(dataset_name == "mario"),
+        )
+        print(f"✓ Installed to {dataset_path}")
+    else:
+        print(f"✓ {dataset_name} already installed at {dataset_path}")
+
+    # mario needs the dev_replays branch (annotations in func/, replay derivatives in gamelogs/)
+    if dataset_name == "mario":
+        subprocess.run(
+            ["git", "-C", str(dataset_path), "checkout", "dev_replays"],
+            check=False,
+            capture_output=True,
+        )
     
     # Build search path based on subject/session
     search_paths = []
@@ -1205,8 +1265,24 @@ def download_cneuromod_data(
     
     if files_to_get:
         print(f"📥 Downloading {len(files_to_get)} files matching pattern '{pattern}'...")
-        dl.get(path=[str(f) for f in files_to_get])
-        print(f"✓ Downloaded {len(files_to_get)} files")
+        # Tolerate per-file failures (e.g. annexed files whose content isn't on any
+        # reachable remote). DataLad raises IncompleteResultsError if any item fails;
+        # we catch it, report the count of actually-downloaded files, and move on.
+        try:
+            from datalad.support.exceptions import IncompleteResultsError
+        except ImportError:
+            IncompleteResultsError = Exception
+        try:
+            dl.get(path=[str(f) for f in files_to_get])
+            print(f"✓ Downloaded {len(files_to_get)} files")
+        except IncompleteResultsError as exc:
+            results = getattr(exc, 'failed', []) or []
+            n_failed = len(results)
+            n_ok = len(files_to_get) - n_failed
+            print(f"⚠️  Downloaded {n_ok}/{len(files_to_get)} files; {n_failed} could not be fetched")
+            if n_failed and n_failed <= 5:
+                for r in results:
+                    print(f"   - {r.get('path', '?')}")
     else:
         print(f"ℹ️  No files found matching pattern '{pattern}'")
     

@@ -48,7 +48,7 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     session_events : pd.DataFrame
         All events across session
     replay_metadata : list of dict
-        Replay metadata from mario.replays for this session
+        Replay metadata (loaded from *_summary.json under mario/sub-XX/ses-YYY/gamelogs/) for this session
     subject : str
         Subject ID
     session : str
@@ -100,6 +100,10 @@ def plot_event_frequencies(session_events, replay_metadata, subject, session, fi
     # Replay statistics
     if replay_metadata:
         df_replays = pd.DataFrame(replay_metadata)
+
+        # Derive a boolean Cleared column from the dev_replays `Outcome` string if needed.
+        if 'Cleared' not in df_replays.columns and 'Outcome' in df_replays.columns:
+            df_replays['Cleared'] = df_replays['Outcome'] == 'cleared'
 
         # Calculate statistics
         levels_played = len(df_replays)
@@ -333,7 +337,7 @@ def get_design_matrix_figure(fmri_glm, run_label=''):
     fig, ax = plt.subplots(figsize=(12, 8))
 
     # Plot design matrix
-    ax = plotting.plot_design_matrix(design_matrix, ax=ax)
+    ax = plotting.plot_design_matrix(design_matrix, axes=ax)
 
     # Remove grid (it falls between columns which looks weird)
     ax.grid(False)
@@ -1397,27 +1401,33 @@ def plot_network_performance_grid(all_encoding_results, pca_dim, atlas,
     fig, axes = plt.subplots(2, 3, figsize=figsize)
     axes = axes.flatten()
 
+    def _labels_to_networks(labels):
+        nets = []
+        for label in labels:
+            if isinstance(label, bytes):
+                label = label.decode('utf-8')
+            parts = str(label).split('_')
+            nets.append(parts[2] if len(parts) >= 3 else 'Unknown')
+        return nets
+
+    def _align(labels, r2_test):
+        """Trim labels and r2_test to a common length.
+
+        Schaefer atlases often have a leading 'background' parcel that isn't
+        represented in r2_test, so drop it. More generally, we align to the
+        shorter of the two so the resulting networks/r2 arrays match.
+        """
+        if len(labels) == len(r2_test) + 1:
+            labels = labels[1:]
+        n = min(len(labels), len(r2_test))
+        return labels[:n], r2_test[:n]
+
     # Common network order (sorted by overall median R²)
     all_data = []
     for layer_name in layers:
         result = encoding_results[layer_name]
-        r2_test = result['r2_test']
-        labels = result['parcel_labels']
-
-        # Handle label mismatch
-        if len(labels) > len(r2_test):
-            labels = labels[1:]
-
-        # Extract networks
-        networks = []
-        for label in labels:
-            if isinstance(label, bytes):
-                label = label.decode('utf-8')
-            parts = label.split('_')
-            if len(parts) >= 3:
-                networks.append(parts[2])
-            else:
-                networks.append('Unknown')
+        labels, r2_test = _align(result['parcel_labels'], result['r2_test'])
+        networks = _labels_to_networks(labels)
 
         if compare_mode:
             condition = 'Trained'
@@ -1430,22 +1440,8 @@ def plot_network_performance_grid(all_encoding_results, pca_dim, atlas,
         encoding_results_untrained = all_encoding_results_untrained[pca_dim]
         for layer_name in layers:
             result = encoding_results_untrained[layer_name]
-            r2_test = result['r2_test']
-            labels = result['parcel_labels']
-
-            if len(labels) > len(r2_test):
-                labels = labels[1:]
-
-            networks = []
-            for label in labels:
-                if isinstance(label, bytes):
-                    label = label.decode('utf-8')
-                parts = label.split('_')
-                if len(parts) >= 3:
-                    networks.append(parts[2])
-                else:
-                    networks.append('Unknown')
-
+            labels, r2_test = _align(result['parcel_labels'], result['r2_test'])
+            networks = _labels_to_networks(labels)
             all_data.extend(list(zip(networks, r2_test, [layer_name]*len(r2_test), ['Untrained']*len(r2_test))))
 
     # Create dataframe
@@ -1487,23 +1483,8 @@ def plot_network_performance_grid(all_encoding_results, pca_dim, atlas,
         else:
             # Original single-condition plot
             result = encoding_results[layer_name]
-            r2_test = result['r2_test']
-            labels = result['parcel_labels']
-
-            # Handle label mismatch
-            if len(labels) > len(r2_test):
-                labels = labels[1:]
-
-            # Extract networks
-            networks = []
-            for label in labels:
-                if isinstance(label, bytes):
-                    label = label.decode('utf-8')
-                parts = label.split('_')
-                if len(parts) >= 3:
-                    networks.append(parts[2])
-                else:
-                    networks.append('Unknown')
+            labels, r2_test = _align(result['parcel_labels'], result['r2_test'])
+            networks = _labels_to_networks(labels)
 
             df = pd.DataFrame({
                 'Network': networks,

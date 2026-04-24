@@ -6,17 +6,23 @@ This script creates a beautiful LaTeX/TikZ visualization of the SimpleCNN
 architecture used for the Mario RL agent.
 
 Usage:
-    python generate_architecture_diagram.py
+    python scripts/generate_architecture_diagram.py
 
-This will generate:
+This will generate (inside scripts/):
     - ppo_architecture.tex (LaTeX source)
 
 To compile to PDF:
-    bash PlotNeuralNet/tikzmake.sh ppo_architecture
+    (cd scripts && pdflatex ppo_architecture.tex)
 """
 
+import os
 import sys
-sys.path.append('PlotNeuralNet/')
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(REPO_ROOT / "PlotNeuralNet"))
+os.chdir(REPO_ROOT / "scripts")
+
 from pycore.tikzeng import *
 
 # Define PPO CNN architecture
@@ -91,12 +97,10 @@ arch = [
 def main():
     # Generate the LaTeX file
     to_generate(arch, 'ppo_architecture.tex')
-    print("✓ Generated ppo_architecture.tex")
+    print("✓ Generated scripts/ppo_architecture.tex")
     print("\nTo compile to PDF:")
-    print("  bash PlotNeuralNet/tikzmake.sh ppo_architecture")
-    print("\nOr manually:")
-    print("  pdflatex ppo_architecture.tex")
-    print("\nThe PDF will be: ppo_architecture.pdf")
+    print("  (cd scripts && pdflatex ppo_architecture.tex)")
+    print("\nThe PDF will be: scripts/ppo_architecture.pdf")
 
 if __name__ == '__main__':
     main()

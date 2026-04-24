@@ -19,7 +19,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 SUBJECT="sub-01"
-SESSION="ses-010"
+SESSION="ses-010"             # primary session used by notebooks 00/01
+SESSIONS=("ses-010" "ses-001") # all sessions to pre-fetch (notebook 03 uses ses-001 too)
 SOURCEDATA_DIR="sourcedata"
 
 # ==============================================================================
@@ -73,7 +74,7 @@ fi
 # Install Dependencies
 # ------------------------------------------------------------------------------
 
-print_header "Step 1/7: Installing Dependencies"
+print_header "Step 1/6: Installing Dependencies"
 
 if ! command -v datalad &> /dev/null; then
     print_info "Installing datalad..."
@@ -87,7 +88,7 @@ fi
 # Create Directory Structure
 # ------------------------------------------------------------------------------
 
-print_header "Step 2/7: Creating Directory Structure"
+print_header "Step 2/6: Creating Directory Structure"
 
 if [ ! -d "${SOURCEDATA_DIR}" ]; then
     mkdir -p "${SOURCEDATA_DIR}"
@@ -102,7 +103,7 @@ cd "${SOURCEDATA_DIR}"
 # Download Dataset Repositories
 # ------------------------------------------------------------------------------
 
-print_header "Step 3/7: Installing Dataset Repositories"
+print_header "Step 3/6: Installing Dataset Repositories"
 
 # cneuromod.processed (anatomical data)
 if [ ! -d "cneuromod.processed" ]; then
@@ -113,52 +114,33 @@ else
     print_warning "cneuromod.processed already exists"
 fi
 
-# mario (raw BIDS data)
+# mario (raw BIDS data + annotations + gamelogs, on branch dev_replays)
 if [ ! -d "mario" ]; then
-    print_info "Installing mario with subdatasets..."
+    print_info "Installing mario with subdatasets (branch: dev_replays)..."
     datalad install --recursive git@github.com:courtois-neuromod/mario
-    print_success "mario installed"
+    (cd mario && git checkout dev_replays)
+    print_success "mario installed @ dev_replays"
 else
     print_warning "mario already exists"
+    (cd mario && git checkout dev_replays 2>/dev/null) || print_warning "Could not switch to dev_replays"
 fi
 
-# stimuli (game ROM and integration files)
-if [ ! -d "mario/stimuli" ]; then
-    # Check if AWS credentials are available
-    if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        print_warning "stimuli requires AWS credentials - skipping download"
-        echo ""
-        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${YELLOW}STIMULI - AWS CREDENTIALS REQUIRED${NC}"
-        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo ""
-        echo "The stimuli dataset contains the Super Mario Bros ROM and"
-        echo "integration files. This data is stored on AWS S3 and requires"
-        echo "access credentials."
-        echo ""
-        echo "Options to obtain access:"
-        echo ""
-        echo "  1. Request AWS credentials from the CNeuromod team:"
-        echo "     • Contact: courtois-neuromod-admin@criugm.qc.ca"
-        echo "     • Specify you need access to stimuli dataset"
-        echo ""
-        echo "  2. Obtain the ROM legally:"
-        echo "     • Purchase Super Mario Bros for NES"
-        echo "     • Extract ROM using legal methods"
-        echo "     • Place in sourcedata/mario/stimuli/"
-        echo ""
-        echo "Note: The tutorial can proceed without stimuli, but some"
-        echo "      visualizations and replay analyses will be limited."
-        echo ""
-        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo ""
-    else
-        print_info "Downloading stimuli files..."
-        datalad get mario/stimuli
-        print_success "stimuli downloaded"
-    fi
+# stimuli (game ROM + save states) — initialized by `--recursive` above, content fetched here.
+# The public conp-ria-storage-http remote serves these; no AWS credentials needed.
+if [ -f "mario/stimuli/SuperMarioBros-Nes/rom.nes" ]; then
+    print_success "mario/stimuli ROM already present"
 else
-    print_warning "mario/stimuli already exists"
+    print_info "Fetching mario/stimuli ROM + save states via datalad get..."
+    if (cd mario && datalad get stimuli/); then
+        print_success "stimuli content downloaded"
+    else
+        print_warning "Could not fetch stimuli content"
+        echo "The Super Mario Bros ROM could not be downloaded automatically."
+        echo "You can either:"
+        echo "  • Retry later (transient network issue)"
+        echo "  • Obtain SuperMarioBros.nes legally and drop it into sourcedata/mario/stimuli/SuperMarioBros-Nes/rom.nes"
+        echo "Notebooks 00/01 work without it; notebook 02 (RL agent) needs the ROM."
+    fi
 fi
 
 # mario.fmriprep (preprocessed fMRI)
@@ -170,16 +152,11 @@ else
     print_warning "mario.fmriprep already exists"
 fi
 
-# mario.annotations (behavioral events)
-if [ ! -d "mario.annotations" ]; then
-    print_info "Installing mario.annotations..."
-    git clone git@github.com:courtois-neuromod/mario.annotations
-    print_success "mario.annotations cloned"
-else
-    print_warning "mario.annotations already exists"
-fi
+# Note: mario.annotations and mario.replays are no longer separate repos.
+# Their contents now live under mario/sub-*/ses-*/func/*_desc-annotated_events.tsv
+# and mario/sub-*/ses-*/gamelogs/* on the dev_replays branch.
 
-# mario.scenes (scene segmentation)
+# mario.scenes (scene segmentation — still an independent repo)
 if [ ! -d "mario.scenes" ]; then
     print_info "Installing mario.scenes..."
     git clone git@github.com:courtois-neuromod/mario.scenes
@@ -188,37 +165,36 @@ else
     print_warning "mario.scenes already exists"
 fi
 
-# mario.replays (replay processing)
-if [ ! -d "mario.replays" ]; then
-    print_info "Installing mario.replays..."
-    git clone git@github.com:courtois-neuromod/mario.replays
-    print_success "mario.replays cloned"
-else
-    print_warning "mario.replays already exists"
-fi
-
 # ------------------------------------------------------------------------------
 # Download Session Data
 # ------------------------------------------------------------------------------
 
-print_header "Step 4/7: Downloading Session Data (${SUBJECT}/${SESSION})"
+print_header "Step 4/6: Downloading Session Data for ${SUBJECT}"
 
-print_info "This will download ~7-8 GB of data..."
+print_info "Fetching sessions: ${SESSIONS[*]}"
 echo ""
 
-# Raw BIDS data (events and gamelogs)
-print_info "Downloading raw BIDS data..."
-datalad get "mario/${SUBJECT}/${SESSION}/func"/*.tsv 2>/dev/null || print_warning "Some TSV files may not exist"
-datalad get "mario/${SUBJECT}/${SESSION}/gamelogs"/*.bk2 2>/dev/null || print_warning "Some BK2 files may not exist"
-print_success "Raw BIDS data downloaded"
+# Raw BIDS + annotations + gamelogs + preprocessed BOLD + confounds, per session
+for SES in "${SESSIONS[@]}"; do
+    print_info "── ${SES} ──"
 
-# Preprocessed fMRI data
-print_info "Downloading preprocessed fMRI data (this may take 10-15 minutes)..."
-datalad get "mario.fmriprep/${SUBJECT}/${SESSION}/func"/*space-MNI152NLin2009cAsym* 2>/dev/null || print_warning "Some fMRIPrep files may not exist"
-datalad get "mario.fmriprep/${SUBJECT}/${SESSION}/func"/*desc-confounds* 2>/dev/null || print_warning "Some confounds may not exist"
-print_success "Preprocessed fMRI data downloaded"
+    print_info "  Events + annotated events..."
+    datalad get "mario/${SUBJECT}/${SES}/func"/*.tsv 2>/dev/null \
+        || print_warning "  Some TSV files may not exist for ${SES}"
 
-# Anatomical data
+    print_info "  Gamelogs (replays, summaries, variables, lowlevel features, recordings)..."
+    datalad get "mario/${SUBJECT}/${SES}/gamelogs"/* 2>/dev/null \
+        || print_warning "  Some gamelogs files may not exist for ${SES}"
+
+    print_info "  Preprocessed BOLD + confounds (this may take a few minutes)..."
+    datalad get "mario.fmriprep/${SUBJECT}/${SES}/func"/*space-MNI152NLin2009cAsym* 2>/dev/null \
+        || print_warning "  Some fMRIPrep files may not exist for ${SES}"
+    datalad get "mario.fmriprep/${SUBJECT}/${SES}/func"/*desc-confounds* 2>/dev/null \
+        || print_warning "  Some confounds may not exist for ${SES}"
+done
+print_success "Mario + fMRIPrep data downloaded for all sessions"
+
+# Anatomical data (subject-level, session-independent)
 print_info "Downloading anatomical data..."
 datalad get "cneuromod.processed/smriprep/${SUBJECT}/anat"/*space-MNI152NLin2009cAsym_desc-preproc_T1w.nii.gz 2>/dev/null || print_warning "Anatomical may not exist"
 datalad get "cneuromod.processed/smriprep/${SUBJECT}/anat"/*space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz 2>/dev/null || print_warning "Brain mask may not exist"
@@ -228,191 +204,103 @@ print_success "Anatomical data downloaded"
 # Verify Downloads
 # ------------------------------------------------------------------------------
 
-print_header "Step 5/7: Verifying Downloads"
+print_header "Step 5/6: Verifying Downloads"
 
-# Check for key files
+# Check for key files across all fetched sessions
 errors=0
 
-# Raw data
-if [ ! -f "mario/${SUBJECT}/${SESSION}/func/${SUBJECT}_${SESSION}_task-mario_run-01_events.tsv" ]; then
-    print_error "Raw events file not found"
-    ((errors++))
-else
-    print_success "Raw events verified"
-fi
+for SES in "${SESSIONS[@]}"; do
+    print_info "── verifying ${SES} ──"
 
-# Preprocessed BOLD
-bold_files=$(find "mario.fmriprep/${SUBJECT}/${SESSION}/func" -name "*space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" 2>/dev/null | wc -l)
-if [ "$bold_files" -eq 0 ]; then
-    print_error "No preprocessed BOLD files found"
-    ((errors++))
-else
-    print_success "Found ${bold_files} preprocessed BOLD files"
-fi
-
-# Confounds
-confound_files=$(find "mario.fmriprep/${SUBJECT}/${SESSION}/func" -name "*desc-confounds_timeseries.tsv" 2>/dev/null | wc -l)
-if [ "$confound_files" -eq 0 ]; then
-    print_error "No confound files found"
-    ((errors++))
-else
-    print_success "Found ${confound_files} confound files"
-fi
-
-# Annotations
-if [ ! -d "mario.annotations/annotations/${SUBJECT}/${SESSION}" ]; then
-    print_warning "Annotations not found (may need manual download)"
-else
-    print_success "Annotations verified"
-fi
-
-# ------------------------------------------------------------------------------
-# Generate Derivatives
-# ------------------------------------------------------------------------------
-
-print_header "Step 6/7: Generating Derivatives for ${SUBJECT}/${SESSION}"
-
-print_info "Generating derivatives from mario.replays, mario.scenes, and mario.annotations..."
-echo ""
-
-# Generate replays with game variables
-if [ -d "${SOURCEDATA_DIR}/mario.replays" ]; then
-    print_info "Setting up mario.replays environment and generating derivatives..."
-    cd "${SOURCEDATA_DIR}/mario.replays"
-
-    # Create environment and setup using invoke
-    if [ ! -d "env" ]; then
-        print_info "Creating virtual environment and installing dependencies..."
-        python3 -m venv env && source env/bin/activate && invoke setup-env
-        print_success "Environment setup complete"
+    if [ ! -f "mario/${SUBJECT}/${SES}/func/${SUBJECT}_${SES}_task-mario_run-01_events.tsv" ]; then
+        print_error "  Raw events file not found for ${SES}"
+        ((errors++))
     else
-        print_info "Environment already exists, activating..."
-        source env/bin/activate
+        print_success "  Raw events verified"
     fi
 
-    # Generate replay derivatives
-    print_info "Generating replay derivatives for ${SUBJECT} ${SESSION}..."
-    invoke create-replays \
-        --subjects "${SUBJECT}" \
-        --sessions "${SESSION}" \
-        --datapath "../mario" \
-        --save-confs \
-        --save-variables || print_warning "Failed to generate replays"
-    print_success "Replay derivatives generated in mario.replays/${SUBJECT}/"
-
-    deactivate
-    cd ../..
-else
-    print_warning "mario.replays not found - skipping replay generation"
-fi
-
-# Generate scene clips
-if [ -d "${SOURCEDATA_DIR}/mario.scenes" ] && [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ]; then
-    print_info "Setting up mario.scenes environment and generating clips..."
-    cd "${SOURCEDATA_DIR}/mario.scenes"
-
-    # Create environment and setup using invoke
-    if [ ! -d "env" ]; then
-        print_info "Creating virtual environment and installing dependencies..."
-        python3 -m venv env && source env/bin/activate && invoke setup-env && invoke get-scenes-data
-        print_success "Environment setup complete"
+    bold_files=$(find "mario.fmriprep/${SUBJECT}/${SES}/func" -name "*space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" 2>/dev/null | wc -l)
+    if [ "$bold_files" -eq 0 ]; then
+        print_error "  No preprocessed BOLD files found for ${SES}"
+        ((errors++))
     else
-        print_info "Environment already exists, activating..."
-        source env/bin/activate
+        print_success "  Found ${bold_files} preprocessed BOLD files"
     fi
 
-    # Generate scene clips
-    print_info "Generating scene clips for ${SUBJECT} ${SESSION}..."
-    invoke create-clips \
-        --subjects "${SUBJECT}" \
-        --sessions "${SESSION}" \
-        --save-videos \
-        --save-variables || print_warning "Failed to generate scene clips"
-    print_success "Scene clips generated in mario.scenes/clips/"
-
-    deactivate
-    cd ../..
-else
-    print_warning "mario.scenes not found or replays not generated - skipping scene clip generation"
-fi
-
-# Generate annotated events
-if [ -d "${SOURCEDATA_DIR}/mario.annotations" ] && [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ]; then
-    print_info "Setting up mario.annotations environment and generating annotations..."
-    cd "${SOURCEDATA_DIR}/mario.annotations"
-
-    # Create environment and setup using invoke
-    if [ ! -d "env" ]; then
-        print_info "Creating virtual environment and installing dependencies..."
-        python3 -m venv env && source env/bin/activate && invoke setup-env
-        print_success "Environment setup complete"
+    confound_files=$(find "mario.fmriprep/${SUBJECT}/${SES}/func" -name "*desc-confounds_timeseries.tsv" 2>/dev/null | wc -l)
+    if [ "$confound_files" -eq 0 ]; then
+        print_error "  No confound files found for ${SES}"
+        ((errors++))
     else
-        print_info "Environment already exists, activating..."
-        source env/bin/activate
+        print_success "  Found ${confound_files} confound files"
     fi
 
-    # Generate annotated events
-    print_info "Generating annotated events for ${SUBJECT} ${SESSION}..."
-    invoke generate-annotations \
-        --datapath "../mario" \
-        --subjects "${SUBJECT}" \
-        --sessions "${SESSION}" || print_warning "Failed to generate annotations"
-    print_success "Annotated events generated in mario.annotations/annotations/"
+    if [ ! -f "mario/${SUBJECT}/${SES}/func/${SUBJECT}_${SES}_task-mario_run-01_desc-annotated_events.tsv" ]; then
+        print_error "  Annotated events TSV not found for ${SES}"
+        ((errors++))
+    else
+        print_success "  Annotated events verified"
+    fi
+done
 
-    deactivate
-    cd ../..
+# Lowlevel features (now in mario/sub-XX/ses-YYY/gamelogs/)
+lowlevel_count=$(find "mario/${SUBJECT}/${SESSION}/gamelogs" -name "*_lowlevel.npy" 2>/dev/null | wc -l)
+if [ "$lowlevel_count" -eq 0 ]; then
+    print_error "No lowlevel feature files found in gamelogs/"
+    ((errors++))
 else
-    print_warning "mario.annotations not found or replays not generated - skipping annotation generation"
+    print_success "Found ${lowlevel_count} lowlevel feature files"
+fi
+
+# Summary JSONs (now in mario/sub-XX/ses-YYY/gamelogs/)
+summary_count=$(find "mario/${SUBJECT}/${SESSION}/gamelogs" -name "*_summary.json" 2>/dev/null | wc -l)
+if [ "$summary_count" -eq 0 ]; then
+    print_warning "No replay summary JSONs found in gamelogs/"
+else
+    print_success "Found ${summary_count} replay summary files"
 fi
 
 # ------------------------------------------------------------------------------
 # Summary
 # ------------------------------------------------------------------------------
 
-print_header "Step 7/7: Installation Summary"
+print_header "Step 6/6: Installation Summary"
 
 echo "Installation location: $(pwd)/${SOURCEDATA_DIR}"
 echo ""
 echo "Directory structure:"
 echo "  ${SOURCEDATA_DIR}/"
-echo "  ├── mario/                          # Raw BIDS data"
-echo "  │   └── stimuli/                    # Game ROM and files (if AWS credentials provided)"
-echo "  ├── mario.fmriprep/                 # Preprocessed fMRI"
-echo "  ├── mario.annotations/"
-echo "  │   └── annotations/                # Annotated event files (generated)"
-echo "  │       └── ${SUBJECT}/${SESSION}/func/"
-echo "  ├── mario.scenes/"
-echo "  │   └── clips/                      # Scene clip videos (generated)"
-echo "  ├── mario.replays/"
-echo "  │   └── ${SUBJECT}/${SESSION}/beh/  # Replay derivatives with game variables (generated)"
-echo "  └── cneuromod.processed/            # Anatomical data"
+echo "  ├── mario/                              # Raw BIDS + annotations + gamelogs (branch: dev_replays)"
+echo "  │   ├── ${SUBJECT}/${SESSION}/"
+echo "  │   │   ├── func/"
+echo "  │   │   │   ├── *_events.tsv                # Raw event timing"
+echo "  │   │   │   └── *_desc-annotated_events.tsv # Rich annotated events"
+echo "  │   │   └── gamelogs/"
+echo "  │   │       ├── *.bk2                        # Replay files"
+echo "  │   │       ├── *_summary.json               # Replay metadata"
+echo "  │   │       ├── *_variables.json             # Game variables"
+echo "  │   │       ├── *_lowlevel.npy               # Luminance / optical flow / audio"
+echo "  │   │       └── *_recording.mp4              # Video"
+echo "  │   └── stimuli/                        # Game ROM (if AWS credentials provided)"
+echo "  ├── mario.fmriprep/                     # Preprocessed fMRI"
+echo "  ├── mario.scenes/                       # Scene segmentation (cloned, not generated)"
+echo "  └── cneuromod.processed/                # Anatomical data"
+echo ""
+print_info "Note: Annotations and replay derivatives are pre-shipped on the dev_replays branch."
+print_info "To regenerate from scratch, see mario/code/annotations/ and mario/code/replays/."
 echo ""
 
 if [ $errors -eq 0 ]; then
-    print_success "All downloads and derivatives generated successfully!"
+    print_success "All downloads verified successfully!"
     echo ""
     echo "Next steps:"
     echo "  1. Activate main environment: source env/bin/activate"
     echo "  2. Start Jupyter: jupyter notebook"
-    echo "  3. Open notebooks/01_dataset_exploration.ipynb"
+    echo "  3. Open notebooks/00_dataset_overview.ipynb"
     echo ""
-    echo "Note: Each Mario package (replays, scenes, annotations) has its own 'env' folder"
-    echo "      for isolated dependency management."
-    echo ""
-
-    # Check if derivatives were generated
-    if [ -d "${SOURCEDATA_DIR}/mario.replays/${SUBJECT}" ] && [ -d "${SOURCEDATA_DIR}/mario.annotations/annotations" ]; then
-        print_success "Derivatives ready in their respective repos"
-    else
-        print_warning "Some derivatives may not have been generated"
-        print_info "You can generate them manually:"
-        print_info "  cd ${SOURCEDATA_DIR}/mario.replays && source env/bin/activate && invoke create-replays --save-variables --subjects ${SUBJECT} --sessions ${SESSION}"
-        print_info "  cd ${SOURCEDATA_DIR}/mario.scenes && source env/bin/activate && invoke create-clips --subjects ${SUBJECT} --sessions ${SESSION}"
-        print_info "  cd ${SOURCEDATA_DIR}/mario.annotations && source env/bin/activate && invoke generate-annotations --subjects ${SUBJECT} --sessions ${SESSION}"
-    fi
 else
     print_warning "Installation completed with ${errors} error(s)"
-    print_info "You may need to manually download some files or generate derivatives"
+    print_info "You may need to manually download some files"
 fi
 
 print_header "Installation Complete!"

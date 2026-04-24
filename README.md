@@ -132,7 +132,7 @@ Simply open any notebook (`.ipynb` file) directly in Google Colab from the GitHu
 - Install system dependencies (e.g., `git-annex`).
 - Install Python packages (e.g., `datalad`).
 - Clone the repository (if accessed directly).
-- Download relevant datasets using DataLad (`mario`, `mario.fmriprep`, `cneuromod.processed`).
+- Download relevant datasets using DataLad (`mario` — pinned to branch `dev_replays`, `mario.fmriprep`, `cneuromod.processed`).
 
 ### 3. Data Availability
 
@@ -272,9 +272,9 @@ To create the beautiful 3D CNN architecture visualization for notebook 02:
 sudo apt-get install texlive-latex-extra imagemagick
 
 # Generate and compile the diagram
-python generate_architecture_diagram.py
-pdflatex ppo_architecture.tex
-convert -density 300 ppo_architecture.pdf -quality 90 -background white -alpha remove notebooks/figures/ppo_architecture.png
+python scripts/generate_architecture_diagram.py
+(cd scripts && pdflatex ppo_architecture.tex)
+convert -density 300 scripts/ppo_architecture.pdf -quality 90 -background white -alpha remove notebooks/figures/ppo_architecture.png
 ```
 
 ## Troubleshooting

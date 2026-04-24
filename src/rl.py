@@ -1232,7 +1232,7 @@ def align_activations_to_bold(model, subject, session, runs, sourcedata_path,
         run_num = run.split('-')[1]
         run_normalized = f"run-{int(run_num):02d}"
 
-        # Load events from mario/ (not mario.annotations)
+        # Load events from mario/
         events_path = (sourcedata_path / 'mario' / subject / session / 'func' /
                       f"{subject}_{session}_task-mario_{run_normalized}_events.tsv")
 

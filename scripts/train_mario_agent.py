@@ -37,7 +37,7 @@ except ImportError:
 # Import from src (assuming existing project structure)
 # If running standalone, ensure these imports work or paste utils here
 try:
-    src_path = Path(__file__).parent / "src"
+    src_path = Path(__file__).parent.parent / "src"
     sys.path.insert(0, str(src_path))
     from rl import SimpleCNN
     from utils import get_sourcedata_path
