@@ -88,7 +88,7 @@ This tutorial demonstrates a complete fMRI analysis pipeline from data explorati
 - [**shinobi_fmri**](https://github.com/courtois-neuromod/shinobi_fmri): Session-level GLM modeling and visualization ([**reference**](https://osf.io/preprints/psyarxiv/uakq9_v3))
 - [**mario_generalization**](https://github.com/courtois-neuromod/mario_generalization): RL agent training and brain encoding ([**reference**](https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf))
 
-**Scope**: Single subject (sub-01), single session (ses-010) - optimized for laptop execution
+**Scope**: Single participant (sub-01), single session (ses-010) - optimized for laptop execution
 
 
 ## Installation
@@ -242,8 +242,8 @@ See `requirements.txt` for full list. Key packages:
 
 **CNeuromod Mario Dataset**
 - Task: Play Super Mario Bros (NES) naturally
-- Subjects: 5 (sub-01, sub-02, sub-03, sub-05, sub-06)
-- Sessions: 21-29 per subject
+- Participants: 5 (sub-01, sub-02, sub-03, sub-05, sub-06)
+- Sessions: 21-29 per participant
 - Runs: 3 to 5 per session, ~10 minutes each
 - TR: 1.49 seconds
 - Levels: 22 levels across 8 worlds:
