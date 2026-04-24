@@ -43,6 +43,7 @@ from .utils import (
 from .glm import (
     prepare_confounds,
     add_button_press_counts,
+    add_scrub_regressors,
     downsample_lowlevel_confounds,
     sanitize_trial_type,
     create_events_for_glm,
@@ -169,11 +170,12 @@ __all__ = [
     'compute_dataset_statistics', 'setup_colab_environment', 'install_dependencies',
     'setup_datalad_datasets', 'download_stimuli', 'verify_data',
     # GLM
-    'prepare_confounds', 'add_button_press_counts', 'downsample_lowlevel_confounds',
-    'sanitize_trial_type', 'create_events_for_glm', 'create_movement_model',
-    'create_game_events_model', 'create_full_actions_model', 'create_simple_action_models',
-    'define_movement_contrasts', 'define_game_event_contrasts', 'fit_run_glm',
-    'compute_contrasts', 'aggregate_runs_fixed_effects', 'threshold_map_clusters',
+    'prepare_confounds', 'add_button_press_counts', 'add_scrub_regressors',
+    'downsample_lowlevel_confounds', 'sanitize_trial_type', 'create_events_for_glm',
+    'create_movement_model', 'create_game_events_model', 'create_full_actions_model',
+    'create_simple_action_models', 'define_movement_contrasts',
+    'define_game_event_contrasts', 'fit_run_glm', 'compute_contrasts',
+    'aggregate_runs_fixed_effects', 'threshold_map_clusters',
     # Parcellation
     'create_random_parcellation', 'create_kmeans_parcellation', 'create_ward_parcellation',
     'save_parcellation', 'load_parcellation', 'extract_parcel_bold_from_parcellation',

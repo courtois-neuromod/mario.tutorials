@@ -160,6 +160,55 @@ def prepare_confounds(confounds_df, strategy='full', lowlevel_confounds=None):
     return confounds_scaled
 
 
+def add_scrub_regressors(run_events, design_matrix):
+    """Add scrub regressors for TRs outside any valid game repetition.
+
+    A "valid" repetition is an event row with ``trial_type == 'gym-retro_game'``
+    whose ``stim_file`` points to an existing .bk2 (i.e. not ``'Missing file'``
+    or NaN). TRs that do not fall within any valid repetition are zeroed out
+    by adding one-hot scrub regressors to the design matrix, effectively
+    excluding them from the GLM fit.
+
+    Parameters
+    ----------
+    run_events : pd.DataFrame
+        Per-run event table. Must contain ``trial_type``, ``onset``,
+        ``duration``, and ``stim_file`` columns.
+    design_matrix : pd.DataFrame
+        Design matrix as produced by
+        :func:`nilearn.glm.first_level.make_first_level_design_matrix`.
+        The index is treated as frame times in seconds.
+
+    Returns
+    -------
+    design_matrix : pd.DataFrame
+        The same design matrix with ``scrub1``, ``scrub2``, … columns
+        appended (one per scrubbed TR).
+    """
+    reps = []
+    for i in range(len(run_events)):
+        if run_events['trial_type'][i] == "gym-retro_game":
+            reps.append(run_events.iloc[i, :])
+
+    time = np.array(design_matrix.index)
+    to_keep = np.zeros(len(time))
+    for i in range(len(time)):
+        for rep in reps:
+            stim = rep["stim_file"]
+            if isinstance(stim, str) and stim != "Missing file":
+                if time[i] >= rep['onset'] and time[i] <= rep['onset'] + rep['duration']:
+                    to_keep[i] = 1.0
+
+    scrub_idx = 1
+    for idx, keep in enumerate(to_keep):
+        if keep == 0.0:
+            scrub_regressor = np.zeros(len(time))
+            scrub_regressor[idx] = 1.0
+            design_matrix[f'scrub{scrub_idx}'] = scrub_regressor
+            scrub_idx += 1
+    return design_matrix
+
+
 def add_button_press_counts(confounds_df, events_df, tr, n_scans):
     """
     Add button press counts as psychophysics confounds.
