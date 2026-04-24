@@ -711,7 +711,7 @@ def install_dependencies(requirements_file):
     """
 
     print(f"📦 Installing dependencies from {requirements_file}...")
-    subprocess.run(f"pip install -q -r {requirements_file}", shell=True, check=True)
+    subprocess.run(["pip", "install", "-q", "-r", str(requirements_file)], check=True)
     print("  ✓ Dependencies installed")
 
 
@@ -739,8 +739,8 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
 
     # Configure git for DataLad
     print("📥 Setting up DataLad datasets...")
-    subprocess.run("git config --global user.email 'notebook@example.com'", shell=True, check=False)
-    subprocess.run("git config --global user.name 'Notebook User'", shell=True, check=False)
+    subprocess.run(["git", "config", "--global", "user.email", "notebook@example.com"], check=False)
+    subprocess.run(["git", "config", "--global", "user.name", "Notebook User"], check=False)
 
     # Dataset URLs. `mario` on the `dev_replays` branch ships annotations
     # (func/*_desc-annotated_events.tsv) and replay derivatives (gamelogs/*) in-tree,
@@ -765,8 +765,7 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
         try:
             # Try datalad install first
             result = subprocess.run(
-                f"datalad install -s {url} {ds_path}",
-                shell=True,
+                ["datalad", "install", "-s", url, str(ds_path)],
                 capture_output=True,
                 text=True
             )
@@ -775,8 +774,7 @@ def setup_datalad_datasets(sourcedata_path, install_only=False):
                 # Fallback to git clone
                 print(f"    DataLad install failed, trying git clone...")
                 result = subprocess.run(
-                    f"git clone {url} {ds_path}",
-                    shell=True,
+                    ["git", "clone", url, str(ds_path)],
                     capture_output=True,
                     text=True
                 )
@@ -853,7 +851,7 @@ def download_stimuli(target_path=None):
     print("📥 Downloading stimuli from Google Drive...")
 
     # Ensure gdown is installed
-    subprocess.run("pip install -q gdown", shell=True, check=False)
+    subprocess.run(["pip", "install", "-q", "gdown"], check=False)
 
     # Google Drive file ID
     file_id = '17zaL1-6OOd3xxj4EIzCI6-o6sghwx7Qi'

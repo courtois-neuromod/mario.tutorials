@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mario-tutorials"
+version = "0.2.0"
+description = "Tutorial series for the Courtois NeuroMod Mario fMRI dataset (GLM, RL agent, brain encoding)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Courtois NeuroMod" }
+]
+keywords = ["fMRI", "neuroimaging", "reinforcement-learning", "brain-encoding", "cneuromod", "super-mario-bros"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "numpy>=1.21.0,<2.0.0",
+    "scipy>=1.7.0,<2.0.0",
+    "pandas>=1.3.0,<3.0.0",
+    "nibabel>=4.0.0,<6.0.0",
+    "nilearn>=0.10.0,<1.0.0",
+    "scikit-learn>=1.0.0,<2.0.0",
+    "torch>=2.0.0,<3.0.0",
+    "matplotlib>=3.5.0,<4.0.0",
+    "seaborn>=0.12.0,<1.0.0",
+    "jupyter>=1.0.0,<2.0.0",
+    "notebook>=6.0.0,<7.0.0",
+    "RISE>=5.7.0,<6.0.0",
+    "ipython>=8.0.0,<10.0.0",
+    "stable-retro>=0.9.0,<1.0.0",
+    "tqdm>=4.60.0,<5.0.0",
+    "opencv-python>=4.5.0,<5.0.0",
+    "datalad>=0.15.0,<2.0.0",
+    "gdown>=5.0.0,<6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.0",
+    "nbstripout>=0.7.0",
+    "pre-commit>=3.5.0",
+    "pip-tools>=7.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/courtois-neuromod/mario.tutorials"
+Documentation = "https://docs.cneuromod.ca/"
+Repository = "https://github.com/courtois-neuromod/mario.tutorials"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+extend-exclude = ["notebooks", "env", "sourcedata", "derivatives", "models"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line-too-long (soft cap via line-length, don't hard-fail)
+    "E402",  # module-level-import-not-at-top (notebook cells often have mid-file imports)
+]
+
+[tool.nbstripout]
+# Keep cell metadata (including RISE slideshow tags) but drop outputs
+extra-keys = "metadata.kernelspec metadata.language_info.version"
