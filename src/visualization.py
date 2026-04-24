@@ -14,7 +14,11 @@ import pandas as pd
 import seaborn as sns
 from nilearn import plotting
 
-from .glm import create_events_for_glm
+# Absolute import — matches the rest of the codebase, which relies on notebooks
+# having `src/` on sys.path (so `import glm` works as a top-level import).
+# Avoids the ImportError you'd get with a relative `from .glm` when src/ is
+# loaded as a flat module tree instead of a package.
+from glm import create_events_for_glm
 
 # ==============================================================================
 # GLM VISUALIZATIONS

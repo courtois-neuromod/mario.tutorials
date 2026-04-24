@@ -50,6 +50,45 @@ jobs:
           print('all canonical exports import cleanly')
           "
 
+      - name: Smoke test — notebook-style top-level imports
+        # Notebooks put `src/` on sys.path and use `from utils import …`,
+        # `from glm import …`, etc. (flat-module style, NOT `from src.utils`).
+        # This step replicates that exact import path so regressions like a
+        # stray `from .glm import X` inside src/visualization.py fail CI here
+        # rather than when a learner runs the notebook.
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, 'src')
+          # Each tuple mirrors a cell from one of the notebooks.
+          notebook_imports = [
+              ("nb00 dataset-statistics",
+               "from utils import compute_dataset_statistics"),
+              ("nb00 visualization.plot_dataset_statistics",
+               "from visualization import plot_dataset_statistics"),
+              ("nb01 utils + glm",
+               "from utils import get_sourcedata_path, load_events, get_session_runs, load_lowlevel_confounds;"
+               "from glm import prepare_confounds, add_scrub_regressors, add_button_press_counts"),
+              ("nb02 rl",
+               "from rl import load_pretrained_model, play_agent_episode, extract_layer_activations, apply_pca"),
+              ("nb03 utils + parcellation + encoding + rl",
+               "from utils import get_sourcedata_path, load_events, get_session_runs, get_bold_path, load_bold;"
+               "from parcellation import load_schaefer_atlas, extract_parcel_bold;"
+               "from encoding import fit_atlas_encoding_per_layer, compare_atlas_layer_performance, get_top_parcels;"
+               "from rl import SimpleCNN"),
+          ]
+          failed = []
+          for name, src in notebook_imports:
+              try:
+                  exec(src)
+                  print(f'  ✓ {name}')
+              except Exception as e:
+                  failed.append((name, e))
+                  print(f'  ✗ {name}: {type(e).__name__}: {e}')
+          if failed:
+              raise SystemExit(f'{len(failed)} notebook-import smoke tests failed')
+          PY
+
       - name: Verify no phantom imports in src/__init__.py
         run: |
           python - <<'PY'
