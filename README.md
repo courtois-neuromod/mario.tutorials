@@ -136,6 +136,8 @@ Then, navigate to the `notebooks/` directory and open any notebook. The initial 
 
 **Custom data location.** By default the notebooks expect datasets under `./sourcedata/`. To keep the multi-GB DataLad stores elsewhere, export `MARIO_DATA=/path/to/your/sourcedata` — `src/utils.get_sourcedata_path()` honours this environment variable.
 
+**Smoke-test / demo mode.** Export `MARIO_DEMO=1` to have Notebooks 01 and 03 process only the first run of the selected session. Useful for CI, quick walkthroughs, or machines that can't afford the full ~20-minute GLM fit.
+
 **Editable install (optional, for development).** If you want to import the `src/` modules from outside this repo or run the pre-commit / ruff tooling:
 
 ```bash
