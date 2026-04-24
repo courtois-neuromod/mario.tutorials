@@ -134,6 +134,17 @@ pip install -r requirements.lock
 
 Then, navigate to the `notebooks/` directory and open any notebook. The initial cells will guide you through installing DataLad, fetching necessary data, and setting up the Python environment.
 
+**Custom data location.** By default the notebooks expect datasets under `./sourcedata/`. To keep the multi-GB DataLad stores elsewhere, export `MARIO_DATA=/path/to/your/sourcedata` — `src/utils.get_sourcedata_path()` honours this environment variable.
+
+**Editable install (optional, for development).** If you want to import the `src/` modules from outside this repo or run the pre-commit / ruff tooling:
+
+```bash
+pip install -e .[dev]
+pre-commit install          # enable the nbstripout + ruff hooks on commit
+```
+
+The editable install reads metadata from `pyproject.toml`. The `[dev]` extra brings in `ruff`, `nbstripout`, `pre-commit`, and `pip-tools`.
+
 #### Google Colab Execution
 
 Simply open any notebook (`.ipynb` file) directly in Google Colab from the GitHub repository. The first code cell in each notebook will detect the Colab environment and automatically:

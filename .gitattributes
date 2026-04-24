@@ -1,0 +1,9 @@
+# Jupyter notebook diffs: route through jupyter-notebook-specific tooling
+# when available. Install once per clone with:
+#   pip install nbstripout jupyter-notebook
+#   git config --local diff.jupyternotebook.command 'git-nbdiffdriver diff'
+# (or keep the default JSON diff if you haven't set that up yet).
+*.ipynb diff=jupyternotebook
+
+# Treat the lockfile as generated — avoid noisy merge conflicts.
+requirements.lock linguist-generated=true

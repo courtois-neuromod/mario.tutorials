@@ -28,8 +28,18 @@ def get_project_root():
 
 
 def get_sourcedata_path():
-    """Get the path to sourcedata directory."""
-    # Sourcedata is within the mario.tutorials directory
+    """Return the directory holding the DataLad-managed `mario*` sub-datasets.
+
+    Resolution order:
+
+    1. ``MARIO_DATA`` environment variable, if set. This lets a user keep the
+       multi-GB datasets on a separate disk without symlinking into the repo.
+    2. Default: ``<project_root>/sourcedata`` (the layout used by the
+       tutorials out of the box).
+    """
+    env_path = os.environ.get('MARIO_DATA')
+    if env_path:
+        return Path(env_path).expanduser().resolve()
     root = get_project_root()
     return root / "sourcedata"
 

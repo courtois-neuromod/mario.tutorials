@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+title: "mario.tutorials — Courtois NeuroMod Mario fMRI analysis tutorial"
+message: >-
+  If you use or redistribute these tutorial notebooks, please cite both
+  this repository and the underlying CNeuromod Mario dataset.
+type: software
+authors:
+  - given-names: Yann
+    family-names: Harel
+    affiliation: "Courtois NeuroMod"
+  - name: "Courtois NeuroMod project"
+    affiliation: "Université de Montréal · CRIUGM"
+repository-code: "https://github.com/courtois-neuromod/mario.tutorials"
+url: "https://github.com/courtois-neuromod/mario.tutorials"
+license: MIT
+version: "0.2.0"
+date-released: "2026-04-24"
+keywords:
+  - fMRI
+  - neuroimaging
+  - reinforcement-learning
+  - brain-encoding
+  - CNeuromod
+  - Super-Mario-Bros
+  - tutorial
+references:
+  - type: generic
+    title: "CNeuromod Mario dataset"
+    url: "https://docs.cneuromod.ca/en/latest/DATASETS.html#mario"
+    repository: "https://github.com/courtois-neuromod/mario"
+    authors:
+      - name: "Courtois NeuroMod project"
+  - type: article
+    title: >-
+      Session-level GLM modeling and visualization for naturalistic
+      video-game fMRI (shinobi_fmri reference pipeline)
+    url: "https://osf.io/preprints/psyarxiv/uakq9_v3"
+    authors:
+      - name: "CNeuromod contributors"
+  - type: conference-paper
+    title: >-
+      A brittle brain: encoding models show poor out-of-distribution
+      generalization (CCN 2025)
+    url: "https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf"
+    authors:
+      - given-names: Yann
+        family-names: Harel
