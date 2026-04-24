@@ -124,6 +124,14 @@ pip install -r requirements.txt
 jupyter notebook
 ```
 
+For a **bit-for-bit reproducible environment** matching the tutorial maintainers', use the pre-resolved lockfile instead:
+
+```bash
+pip install -r requirements.lock
+```
+
+`requirements.txt` lists the direct dependencies with major-version caps; `requirements.lock` (generated with `pip-compile`) pins exact versions of every transitive dependency.
+
 Then, navigate to the `notebooks/` directory and open any notebook. The initial cells will guide you through installing DataLad, fetching necessary data, and setting up the Python environment.
 
 #### Google Colab Execution
