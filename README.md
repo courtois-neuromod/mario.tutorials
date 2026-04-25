@@ -288,6 +288,29 @@ See `requirements.txt` for full list. Key packages:
 - **Nilearn Documentation**: https://nilearn.github.io
 - **DataLad Handbook**: https://handbook.datalad.org/
 
+## Training the PPO agent on a GPU cluster (Compute Canada / DRAC)
+
+If you want to train new agent weights on Beluga / Narval / Cedar / Graham, the repo ships a one-time bootstrap and a Slurm submission script under `scripts/drac/`:
+
+```bash
+# On a login node — virtualenv, dependencies from DRAC's wheelhouse,
+# and pre-stage the Mario ROM (compute nodes have no internet).
+bash scripts/drac/setup.sh
+
+# Edit scripts/drac/train.slurm and replace `def-CHANGEME` with your allocation.
+
+# Smoke-test (10k steps, ~5 min on any GPU):
+sbatch --time=00:30:00 --export=ALL,STEPS=10000 scripts/drac/train.slurm
+
+# Full 5M-step / 4-level run (the configuration that produced the canonical 1M-step checkpoint):
+sbatch scripts/drac/train.slurm
+
+# All 22 levels, 10M steps:
+sbatch --time=12:00:00 --export=ALL,STEPS=10000000,LEVELS=all scripts/drac/train.slurm
+```
+
+Outputs land in `models/<auto-named>.pth` next to a JSON training log. The job allocates 1 GPU + 4 CPUs + 32 GB RAM by default; pin a specific GPU model by editing `--gres=gpu:1` to e.g. `gpu:a100:1` or `gpu:v100l:1`.
+
 ## Optional: Generate Architecture Diagram
 
 To create the beautiful 3D CNN architecture visualization for notebook 02:
