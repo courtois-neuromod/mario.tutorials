@@ -8,6 +8,9 @@ This module consolidates all visualization functions from:
 """
 
 
+import colorsys
+import re
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -19,6 +22,49 @@ from nilearn import plotting
 # Avoids the ImportError you'd get with a relative `from .glm` when src/ is
 # loaded as a flat module tree instead of a package.
 from glm import create_events_for_glm
+
+# Hand-picked base hues for the 8 SMB worlds. Worlds with similar visual
+# theme in-game share neighbourhoods on the hue wheel (overworld → green,
+# underworld → blue, castle → red/brown, etc.) so the palette feels
+# motivated rather than arbitrary.
+_WORLD_HUE = {
+    1: 0.10,  # warm orange — overworld
+    2: 0.55,  # cyan — underworld / water
+    3: 0.32,  # green — overworld 2
+    4: 0.78,  # purple — castle
+    5: 0.05,  # red — fortress
+    6: 0.45,  # teal — sky / cloud
+    7: 0.62,  # blue — pipe / underground
+    8: 0.92,  # magenta — final castle
+}
+
+
+def level_color(level):
+    """Stable RGB color for a Mario level string.
+
+    World controls hue (so all w1*ln share a hue family), sub-level varies
+    lightness within the family (l1 darker, l3 lighter). Accepts both
+    annotated-events format (``w1l1``) and gym-retro format (``Level1-1``).
+    Falls back to mid-grey for anything unrecognisable.
+
+    Returns
+    -------
+    (r, g, b) tuple of floats in [0, 1].
+    """
+    if not isinstance(level, str):
+        return (0.55, 0.55, 0.55)
+    m = re.match(r'w(\d+)l(\d+)', level, flags=re.IGNORECASE)
+    if m is None:
+        m = re.match(r'Level\s*(\d+)[-_](\d+)', level, flags=re.IGNORECASE)
+    if m is None:
+        return (0.55, 0.55, 0.55)
+    world = int(m.group(1))
+    sub = int(m.group(2))
+    hue = _WORLD_HUE.get(world, ((world - 1) % 8) / 8.0)
+    # SMB1 has up to 4 sub-levels per world; map sub 1..4 -> lightness 0.42..0.72
+    lightness = 0.42 + (max(1, min(sub, 4)) - 1) * 0.10
+    saturation = 0.70
+    return colorsys.hls_to_rgb(hue, lightness, saturation)
 
 # ==============================================================================
 # GLM VISUALIZATIONS
@@ -200,26 +246,27 @@ def plot_event_timeline(events_df, run_label, figsize=(16, 8)):
     # Event timeline with replay backgrounds
     ax1 = axes[0]
 
-    # Draw replay backgrounds using gym-retro_game events
+    # Draw replay backgrounds using gym-retro_game events. Color each repetition
+    # by its level: world → hue family, sub-level → lightness within the family.
+    # Same level always renders the same color, so a run that loops on w1l1
+    # shows a consistent stripe rather than a Set3 rainbow.
     game_markers = events_df[events_df['trial_type'] == 'gym-retro_game']
 
     if len(game_markers) > 0:
-        colors = plt.cm.Set3(np.linspace(0, 1, len(game_markers)))
-        for i, (idx, game_event) in enumerate(game_markers.iterrows()):
+        for _, game_event in game_markers.iterrows():
             onset = game_event['onset']
             duration = game_event['duration']
+            level = game_event.get('level', 'unknown')
+            color = level_color(level)
 
             # Draw semi-transparent rectangle for this replay
-            ax1.axvspan(onset, onset + duration, alpha=0.15, color=colors[i], zorder=0)
+            ax1.axvspan(onset, onset + duration, alpha=0.18, color=color, zorder=0)
 
-            # Add level text from the event data itself
-            # Get the level from the game_event row (which has the correct timing)
-            level = game_event.get('level', 'unknown')
             # Position text just outside the top of the plot
-            ax1.text(onset + duration/2, len(all_events_list) + 0.3,
-                    level, ha='center', va='bottom', fontsize=9,
-                    fontweight='bold', bbox=dict(boxstyle='round,pad=0.3',
-                                                  facecolor=colors[i], alpha=0.3))
+            ax1.text(onset + duration / 2, len(all_events_list) + 0.3,
+                     level, ha='center', va='bottom', fontsize=9,
+                     fontweight='bold',
+                     bbox=dict(boxstyle='round,pad=0.3', facecolor=color, alpha=0.35))
 
     # Plot all events (buttons + game events)
     for idx, event_type in enumerate(all_events_list):

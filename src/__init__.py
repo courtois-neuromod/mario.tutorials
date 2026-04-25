@@ -110,6 +110,8 @@ from .utils import (
 # Visualizations
 from .visualization import (
     get_design_matrix_figure,
+    # Color helpers
+    level_color,
     plot_agent_gameplay,
     plot_confounds_structure,
     plot_contrast_glass_brain,
@@ -199,4 +201,5 @@ __all__ = [
     'plot_agent_gameplay', 'plot_r2_brainmap', 'plot_encoding_comparison_table',
     'plot_prediction_examples', 'plot_layer_comparison_bars',
     'plot_network_performance_grid', 'plot_glass_brain_r2', 'visualize_best_parcel_prediction',
+    'level_color',
 ]
